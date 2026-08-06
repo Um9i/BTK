@@ -1,0 +1,16 @@
+[Unit]
+Description=BTK Postgres database
+
+[Container]
+Image=docker.io/library/postgres:16-alpine
+Pod=btk.pod
+Environment=POSTGRES_USER=btk
+Environment=POSTGRES_PASSWORD=btk
+Environment=POSTGRES_DB=btk
+Volume=btk-db.volume:/var/lib/postgresql/data
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=BTK FastAPI backend
+After=btk-db.service
+Requires=btk-db.service
+
+[Container]
+Image=localhost/btk:latest
+Pod=btk.pod
+Environment=BTK_DB_HOST=127.0.0.1
+EnvironmentFile=/etc/btk/btk.env
+Exec=uv run uvicorn btk.api.app:app --host 0.0.0.0 --port 8000
+AutoUpdate=local
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

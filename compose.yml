@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${BTK_DB_NAME:-btk}
+      POSTGRES_USER: ${BTK_DB_USER:-btk}
+      POSTGRES_PASSWORD: ${BTK_DB_PASSWORD:-btk}
+    ports:
+      - "5432:5432"
+    volumes:
+      - btk-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BTK_DB_USER:-btk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      target: api
+    env_file: .env
+    environment:
+      BTK_DB_HOST: postgres
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bot:
+    build:
+      context: .
+      target: bot
+    env_file: .env
+    environment:
+      BTK_DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  btk-postgres-data:

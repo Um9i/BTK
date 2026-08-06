@@ -1,0 +1,15 @@
+[Unit]
+Description=BTK live ship stats refresh
+After=btk-db.service
+Requires=btk-db.service
+
+[Container]
+Image=localhost/btk:latest
+Pod=btk.pod
+Environment=BTK_DB_HOST=127.0.0.1
+EnvironmentFile=/etc/btk/btk.env
+Exec=uv run btk-ingest live-shipstats
+
+[Service]
+Type=oneshot
+RemainAfterExit=no

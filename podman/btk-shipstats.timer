@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh BTK ship stats once daily
+
+[Timer]
+# Ship stats basically never change mid-round; daily is plenty.
+OnCalendar=*-*-* 00:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

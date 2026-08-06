@@ -1,0 +1,11 @@
+[Unit]
+Description=Run btk-ingest one minute after every PA tick
+
+[Timer]
+# PA ticks hourly, on the hour; btk-ingest should run 1 minute after each
+# tick (mirrors merlin-excalibur.timer).
+OnCalendar=*-*-* *:01:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
