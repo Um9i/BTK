@@ -13,6 +13,9 @@ log = logging.getLogger(__name__)
 
 INITIAL_COGS = (
     "btk.bot.cogs.general",
+    "btk.bot.cogs.game",
+    "btk.bot.cogs.ships",
+    "btk.bot.cogs.calcs",
 )
 
 
