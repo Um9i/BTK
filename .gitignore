@@ -10,4 +10,5 @@ build/
 .env
 data/
 .claude
+CLAUDE.md
 .DS_Store

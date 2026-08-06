@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from btk.api.routers import alliances, health, planets, rounds, status
+from btk.api.routers import alliances, feed, galaxies, health, planets, rounds, ships, status
 from btk.config import get_settings
 from btk.db import close_pool, create_pool
 
@@ -27,6 +27,9 @@ def create_app() -> FastAPI:
     app.include_router(rounds.router)
     app.include_router(alliances.router)
     app.include_router(planets.router)
+    app.include_router(galaxies.router)
+    app.include_router(ships.router)
+    app.include_router(feed.router)
     return app
 
 
