@@ -1,19 +1,19 @@
 from asyncpg import Connection
 from fastapi import APIRouter, Depends, HTTPException
 
-from btk.api.deps import db_conn
+from btk.api.deps import db_conn, resolve_round_id, resolve_tick_id
 
 router = APIRouter(prefix="/planets", tags=["planets"])
 
 
 @router.get("")
-async def list_planets(round_id: int, tick_id: int | None = None, conn: Connection = Depends(db_conn)) -> list[dict]:
+async def list_planets(
+    round_number: int, tick_number: int | None = None, conn: Connection = Depends(db_conn)
+) -> list[dict]:
+    round_id = await resolve_round_id(conn, round_number)
+    tick_id = await resolve_tick_id(conn, round_id, tick_number)
     if tick_id is None:
-        tick_id = await conn.fetchval(
-            "SELECT id FROM tick WHERE round_id = $1 ORDER BY number DESC LIMIT 1", round_id
-        )
-        if tick_id is None:
-            return []
+        return []
 
     rows = await conn.fetch(
         """
