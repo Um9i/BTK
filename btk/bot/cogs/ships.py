@@ -212,7 +212,9 @@ class Ships(commands.Cog):
                 ship["class"],
             )
         if not attackers:
-            await ctx.send(f"{ship['name']} are not hit by anything as that category ({attacker_slot})")
+            await ctx.send(
+                f"{ship['name']} are not hit by anything as that category ({attacker_slot})"
+            )
             return
 
         if ship["class"] == "Roids":
@@ -231,13 +233,18 @@ class Ships(commands.Cog):
             uses_guns = (a["type"] or "").lower() == "emp" or not a["damage"]
             try:
                 if uses_guns:
-                    needed = int(math.ceil(num / (float(100 - ship["empres"]) / 100) / a["guns"]) / efficiency)
+                    needed = int(
+                        math.ceil(num / (float(100 - ship["empres"]) / 100) / a["guns"])
+                        / efficiency
+                    )
                 else:
                     needed = int(math.ceil(float(ship["armor"] * num) / a["damage"]) / efficiency)
             except ZeroDivisionError:
                 parts.append(f"{a['name']}: n/a ")
                 continue
-            parts.append(f"{a['name']}: {needed} ({num2short(a['total_cost'] * needed // SHIP_VALUE)}) ")
+            parts.append(
+                f"{a['name']}: {needed} ({num2short(a['total_cost'] * needed // SHIP_VALUE)}) "
+            )
         await ctx.send("".join(parts))
 
     @commands.command(name="bestagainst")
@@ -271,7 +278,9 @@ class Ships(commands.Cog):
                 ship["class"],
             )
         if not attackers:
-            await ctx.send(f"{ship['name']} are not hit by anything as that category ({attacker_slot})")
+            await ctx.send(
+                f"{ship['name']} are not hit by anything as that category ({attacker_slot})"
+            )
             return
 
         efficiency = TARGET_EFFICIENCY[attacker_slot]
@@ -282,7 +291,10 @@ class Ships(commands.Cog):
             uses_guns = (a["type"] or "").lower() == "emp" or not a["damage"]
             try:
                 if uses_guns:
-                    needed = int(math.ceil(num / (float(100 - ship["empres"]) / 100) / a["guns"]) / efficiency)
+                    needed = int(
+                        math.ceil(num / (float(100 - ship["empres"]) / 100) / a["guns"])
+                        / efficiency
+                    )
                 else:
                     needed = int(math.ceil(float(ship["armor"] * num) / a["damage"]) / efficiency)
             except ZeroDivisionError:
@@ -291,13 +303,16 @@ class Ships(commands.Cog):
             ranked.append((a["name"], needed, value_spent))
 
         if not ranked:
-            await ctx.send(f"No attacker in that category ({attacker_slot}) could get a needed count.")
+            await ctx.send(
+                f"No attacker in that category ({attacker_slot}) could get a needed count."
+            )
             return
 
         ranked.sort(key=lambda r: r[2])
         lines = [f"{n}: {needed} ({num2short(v)})" for n, needed, v in ranked[:5]]
         await ctx.send(
-            f"Cheapest ways to stop {raw_num} {ship['name']} as {attacker_slot}: " + " | ".join(lines)
+            f"Cheapest ways to stop {raw_num} {ship['name']} as {attacker_slot}: "
+            + " | ".join(lines)
         )
 
     @commands.command(name="prod")
@@ -390,7 +405,9 @@ class Ships(commands.Cog):
         try:
             resources = _reverse_prod(ticks, factories, bonus)
         except ZeroDivisionError:
-            await ctx.send("Couldn't converge on an answer for those numbers -- try smaller ticks/factories.")
+            await ctx.send(
+                "Couldn't converge on an answer for those numbers -- try smaller ticks/factories."
+            )
             return
         ships = int(resources / cost)
 
@@ -476,7 +493,9 @@ class Ships(commands.Cog):
                 target_class,
             )
             if not targets:
-                await ctx.send(f"{ship['name']} does not have any targets in that category ({target})")
+                await ctx.send(
+                    f"{ship['name']} does not have any targets in that category ({target})"
+                )
                 return
 
             ship_type = (ship["type"] or "").lower()
@@ -501,13 +520,17 @@ class Ships(commands.Cog):
             for t in targets:
                 try:
                     if uses_guns:
-                        killed = int(efficiency * ship["guns"] * num * float(100 - t["empres"]) / 100)
+                        killed = int(
+                            efficiency * ship["guns"] * num * float(100 - t["empres"]) / 100
+                        )
                     else:
                         killed = int(efficiency * total_damage / t["armor"])
                 except ZeroDivisionError:
                     parts.append(f"{t['name']}: n/a ")
                     continue
-                parts.append(f"{t['name']}: {killed} ({num2short(t['total_cost'] * killed // SHIP_VALUE)}) ")
+                parts.append(
+                    f"{t['name']}: {killed} ({num2short(t['total_cost'] * killed // SHIP_VALUE)}) "
+                )
             await ctx.send("".join(parts))
 
 

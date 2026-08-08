@@ -6,21 +6,49 @@ to round-trip through HTTP within the same process for the same connection
 pool.
 """
 
+import asyncio
 import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from asyncpg import Connection
-from fastapi import APIRouter, Depends, HTTPException, Request
+from asyncpg import Connection, Record
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from btk.api.deps import db_conn
+from btk.api.deps import current_user, db_conn
+from btk.auth import (
+    SESSION_COOKIE_NAME,
+    SESSION_TTL,
+    new_session_token,
+    session_expiry,
+    verify_password,
+)
+from btk.config import get_settings
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
-PLANET_COORD_RE = re.compile(r"(\d+)[:.](\d+)[:.](\d+)")
+# Accepts ":", "." or plain whitespace as the coordinate separator, so
+# "1:1:1", "1.1.1" and "1 1 1" all resolve the same way.
+PLANET_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)[:.\s]+(\d+)")
+GALAXY_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)")
 PLANET_LIST_PAGE_SIZE = 50
+
+# Ranks every planet in the tick by score first, then lets each branch below
+# filter that already-ranked set -- so "rank" on a coordinate or galaxy
+# lookup is still the planet's real standing round-wide, not just its
+# position within the handful of rows a search happens to return.
+RANKED_PLANET_STAT_CTE = """
+    WITH ranked AS (
+        SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
+               ps.size, ps.score, ps.value, ps.xp, ps.special,
+               RANK() OVER (ORDER BY ps.score DESC) AS rank
+        FROM planet_stat ps
+        JOIN planet p ON p.id = ps.planet_id
+        WHERE ps.tick_id = $1
+    )
+"""
 
 # PA ticks hourly, 1 minute past the hour (see btk-ingest.timer) -- a tick
 # ingested more recently than one full tick interval ago is "live"; older
@@ -66,7 +94,11 @@ async def _latest_tick(conn: Connection, round_id: int):
 
 
 @router.get("/")
-async def index(request: Request, conn: Connection = Depends(db_conn)):
+async def index(
+    request: Request,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
     round_row = await _current_round(conn)
     tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
     counts = {"alliances": 0, "galaxies": 0, "planets": 0}
@@ -89,12 +121,17 @@ async def index(request: Request, conn: Connection = Depends(db_conn)):
             "counts": counts,
             "freshness": _freshness(tick_row),
             "countdown": _next_tick_countdown(),
+            "user": user,
         },
     )
 
 
 @router.get("/web/alliances")
-async def alliances_list(request: Request, conn: Connection = Depends(db_conn)):
+async def alliances_list(
+    request: Request,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
     round_row = await _current_round(conn)
     rows = []
     tick_row = None
@@ -112,15 +149,23 @@ async def alliances_list(request: Request, conn: Connection = Depends(db_conn)):
             tick_row["id"],
         )
     return templates.TemplateResponse(
-        request, "alliances_list.html", {"round": round_row, "alliances": rows}
+        request, "alliances_list.html", {"round": round_row, "alliances": rows, "user": user}
     )
 
 
 @router.get("/web/alliances/{alliance_id}")
-async def alliance_detail(request: Request, alliance_id: int, conn: Connection = Depends(db_conn)):
-    name = await conn.fetchval("SELECT name FROM alliance WHERE id = $1", alliance_id)
-    if name is None:
+async def alliance_detail(
+    request: Request,
+    alliance_id: int,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
+    alliance_row = await conn.fetchrow(
+        "SELECT name, round_id FROM alliance WHERE id = $1", alliance_id
+    )
+    if alliance_row is None:
         raise HTTPException(status_code=404, detail="No such alliance")
+    name = alliance_row["name"]
     history = await conn.fetch(
         """
         SELECT t.number AS tick, s.rank, s.size, s.members, s.score, s.points, s.total_score, s.total_value
@@ -132,13 +177,40 @@ async def alliance_detail(request: Request, alliance_id: int, conn: Connection =
         """,
         alliance_id,
     )
+    # alliance_listing.txt has no per-planet membership (see db/schema.sql's
+    # note on planet_intel), so the only "roster" for an alliance is
+    # whatever's been manually tagged via !intel alliance=<name> -- shown
+    # here for logged-in members only, same as the intel box on a planet.
+    intel_planets = []
+    if user is not None:
+        tick_row = await _latest_tick(conn, alliance_row["round_id"])
+        if tick_row:
+            intel_planets = await conn.fetch(
+                """
+                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.score,
+                       pi.nick, pi.comment, pi.amps, pi.dists, pi.defwhore
+                FROM planet_intel pi
+                JOIN planet p ON p.id = pi.planet_id
+                JOIN planet_stat ps ON ps.planet_id = p.id AND ps.tick_id = $1
+                WHERE pi.alliance ILIKE $2
+                ORDER BY ps.score DESC
+                """,
+                tick_row["id"],
+                name,
+            )
     return templates.TemplateResponse(
-        request, "alliance_detail.html", {"name": name, "history": history}
+        request,
+        "alliance_detail.html",
+        {"name": name, "history": history, "user": user, "intel_planets": intel_planets},
     )
 
 
 @router.get("/web/galaxies")
-async def galaxies_list(request: Request, conn: Connection = Depends(db_conn)):
+async def galaxies_list(
+    request: Request,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
     round_row = await _current_round(conn)
     rows = []
     tick_row = None
@@ -157,12 +229,17 @@ async def galaxies_list(request: Request, conn: Connection = Depends(db_conn)):
             tick_row["id"],
         )
     return templates.TemplateResponse(
-        request, "galaxies_list.html", {"round": round_row, "galaxies": rows}
+        request, "galaxies_list.html", {"round": round_row, "galaxies": rows, "user": user}
     )
 
 
 @router.get("/web/galaxies/{galaxy_id}")
-async def galaxy_detail(request: Request, galaxy_id: int, conn: Connection = Depends(db_conn)):
+async def galaxy_detail(
+    request: Request,
+    galaxy_id: int,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
     galaxy = await conn.fetchrow("SELECT id, x, y FROM galaxy WHERE id = $1", galaxy_id)
     if galaxy is None:
         raise HTTPException(status_code=404, detail="No such galaxy")
@@ -198,13 +275,17 @@ async def galaxy_detail(request: Request, galaxy_id: int, conn: Connection = Dep
     return templates.TemplateResponse(
         request,
         "galaxy_detail.html",
-        {"galaxy": galaxy, "history": history, "planets": planets},
+        {"galaxy": galaxy, "history": history, "planets": planets, "user": user},
     )
 
 
 @router.get("/web/planets")
 async def planets_list(
-    request: Request, q: str = "", page: int = 1, conn: Connection = Depends(db_conn)
+    request: Request,
+    q: str = "",
+    page: int = 1,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
 ):
     round_row = await _current_round(conn)
     rows = []
@@ -216,32 +297,34 @@ async def planets_list(
     if tick_row:
         q = q.strip()
         coord_match = PLANET_COORD_RE.fullmatch(q)
+        galaxy_match = None if coord_match else GALAXY_COORD_RE.fullmatch(q)
         if coord_match:
             x, y, z = (int(v) for v in coord_match.groups())
             rows = await conn.fetch(
-                """
-                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-                       ps.size, ps.score, ps.value, ps.xp, ps.special
-                FROM planet_stat ps
-                JOIN planet p ON p.id = ps.planet_id
-                WHERE ps.tick_id = $1 AND ps.x = $2 AND ps.y = $3 AND ps.z = $4
-                """,
+                RANKED_PLANET_STAT_CTE + "SELECT * FROM ranked WHERE x = $2 AND y = $3 AND z = $4",
                 tick_row["id"],
                 x,
                 y,
                 z,
             )
             total = len(rows)
+        elif galaxy_match:
+            x, y = (int(v) for v in galaxy_match.groups())
+            rows = await conn.fetch(
+                RANKED_PLANET_STAT_CTE + "SELECT * FROM ranked WHERE x = $2 AND y = $3 ORDER BY z",
+                tick_row["id"],
+                x,
+                y,
+            )
+            total = len(rows)
         elif q:
             pattern = f"%{q}%"
             rows = await conn.fetch(
-                """
-                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-                       ps.size, ps.score, ps.value, ps.xp, ps.special
-                FROM planet_stat ps
-                JOIN planet p ON p.id = ps.planet_id
-                WHERE ps.tick_id = $1 AND (ps.planet_name ILIKE $2 OR ps.ruler_name ILIKE $2)
-                ORDER BY ps.score DESC
+                RANKED_PLANET_STAT_CTE
+                + """
+                SELECT * FROM ranked
+                WHERE planet_name ILIKE $2 OR ruler_name ILIKE $2
+                ORDER BY score DESC
                 LIMIT 100
                 """,
                 tick_row["id"],
@@ -255,7 +338,8 @@ async def planets_list(
             rows = await conn.fetch(
                 """
                 SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-                       ps.size, ps.score, ps.value, ps.xp, ps.special
+                       ps.size, ps.score, ps.value, ps.xp, ps.special,
+                       RANK() OVER (ORDER BY ps.score DESC) AS rank
                 FROM planet_stat ps
                 JOIN planet p ON p.id = ps.planet_id
                 WHERE ps.tick_id = $1
@@ -277,12 +361,18 @@ async def planets_list(
             "total": total,
             "page_size": PLANET_LIST_PAGE_SIZE,
             "paginated": not q,
+            "user": user,
         },
     )
 
 
 @router.get("/web/planets/{planet_id}")
-async def planet_detail(request: Request, planet_id: int, conn: Connection = Depends(db_conn)):
+async def planet_detail(
+    request: Request,
+    planet_id: int,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
     external_id = await conn.fetchval("SELECT external_id FROM planet WHERE id = $1", planet_id)
     if external_id is None:
         raise HTTPException(status_code=404, detail="No such planet")
@@ -298,12 +388,79 @@ async def planet_detail(request: Request, planet_id: int, conn: Connection = Dep
         """,
         planet_id,
     )
-    intel = await conn.fetchrow(
-        "SELECT nick, comment, amps, dists, defwhore FROM planet_intel WHERE planet_id = $1",
-        planet_id,
-    )
+    # Scouting notes are player-submitted intel on other alliances, not
+    # public data -- only shown to logged-in (Discord-verified) members.
+    intel = None
+    if user is not None:
+        intel = await conn.fetchrow(
+            "SELECT nick, alliance, comment, amps, dists, defwhore FROM planet_intel WHERE planet_id = $1",
+            planet_id,
+        )
     return templates.TemplateResponse(
         request,
         "planet_detail.html",
-        {"external_id": external_id, "history": history, "intel": intel},
+        {"external_id": external_id, "history": history, "user": user, "intel": intel},
     )
+
+
+@router.get("/login")
+async def login_form(
+    request: Request, next: str = "/", user: Record | None = Depends(current_user)
+):
+    if user is not None:
+        return RedirectResponse(next, status_code=303)
+    return templates.TemplateResponse(
+        request, "login.html", {"next": next, "error": None, "user": None}
+    )
+
+
+@router.post("/login")
+async def login_submit(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    next: str = Form("/"),
+    conn: Connection = Depends(db_conn),
+):
+    row = await conn.fetchrow(
+        "SELECT discord_user_id, password_hash FROM web_credential WHERE username = $1",
+        username.strip(),
+    )
+    valid = row is not None and await asyncio.to_thread(
+        verify_password, password, row["password_hash"]
+    )
+    if not valid:
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {"next": next, "error": "Wrong username or password.", "user": None},
+            status_code=401,
+        )
+
+    token = new_session_token()
+    await conn.execute(
+        "INSERT INTO web_session (token, discord_user_id, expires_at) VALUES ($1, $2, $3)",
+        token,
+        row["discord_user_id"],
+        session_expiry(),
+    )
+    response = RedirectResponse(next or "/", status_code=303)
+    response.set_cookie(
+        SESSION_COOKIE_NAME,
+        token,
+        httponly=True,
+        secure=get_settings().web_cookie_secure,
+        samesite="lax",
+        max_age=int(SESSION_TTL.total_seconds()),
+    )
+    return response
+
+
+@router.post("/logout")
+async def logout(request: Request, conn: Connection = Depends(db_conn)):
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if token:
+        await conn.execute("DELETE FROM web_session WHERE token = $1", token)
+    response = RedirectResponse("/", status_code=303)
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    return response

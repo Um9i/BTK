@@ -20,6 +20,7 @@ INITIAL_COGS = (
     "btk.bot.cogs.calcs",
     "btk.bot.cogs.members",
     "btk.bot.cogs.scans",
+    "btk.bot.cogs.preferences",
 )
 
 

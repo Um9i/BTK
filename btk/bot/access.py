@@ -35,7 +35,9 @@ async def is_member(discord_user_id: int) -> bool:
         return True
     async with acquire() as conn:
         return (
-            await conn.fetchval("SELECT 1 FROM bot_member WHERE discord_user_id = $1", discord_user_id)
+            await conn.fetchval(
+                "SELECT 1 FROM bot_member WHERE discord_user_id = $1", discord_user_id
+            )
             is not None
         )
 

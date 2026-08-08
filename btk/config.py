@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8000
+    # Marks the web login session cookie Secure (HTTPS-only) -- on by
+    # default since production sits behind Caddy over HTTPS; set to false
+    # only for local HTTP dev if the cookie needs to round-trip in a browser.
+    web_cookie_secure: bool = True
 
     @property
     def admin_ids(self) -> list[int]:

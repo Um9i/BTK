@@ -50,7 +50,9 @@ class Scans(commands.Cog):
 
         match = REQ_RE.match(arg)
         if not match:
-            await ctx.send("Usage: !reqscan <x:y:z> <types e.g. PDUNJA> | list | cancel <id> [id ...]")
+            await ctx.send(
+                "Usage: !reqscan <x:y:z> <types e.g. PDUNJA> | list | cancel <id> [id ...]"
+            )
             return
 
         x, y, z, types = match.groups()
@@ -98,7 +100,9 @@ class Scans(commands.Cog):
                 )
 
         id_range = f"{ids[0]}-{ids[-1]}" if len(ids) > 1 else str(ids[0])
-        await ctx.send(f"Requested {len(ids)} scan(s) of {x}:{y}:{z} ({types}). !reqscan cancel {id_range} to cancel.")
+        await ctx.send(
+            f"Requested {len(ids)} scan(s) of {x}:{y}:{z} ({types}). !reqscan cancel {id_range} to cancel."
+        )
 
     async def _list(self, ctx: commands.Context) -> None:
         async with acquire() as conn:
@@ -113,7 +117,10 @@ class Scans(commands.Cog):
         if not rows:
             await ctx.send("There are no open scan requests.")
             return
-        lines = [f"[{r['id']}] {r['x']}:{r['y']}:{r['z']} {SCAN_TYPES[r['scan_type']]['name']}" for r in rows]
+        lines = [
+            f"[{r['id']}] {r['x']}:{r['y']}:{r['z']} {SCAN_TYPES[r['scan_type']]['name']}"
+            for r in rows
+        ]
         await ctx.send("Open scan requests: " + " | ".join(lines))
 
     async def _cancel(self, ctx: commands.Context, ids_part: str) -> None:
@@ -131,7 +138,9 @@ class Scans(commands.Cog):
         admin = is_admin(ctx.author.id)
         async with acquire() as conn:
             for req_id in ids:
-                row = await conn.fetchrow("SELECT requested_by, active FROM scan_request WHERE id = $1", req_id)
+                row = await conn.fetchrow(
+                    "SELECT requested_by, active FROM scan_request WHERE id = $1", req_id
+                )
                 if row is None or not row["active"]:
                     missing.append(req_id)
                     continue

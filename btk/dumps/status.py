@@ -56,12 +56,16 @@ def parse_game_status(html: str) -> GameStatus:
     def field(label: str) -> str:
         m = re.search(rf'{re.escape(label)}\s*<span class="highlight">\s*(.*?)\s*</span>', section)
         if not m:
-            raise ValueError(f"Could not find {label!r} in the game status page's #game_status section")
+            raise ValueError(
+                f"Could not find {label!r} in the game status page's #game_status section"
+            )
         return m.group(1).strip()
 
     round_match = re.search(r"<li>Round (\d+) - (.+?)</li>", section)
     if not round_match:
-        raise ValueError("Could not find the round header in the game status page's #game_status section")
+        raise ValueError(
+            "Could not find the round header in the game status page's #game_status section"
+        )
 
     return GameStatus(
         round_number=int(round_match.group(1)),

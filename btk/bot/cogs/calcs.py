@@ -67,7 +67,9 @@ class Calcs(commands.Cog):
         if not match:
             await ctx.send("Usage: !roidsave <roids> <ticks> [mining_bonus]")
             return
-        roids, ticks, raw_bonus = (int(g) for g in (match.group(1), match.group(2), match.group(3) or "0"))
+        roids, ticks, raw_bonus = (
+            int(g) for g in (match.group(1), match.group(2), match.group(3) or "0")
+        )
 
         mining = ROID_MINING * (raw_bonus + 100) / 100
         value = ticks * roids * mining / SHIP_VALUE

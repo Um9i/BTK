@@ -8,13 +8,14 @@
 {% endif %}
 <form class="search-form" method="get" action="/web/planets">
     <span class="prompt">&gt;</span>
-    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z, planet name, or ruler name" autocomplete="off">
+    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler name" autocomplete="off">
     <button type="submit">Query</button>
 </form>
 {% if planets %}
 <table>
     <thead>
         <tr>
+            <th class="num">Rank</th>
             <th>Coords</th>
             <th>Planet</th>
             <th>Ruler</th>
@@ -28,6 +29,7 @@
     <tbody>
         {% for p in planets %}
         <tr>
+            <td class="num{% if p.rank <= 3 %} rank-top{% endif %}">{{ p.rank }}</td>
             <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
             <td>{{ p.planet_name }}{{ macros.special_tags(p.special) }}</td>
             <td>{{ p.ruler_name }}</td>

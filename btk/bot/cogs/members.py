@@ -47,12 +47,15 @@ class Members(commands.Cog):
             await ctx.send("Usage: !remuser <discord user id or @mention>")
             return
         if user_id in get_settings().admin_ids:
-            await ctx.send(f"<@{user_id}> is an admin (BTK_DISCORD_ADMIN_IDS) -- remove them from config instead.")
+            await ctx.send(
+                f"<@{user_id}> is an admin (BTK_DISCORD_ADMIN_IDS) -- remove them from config instead."
+            )
             return
 
         async with acquire() as conn:
             deleted = await conn.fetchval(
-                "DELETE FROM bot_member WHERE discord_user_id = $1 RETURNING discord_user_id", user_id
+                "DELETE FROM bot_member WHERE discord_user_id = $1 RETURNING discord_user_id",
+                user_id,
             )
         if deleted is None:
             await ctx.send(f"<@{user_id}> is not a member.")

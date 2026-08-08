@@ -47,7 +47,9 @@ async def create_tick(
     )
 
 
-async def ingest_alliances(conn: asyncpg.Connection, round_id: int, tick_id: int, rows: list[dict]) -> None:
+async def ingest_alliances(
+    conn: asyncpg.Connection, round_id: int, tick_id: int, rows: list[dict]
+) -> None:
     if not rows:
         return
 
@@ -59,7 +61,9 @@ async def ingest_alliances(conn: asyncpg.Connection, round_id: int, tick_id: int
     id_by_name = {
         r["name"]: r["id"]
         for r in await conn.fetch(
-            "SELECT id, name FROM alliance WHERE round_id = $1 AND name = ANY($2::text[])", round_id, names
+            "SELECT id, name FROM alliance WHERE round_id = $1 AND name = ANY($2::text[])",
+            round_id,
+            names,
         )
     }
 
@@ -217,7 +221,9 @@ async def ingest_tick(
     """Ingest one tick's worth of already-parsed dump rows in a single transaction."""
     async with conn.transaction():
         round_id = await get_or_create_round(conn, round_number, round_name)
-        tick_id = await create_tick(conn, round_id, tick_number, etag=etag, last_modified=last_modified)
+        tick_id = await create_tick(
+            conn, round_id, tick_number, etag=etag, last_modified=last_modified
+        )
         await ingest_alliances(conn, round_id, tick_id, alliance_rows)
         galaxy_id_by_xy = await ingest_galaxies(conn, round_id, tick_id, galaxy_rows)
         await ingest_planets(conn, round_id, tick_id, planet_rows, galaxy_id_by_xy)

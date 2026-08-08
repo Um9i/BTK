@@ -190,12 +190,15 @@ CREATE TABLE IF NOT EXISTS scan_request (
 
 -- Manual per-planet scouting notes maintained via !intel, ported from
 -- Merlin's Hooks/intel/intel.py. Unlike Merlin's Intel table, this doesn't
--- track alliance override, covop, relay, or reportchan -- those were IRC
--- routing/channel concerns, and alliance already comes from the live
--- ingest, so this is just player-maintained notes layered on top of it.
+-- track covop, relay, or reportchan -- those were IRC routing/channel
+-- concerns. alliance IS tracked here though, despite the table's name --
+-- alliance_listing.txt (see btk/dumps/parser.py) only carries aggregate
+-- per-alliance totals, never a per-planet membership list, so there's no
+-- other way to know which alliance a scouted planet belongs to.
 CREATE TABLE IF NOT EXISTS planet_intel (
     planet_id   INTEGER PRIMARY KEY REFERENCES planet(id) ON DELETE CASCADE,
     nick        TEXT,
+    alliance    TEXT,
     comment     TEXT,
     amps        INTEGER,
     dists       INTEGER,
@@ -204,6 +207,33 @@ CREATE TABLE IF NOT EXISTS planet_intel (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Website login, set via the bot's !pref command -- there's no signup form,
+-- so passing the bot's global_member_check (bot_member OR a config-only
+-- admin, see btk/bot/access.py) is the only way to get one. No FK to
+-- bot_member here: admins are deliberately never written to that table, so
+-- a FK against it would lock admins out of their own website login.
+-- username is captured from the Discord username at the time credentials
+-- are first created and doesn't change if their Discord name later does, so
+-- a bookmarked/remembered login keeps working.
+CREATE TABLE IF NOT EXISTS web_credential (
+    discord_user_id BIGINT PRIMARY KEY,
+    username        TEXT NOT NULL UNIQUE,
+    password_hash   TEXT NOT NULL,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Server-side sessions for the website login, keyed by an opaque bearer
+-- token stored in a cookie -- not a signed/stateless cookie, so a session
+-- can be revoked (credential deleted -> cascades here) without needing a
+-- separate token-blocklist mechanism.
+CREATE TABLE IF NOT EXISTS web_session (
+    token           TEXT PRIMARY KEY,
+    discord_user_id BIGINT NOT NULL REFERENCES web_credential(discord_user_id) ON DELETE CASCADE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at      TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_web_session_expires ON web_session(expires_at);
 CREATE INDEX IF NOT EXISTS idx_scan_request_active ON scan_request(round_id, active);
 CREATE INDEX IF NOT EXISTS idx_planet_stat_tick ON planet_stat(tick_id);
 CREATE INDEX IF NOT EXISTS idx_galaxy_stat_tick ON galaxy_stat(tick_id);

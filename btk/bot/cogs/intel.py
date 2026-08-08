@@ -87,6 +87,8 @@ def _format_intel(row) -> str:
     parts = []
     if row["nick"]:
         parts.append(f"Nick: {row['nick']}")
+    if row["alliance"]:
+        parts.append(f"Alliance: {row['alliance']}")
     if row["comment"]:
         parts.append(f"Comment: {row['comment']}")
     if row["amps"] is not None:
@@ -201,12 +203,12 @@ class Intel(commands.Cog):
 
     @commands.command(name="intel")
     async def intel(self, ctx: commands.Context, *, arg: str) -> None:
-        """View or set scouting notes for a planet. Usage: !intel <x:y:z> [nick=|comment=|amps=|dists=|defwhore=]"""
+        """View or set scouting notes for a planet. Usage: !intel <x:y:z> [nick=|alliance=|comment=|amps=|dists=|defwhore=]"""
         arg = arg.strip()
         match = PLANET_COORD_RE.match(arg)
         if not match:
             await ctx.send(
-                "Usage: !intel <x:y:z> [nick=... | comment=... | amps=N | dists=N | defwhore=yes|no]"
+                "Usage: !intel <x:y:z> [nick=... | alliance=... | comment=... | amps=N | dists=N | defwhore=yes|no]"
             )
             return
         x, y, z = (int(v) for v in match.groups())
@@ -234,7 +236,7 @@ class Intel(commands.Cog):
                 return
 
             existing = await conn.fetchrow(
-                "SELECT nick, comment, amps, dists, defwhore FROM planet_intel WHERE planet_id = $1",
+                "SELECT nick, alliance, comment, amps, dists, defwhore FROM planet_intel WHERE planet_id = $1",
                 planet_id,
             )
 
@@ -249,13 +251,24 @@ class Intel(commands.Cog):
             merged = (
                 dict(existing)
                 if existing
-                else {"nick": None, "comment": None, "amps": None, "dists": None, "defwhore": None}
+                else {
+                    "nick": None,
+                    "alliance": None,
+                    "comment": None,
+                    "amps": None,
+                    "dists": None,
+                    "defwhore": None,
+                }
             )
             if comment is not None:
                 merged["comment"] = comment or None
             if "nick" in opts:
                 merged["nick"] = (
                     None if opts["nick"].lower() in ("-", "none", "null") else opts["nick"]
+                )
+            if "alliance" in opts:
+                merged["alliance"] = (
+                    None if opts["alliance"].lower() in ("-", "none", "null") else opts["alliance"]
                 )
             if "amps" in opts and opts["amps"].isdigit():
                 merged["amps"] = int(opts["amps"])
@@ -270,14 +283,15 @@ class Intel(commands.Cog):
 
             await conn.execute(
                 """
-                INSERT INTO planet_intel (planet_id, nick, comment, amps, dists, defwhore, updated_by, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+                INSERT INTO planet_intel (planet_id, nick, alliance, comment, amps, dists, defwhore, updated_by, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
                 ON CONFLICT (planet_id) DO UPDATE SET
-                    nick = $2, comment = $3, amps = $4, dists = $5, defwhore = $6,
-                    updated_by = $7, updated_at = now()
+                    nick = $2, alliance = $3, comment = $4, amps = $5, dists = $6, defwhore = $7,
+                    updated_by = $8, updated_at = now()
                 """,
                 planet_id,
                 merged["nick"],
+                merged["alliance"],
                 merged["comment"],
                 merged["amps"],
                 merged["dists"],

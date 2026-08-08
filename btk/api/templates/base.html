@@ -6,22 +6,61 @@
     <title>{% block title %}BTK{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <!-- Applied before first paint so the theme never flashes between pages. -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem("theme");
+            var dark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.classList.toggle("dark", dark);
+        })();
+    </script>
 </head>
 <body>
-    <div class="graticule-bg"></div>
     <header class="mission-bar">
-        <a class="wordmark" href="/">BTK</a>
-        <nav>
-            <a href="/web/alliances"{% if request.url.path.startswith('/web/alliances') %} class="active"{% endif %}>Alliances</a>
-            <a href="/web/galaxies"{% if request.url.path.startswith('/web/galaxies') %} class="active"{% endif %}>Galaxies</a>
-            <a href="/web/planets"{% if request.url.path.startswith('/web/planets') %} class="active"{% endif %}>Planets</a>
-            <a href="/docs">API</a>
-        </nav>
+        <div class="mission-bar-inner">
+            <a class="wordmark" href="/">BTK</a>
+            <nav>
+                <a href="/web/alliances"{% if request.url.path.startswith('/web/alliances') %} class="active"{% endif %}>Alliances</a>
+                <a href="/web/galaxies"{% if request.url.path.startswith('/web/galaxies') %} class="active"{% endif %}>Galaxies</a>
+                <a href="/web/planets"{% if request.url.path.startswith('/web/planets') %} class="active"{% endif %}>Planets</a>
+                <a href="/docs">API</a>
+                {% if user %}
+                <span class="account">
+                    {{ user.username }}
+                    <form action="/logout" method="post">
+                        <button type="submit" class="link-button">Log out</button>
+                    </form>
+                </span>
+                {% else %}
+                <a href="/login{% if request.url.path != '/' %}?next={{ request.url.path }}{% endif %}"{% if request.url.path == '/login' %} class="active"{% endif %}>Log in</a>
+                {% endif %}
+                <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light mode">
+                    <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </nav>
+        </div>
     </header>
     <main>
         {% block content %}{% endblock %}
     </main>
+    <script>
+        (function () {
+            var btn = document.getElementById("theme-toggle");
+            var root = document.documentElement;
+            function sync() {
+                var dark = root.classList.contains("dark");
+                btn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+            }
+            btn.addEventListener("click", function () {
+                var dark = root.classList.toggle("dark");
+                localStorage.setItem("theme", dark ? "dark" : "light");
+                sync();
+            });
+            sync();
+        })();
+    </script>
 </body>
 </html>
