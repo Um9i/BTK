@@ -7,6 +7,7 @@
 <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.planet_name }}</h1>
 <p class="subtitle">'{{ latest.ruler_name }}' ({{ latest.race }}){{ macros.special_tags(latest.special) }}</p>
 <div class="vitals">
+    <div class="vital"><div class="label">Rank</div><div class="value">{{ rank }}</div></div>
     <div class="vital"><div class="label">Size</div><div class="value">{{ latest.size }}</div></div>
     <div class="vital"><div class="label">Score</div><div class="value">{{ "{:,}".format(latest.score) }}</div></div>
     <div class="vital"><div class="label">Value</div><div class="value">{{ "{:,}".format(latest.value) }}</div></div>

@@ -255,6 +255,7 @@ async def galaxy_detail(
         galaxy_id,
     )
     planets = []
+    rank = None
     if history:
         latest_tick_id = await conn.fetchval(
             "SELECT id FROM tick WHERE round_id = (SELECT round_id FROM galaxy WHERE id = $1) ORDER BY number DESC LIMIT 1",
@@ -272,10 +273,22 @@ async def galaxy_detail(
             latest_tick_id,
             galaxy_id,
         )
+        rank = await conn.fetchval(
+            """
+            WITH ranked AS (
+                SELECT galaxy_id, RANK() OVER (ORDER BY score DESC) AS rank
+                FROM galaxy_stat
+                WHERE tick_id = $1
+            )
+            SELECT rank FROM ranked WHERE galaxy_id = $2
+            """,
+            latest_tick_id,
+            galaxy_id,
+        )
     return templates.TemplateResponse(
         request,
         "galaxy_detail.html",
-        {"galaxy": galaxy, "history": history, "planets": planets, "user": user},
+        {"galaxy": galaxy, "history": history, "planets": planets, "rank": rank, "user": user},
     )
 
 
@@ -388,6 +401,24 @@ async def planet_detail(
         """,
         planet_id,
     )
+    rank = None
+    if history:
+        latest_tick_id = await conn.fetchval(
+            "SELECT id FROM tick WHERE round_id = (SELECT round_id FROM planet WHERE id = $1) ORDER BY number DESC LIMIT 1",
+            planet_id,
+        )
+        rank = await conn.fetchval(
+            """
+            WITH ranked AS (
+                SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
+                FROM planet_stat
+                WHERE tick_id = $1
+            )
+            SELECT rank FROM ranked WHERE planet_id = $2
+            """,
+            latest_tick_id,
+            planet_id,
+        )
     # Scouting notes are player-submitted intel on other alliances, not
     # public data -- only shown to logged-in (Discord-verified) members.
     intel = None
@@ -399,7 +430,13 @@ async def planet_detail(
     return templates.TemplateResponse(
         request,
         "planet_detail.html",
-        {"external_id": external_id, "history": history, "user": user, "intel": intel},
+        {
+            "external_id": external_id,
+            "history": history,
+            "rank": rank,
+            "user": user,
+            "intel": intel,
+        },
     )
 
 
