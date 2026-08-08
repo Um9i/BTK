@@ -2,13 +2,17 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from starlette.staticfiles import StaticFiles
 
-from btk.api.routers import alliances, feed, galaxies, health, planets, rounds, ships, status
+from btk.api.routers import alliances, feed, galaxies, health, planets, rounds, ships, status, web
 from btk.config import get_settings
 from btk.db import close_pool, create_pool
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -30,6 +34,8 @@ def create_app() -> FastAPI:
     app.include_router(galaxies.router)
     app.include_router(ships.router)
     app.include_router(feed.router)
+    app.include_router(web.router)
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     return app
 
 

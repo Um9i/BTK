@@ -110,6 +110,50 @@ systemctl --user enable --now btk-ingest.timer btk-shipstats.timer
 uv run btk-initdb   # once, against the now-running btk-db container
 ```
 
+### Reverse proxy / HTTPS (Caddy)
+
+`btk-api` also serves a server-rendered HTML frontend (Jinja2 templates,
+`btk/api/routers/web.py`) alongside the JSON API on the same port 8000 --
+`/` for the dashboard, `/web/alliances`, `/web/galaxies`, `/web/planets`
+(and their `/{id}` detail pages), plus the existing JSON routes and `/docs`.
+For a real domain, put [Caddy](https://caddyserver.com/) in front for
+automatic HTTPS rather than exposing 8000 directly.
+
+Caddy is a plain Fedora package (`dnf install caddy`), **not** one of the
+`podman/` quadlets -- its systemd unit already runs with
+`CAP_NET_BIND_SERVICE`, so it can bind ports 80/443 without any of the
+rootless-podman low-port workarounds (lowering
+`net.ipv4.ip_unprivileged_port_start`, etc.) that publishing 80/443 from the
+pod itself would need.
+
+```bash
+sudo dnf install -y caddy
+
+# /etc/caddy/Caddyfile
+cat <<'EOF' | sudo tee /etc/caddy/Caddyfile
+your.domain.here {
+    reverse_proxy 127.0.0.1:8000
+}
+EOF
+
+sudo systemctl enable --now caddy
+```
+
+Caddy fetches and auto-renews the Let's Encrypt cert on first start (the
+domain's DNS A/AAAA record must already point at the host) and redirects
+HTTP to HTTPS by default. Once it's confirmed working, lock `btk.pod` down
+so port 8000 is only reachable via Caddy, not directly from the internet --
+`podman/btk.pod`'s `PublishPort` is already set to `127.0.0.1:8000:8000`
+for this reason. If you change it, re-apply and cycle the whole pod (a
+`PublishPort` change needs the pod itself recreated, not just the
+containers):
+
+```bash
+systemctl --user daemon-reload
+systemctl --user stop btk-api.service btk-bot.service btk-db.service btk-pod.service
+systemctl --user start btk-db.service btk-api.service btk-bot.service
+```
+
 ## Dump data
 
 The current round's dumps live at fixed URLs under

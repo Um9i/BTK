@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Alliances - BTK{% endblock %}
+{% block content %}
+<h1>Alliances</h1>
+{% if round %}
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
+{% endif %}
+{% if alliances %}
+<table>
+    <thead>
+        <tr>
+            <th class="num">Rank</th>
+            <th>Name</th>
+            <th class="num">Members</th>
+            <th class="num">Score</th>
+            <th class="num">Points</th>
+            <th class="num">Total Score</th>
+            <th class="num">Total Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in alliances %}
+        <tr>
+            <td class="num{% if a.rank <= 3 %} rank-top{% endif %}">{{ a.rank }}</td>
+            <td><a href="/web/alliances/{{ a.id }}">{{ a.name }}</a></td>
+            <td class="num">{{ a.members }}</td>
+            <td class="num">{{ "{:,}".format(a.score) }}</td>
+            <td class="num">{{ a.points }}</td>
+            <td class="num">{{ "{:,}".format(a.total_score) }}</td>
+            <td class="num">{{ "{:,}".format(a.total_value) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No alliance data yet.</p>
+{% endif %}
+{% endblock %}

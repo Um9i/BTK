@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}{{ galaxy.x }}:{{ galaxy.y }} - BTK{% endblock %}
+{% block content %}
+<h1>Galaxy {{ galaxy.x }}:{{ galaxy.y }}</h1>
+
+{% if history %}
+{% set latest = history[0] %}
+<div class="vitals">
+    <div class="vital"><div class="label">Name</div><div class="value">{{ latest.name }}</div></div>
+    <div class="vital"><div class="label">Size</div><div class="value">{{ latest.size }}</div></div>
+    <div class="vital"><div class="label">Score</div><div class="value">{{ "{:,}".format(latest.score) }}</div></div>
+    <div class="vital"><div class="label">Value</div><div class="value">{{ "{:,}".format(latest.value) }}</div></div>
+</div>
+{% endif %}
+
+<h2>Planets</h2>
+{% if planets %}
+<table>
+    <thead>
+        <tr>
+            <th>Coords</th>
+            <th>Planet</th>
+            <th>Ruler</th>
+            <th>Race</th>
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">XP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in planets %}
+        <tr>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td>{{ p.planet_name }}{{ macros.special_tags(p.special) }}</td>
+            <td>{{ p.ruler_name }}</td>
+            <td>{{ p.race }}</td>
+            <td class="num">{{ p.size }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num">{{ "{:,}".format(p.value) }}</td>
+            <td class="num">{{ "{:,}".format(p.xp) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No planets recorded.</p>
+{% endif %}
+
+<h2>Log &mdash; most recent 50 ticks</h2>
+{% if history %}
+<table>
+    <thead>
+        <tr>
+            <th class="num">Tick</th>
+            <th>Name</th>
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">XP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in history %}
+        <tr>
+            <td class="num">{{ h.tick }}</td>
+            <td>{{ h.name }}</td>
+            <td class="num">{{ h.size }}</td>
+            <td class="num">{{ "{:,}".format(h.score) }}</td>
+            <td class="num">{{ "{:,}".format(h.value) }}</td>
+            <td class="num">{{ "{:,}".format(h.xp) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No stats recorded.</p>
+{% endif %}
+{% endblock %}

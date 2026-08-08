@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}BTK{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="graticule-bg"></div>
+    <header class="mission-bar">
+        <a class="wordmark" href="/">BTK</a>
+        <nav>
+            <a href="/web/alliances"{% if request.url.path.startswith('/web/alliances') %} class="active"{% endif %}>Alliances</a>
+            <a href="/web/galaxies"{% if request.url.path.startswith('/web/galaxies') %} class="active"{% endif %}>Galaxies</a>
+            <a href="/web/planets"{% if request.url.path.startswith('/web/planets') %} class="active"{% endif %}>Planets</a>
+            <a href="/docs">API</a>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

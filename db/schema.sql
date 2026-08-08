@@ -188,6 +188,22 @@ CREATE TABLE IF NOT EXISTS scan_request (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Manual per-planet scouting notes maintained via !intel, ported from
+-- Merlin's Hooks/intel/intel.py. Unlike Merlin's Intel table, this doesn't
+-- track alliance override, covop, relay, or reportchan -- those were IRC
+-- routing/channel concerns, and alliance already comes from the live
+-- ingest, so this is just player-maintained notes layered on top of it.
+CREATE TABLE IF NOT EXISTS planet_intel (
+    planet_id   INTEGER PRIMARY KEY REFERENCES planet(id) ON DELETE CASCADE,
+    nick        TEXT,
+    comment     TEXT,
+    amps        INTEGER,
+    dists       INTEGER,
+    defwhore    BOOLEAN,
+    updated_by  BIGINT NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_scan_request_active ON scan_request(round_id, active);
 CREATE INDEX IF NOT EXISTS idx_planet_stat_tick ON planet_stat(tick_id);
 CREATE INDEX IF NOT EXISTS idx_galaxy_stat_tick ON galaxy_stat(tick_id);

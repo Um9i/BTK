@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}Planets - BTK{% endblock %}
+{% block content %}
+<h1>Planets</h1>
+{% if round %}
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
+{% endif %}
+<form class="search-form" method="get" action="/web/planets">
+    <span class="prompt">&gt;</span>
+    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z, planet name, or ruler name" autocomplete="off">
+    <button type="submit">Query</button>
+</form>
+{% if planets %}
+<table>
+    <thead>
+        <tr>
+            <th>Coords</th>
+            <th>Planet</th>
+            <th>Ruler</th>
+            <th>Race</th>
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">XP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in planets %}
+        <tr>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td>{{ p.planet_name }}{{ macros.special_tags(p.special) }}</td>
+            <td>{{ p.ruler_name }}</td>
+            <td>{{ p.race }}</td>
+            <td class="num">{{ p.size }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num">{{ "{:,}".format(p.value) }}</td>
+            <td class="num">{{ "{:,}".format(p.xp) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% if paginated %}
+<div class="pagination">
+    {% if page > 1 %}<a href="/web/planets?page={{ page - 1 }}">&larr; prev</a>{% endif %}
+    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} planets</span>
+    {% if page * page_size < total %}<a href="/web/planets?page={{ page + 1 }}">next &rarr;</a>{% endif %}
+</div>
+{% endif %}
+{% else %}
+<p class="empty">{% if q %}No planets matching '{{ q }}'.{% else %}No planet data yet.{% endif %}</p>
+{% endif %}
+{% endblock %}

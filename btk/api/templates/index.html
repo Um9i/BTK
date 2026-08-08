@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}BTK{% endblock %}
+{% block content %}
+{% if round %}
+<div class="console">
+    <div class="console-top">
+        <div>
+            <h1>Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</h1>
+            <div class="subtitle">Tick-by-tick tracker</div>
+        </div>
+        <span class="status-pill{% if freshness.live %} live{% endif %}">
+            <span class="dot"></span>{{ freshness.label }}
+        </span>
+    </div>
+
+    <div class="clock-row">
+        <div class="clock-block">
+            <div class="eyebrow">Next tick</div>
+            <div class="clock-value" id="countdown">T&minus;{{ countdown }}</div>
+        </div>
+        <div class="clock-block">
+            <div class="eyebrow">Last ingested tick</div>
+            <div class="clock-value dim">{% if tick %}{{ "%04d"|format(tick.number) }}{% else %}&mdash;{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <a class="stat-card" href="/web/alliances">
+        <div class="value">{{ counts.alliances }}</div>
+        <div class="label">Alliances</div>
+    </a>
+    <a class="stat-card" href="/web/galaxies">
+        <div class="value">{{ counts.galaxies }}</div>
+        <div class="label">Galaxies</div>
+    </a>
+    <a class="stat-card" href="/web/planets">
+        <div class="value">{{ counts.planets }}</div>
+        <div class="label">Planets</div>
+    </a>
+</div>
+
+<p class="links-line"><a href="/status/game">Live game status</a> &middot; <a href="/docs">JSON API docs</a></p>
+
+<script>
+    // PA ticks hourly, 1 minute past the hour (UTC) -- no server round-trip
+    // needed, the schedule is fixed, so this counts down entirely client-side.
+    (function () {
+        var el = document.getElementById("countdown");
+        function render() {
+            var now = new Date();
+            var next = new Date(Date.UTC(
+                now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+                now.getUTCHours(), 1, 0
+            ));
+            if (next <= now) {
+                next.setUTCHours(next.getUTCHours() + 1);
+            }
+            var s = Math.max(0, Math.floor((next - now) / 1000));
+            var h = String(Math.floor(s / 3600)).padStart(2, "0");
+            var m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+            var sec = String(s % 60).padStart(2, "0");
+            el.textContent = "T−" + h + ":" + m + ":" + sec;
+        }
+        render();
+        setInterval(render, 1000);
+    })();
+</script>
+{% else %}
+<h1>BTK</h1>
+<p class="empty">No round data yet.</p>
+{% endif %}
+{% endblock %}

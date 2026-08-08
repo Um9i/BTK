@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}{{ external_id }} - BTK{% endblock %}
+{% block content %}
+{% set latest = history[0] if history else None %}
+{% if latest %}
+<h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.planet_name }}</h1>
+<p class="subtitle">'{{ latest.ruler_name }}' ({{ latest.race }}){{ macros.special_tags(latest.special) }}</p>
+<div class="vitals">
+    <div class="vital"><div class="label">Size</div><div class="value">{{ latest.size }}</div></div>
+    <div class="vital"><div class="label">Score</div><div class="value">{{ "{:,}".format(latest.score) }}</div></div>
+    <div class="vital"><div class="label">Value</div><div class="value">{{ "{:,}".format(latest.value) }}</div></div>
+    <div class="vital"><div class="label">XP</div><div class="value">{{ "{:,}".format(latest.xp) }}</div></div>
+</div>
+{% else %}
+<h1>Planet {{ external_id }}</h1>
+{% endif %}
+
+{% if intel and (intel.nick or intel.comment or intel.amps is not none or intel.dists is not none or intel.defwhore is not none) %}
+<div class="intel-box">
+    <div class="eyebrow">Intel</div>
+    <dl>
+        {% if intel.nick %}<dt>Nick</dt><dd>{{ intel.nick }}</dd>{% endif %}
+        {% if intel.comment %}<dt>Comment</dt><dd>{{ intel.comment }}</dd>{% endif %}
+        {% if intel.amps is not none %}<dt>Amps</dt><dd>{{ intel.amps }}</dd>{% endif %}
+        {% if intel.dists is not none %}<dt>Dists</dt><dd>{{ intel.dists }}</dd>{% endif %}
+        {% if intel.defwhore is not none %}<dt>Defwhore</dt><dd>{{ "yes" if intel.defwhore else "no" }}</dd>{% endif %}
+    </dl>
+</div>
+{% endif %}
+
+<h2>Log &mdash; most recent 50 ticks</h2>
+{% if history %}
+<table>
+    <thead>
+        <tr>
+            <th class="num">Tick</th>
+            <th>Coords</th>
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">XP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in history %}
+        <tr>
+            <td class="num">{{ h.tick }}</td>
+            <td>{{ h.x }}:{{ h.y }}:{{ h.z }}</td>
+            <td class="num">{{ h.size }}</td>
+            <td class="num">{{ "{:,}".format(h.score) }}</td>
+            <td class="num">{{ "{:,}".format(h.value) }}</td>
+            <td class="num">{{ "{:,}".format(h.xp) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No stats recorded.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% set SPECIAL_FLAGS = {"P": "Prot", "D": "Del", "R": "Reset", "V": "Vac", "C": "Closed", "E": "Exile"} %}
+{% set SPECIAL_DANGER = ["D", "E"] %}
+{% set SPECIAL_QUIET = ["P"] %}
+
+{% macro special_tags(special) %}
+    {% if special %}
+        {% for code in special.split(",") %}
+            {% if code %}
+            <span class="tag{% if code in SPECIAL_DANGER %} danger{% elif code in SPECIAL_QUIET %} quiet{% endif %}">{{ SPECIAL_FLAGS.get(code, code) }}</span>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endmacro %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Galaxies - BTK{% endblock %}
+{% block content %}
+<h1>Galaxies</h1>
+{% if round %}
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
+{% endif %}
+{% if galaxies %}
+<table>
+    <thead>
+        <tr>
+            <th class="num">Rank</th>
+            <th>Coords</th>
+            <th>Name</th>
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">XP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for g in galaxies %}
+        {% set unclaimed = g.name == "A Galaxy Far Far Away" or g.size == 0 %}
+        <tr{% if unclaimed %} class="unclaimed"{% endif %}>
+            <td class="num{% if g.rank <= 3 %} rank-top{% endif %}">{{ g.rank }}</td>
+            <td><a href="/web/galaxies/{{ g.id }}">{{ g.x }}:{{ g.y }}</a></td>
+            <td>{{ g.name }}</td>
+            <td class="num">{{ g.size }}</td>
+            <td class="num">{{ "{:,}".format(g.score) }}</td>
+            <td class="num">{{ "{:,}".format(g.value) }}</td>
+            <td class="num">{{ "{:,}".format(g.xp) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No galaxy data yet.</p>
+{% endif %}
+{% endblock %}

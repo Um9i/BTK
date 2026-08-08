@@ -1,0 +1,553 @@
+/* BTK — mission console
+
+   A tick-based space wargame tracker, styled like flight telemetry rather
+   than a generic SaaS dashboard: phosphor-amber readouts on a cool void,
+   every number set in mono with real tabular alignment, and a coordinate
+   graticule in the negative space (the game addresses everything in it by
+   x:y:z, so the grid isn't decoration). Michroma is spent in exactly two
+   places -- the wordmark and page H1s -- everything else stays quiet.
+*/
+
+:root {
+    --void: #0a0d13;
+    --panel: #12161f;
+    --panel-raised: #171d29;
+    --line: #232a3a;
+    --ink: #d8dee8;
+    --ink-dim: #7c8798;
+    --ink-faint: #454e60;
+    --amber: #ffb545;
+    --amber-wash: rgb(255 181 69 / 12%);
+    --amber-line: rgb(255 181 69 / 35%);
+    --danger: #ff6b5e;
+    --good: #5ec98f;
+
+    --font-display: "Michroma", "Segoe UI", sans-serif;
+    --font-ui: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--void);
+    color: var(--ink);
+    font: 15px/1.55 var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--amber);
+}
+
+::selection {
+    background: var(--amber);
+    color: var(--void);
+}
+
+:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+}
+
+/* Coordinate graticule -- a faint ruled grid fixed behind the whole viewport,
+   not just the hero. The game addresses everything in it by x:y:z, so a
+   starmap grid sitting under every screen (tables included) is the one
+   throughline that makes list/detail pages read as the same console as the
+   homepage, instead of the grid being a hero-only flourish. */
+.graticule-bg {
+    background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.4;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ---------- mission bar ---------- */
+
+header.mission-bar {
+    position: relative;
+    background: var(--panel-raised);
+    border-bottom: 1px solid var(--line);
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    overflow-x: auto;
+}
+
+.wordmark {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    letter-spacing: 0.14em;
+    color: var(--amber);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.wordmark::before {
+    content: "◆ ";
+}
+
+.mission-bar nav {
+    display: flex;
+    gap: 1.3rem;
+    white-space: nowrap;
+}
+
+.mission-bar nav a {
+    color: var(--ink-dim);
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.mission-bar nav a:hover {
+    color: var(--ink);
+}
+
+.mission-bar nav a.active {
+    color: var(--amber);
+}
+
+main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3rem;
+}
+
+/* ---------- headings ---------- */
+
+h1 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 0 0 0.4rem;
+}
+
+h2 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.subtitle {
+    color: var(--ink-dim);
+    margin: 0 0 1.5rem;
+    font-size: 0.92rem;
+}
+
+.eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+}
+
+/* ---------- hero console (homepage only) ---------- */
+
+.console {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    padding: 1.75rem;
+    margin-bottom: 1.75rem;
+    overflow: hidden;
+}
+
+.console-top {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 0.25rem 0.65rem;
+    white-space: nowrap;
+}
+
+.status-pill .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-dim);
+}
+
+.status-pill.live {
+    color: var(--good);
+    border-color: rgb(94 201 143 / 35%);
+}
+
+.status-pill.live .dot {
+    background: var(--good);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .status-pill.live .dot {
+        animation: none;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+.clock-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.clock-block .eyebrow {
+    margin-bottom: 0.3rem;
+}
+
+.clock-value {
+    font-family: var(--font-data);
+    font-size: 2rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--amber);
+    letter-spacing: 0.02em;
+}
+
+.clock-value.dim {
+    color: var(--ink);
+}
+
+/* ---------- stat cards ---------- */
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    text-decoration: none;
+    display: block;
+    transition: border-color 0.15s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--amber-line);
+}
+
+.stat-card .value {
+    font-family: var(--font-data);
+    font-size: 1.6rem;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card .label {
+    color: var(--ink-dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+}
+
+.links-line {
+    color: var(--ink-dim);
+    font-size: 0.88rem;
+}
+
+/* ---------- vitals (detail pages) ---------- */
+
+.vitals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.vital {
+    background: var(--panel);
+    padding: 0.85rem 1rem;
+}
+
+.vital .label {
+    color: var(--ink-dim);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.vital .value {
+    font-family: var(--font-data);
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- tables ---------- */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+}
+
+thead th {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    background: var(--panel-raised);
+    color: var(--ink-dim);
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 0.5rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+}
+
+td.num, th.num {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+tbody tr:nth-child(even) {
+    background: rgb(23 29 41 / 45%);
+}
+
+tbody tr:hover {
+    background: var(--panel);
+}
+
+tbody a {
+    color: var(--ink);
+    text-decoration: none;
+    font-family: var(--font-data);
+}
+
+tbody a:hover {
+    color: var(--amber);
+}
+
+/* Top 3 on a ranked board get the amber readout treatment; everyone else
+   stays in plain ink so the podium is legible at a glance without a medal
+   icon set that would fight the mono/tabular numbers. */
+td.rank-top {
+    color: var(--amber);
+    font-weight: 600;
+}
+
+/* Unclaimed/unrenamed galaxies (still the game's own default name) are real
+   rows, but not notable ones -- dim them so a scan down the board lands on
+   galaxies someone actually named. */
+tr.unclaimed td {
+    color: var(--ink-faint);
+}
+
+tr.unclaimed td a {
+    color: var(--ink-dim);
+}
+
+.empty {
+    color: var(--ink-dim);
+    font-style: italic;
+}
+
+/* ---------- flags / tags ---------- */
+
+.tag {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 0.05rem 0.4rem;
+    font-size: 0.72rem;
+    font-family: var(--font-data);
+    margin-left: 0.4rem;
+    border: 1px solid var(--amber-line);
+    color: var(--amber);
+}
+
+.tag.danger {
+    border-color: rgb(255 107 94 / 40%);
+    color: var(--danger);
+}
+
+/* "Prot" (newbie protection) sits on the majority of rows in the early
+   game -- common enough that treating it like a real alert would drown out
+   the flags that are actually rare (Del, Exile, Reset). */
+.tag.quiet {
+    border-color: var(--line);
+    color: var(--ink-dim);
+}
+
+/* ---------- search ---------- */
+
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    overflow: hidden;
+}
+
+.search-form .prompt {
+    font-family: var(--font-data);
+    color: var(--amber);
+    padding: 0 0 0 0.85rem;
+    font-size: 0.92rem;
+}
+
+.search-form input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    padding: 0.6rem 0.6rem;
+    font-family: var(--font-data);
+    font-size: 0.92rem;
+}
+
+.search-form input:focus {
+    outline: none;
+}
+
+.search-form input::placeholder {
+    color: var(--ink-dim);
+}
+
+.search-form button {
+    background: var(--amber-wash);
+    color: var(--amber);
+    border: none;
+    border-left: 1px solid var(--line);
+    padding: 0.6rem 1.1rem;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.search-form button:hover {
+    background: var(--amber-line);
+}
+
+/* ---------- pagination ---------- */
+
+.pagination {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    color: var(--ink-dim);
+    font-size: 0.85rem;
+    font-family: var(--font-data);
+}
+
+.pagination a {
+    color: var(--amber);
+    text-decoration: none;
+}
+
+/* ---------- intel panel ---------- */
+
+.intel-box {
+    position: relative;
+    background: var(--panel);
+    border: 1px dashed var(--amber-line);
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.75rem;
+}
+
+.intel-box .eyebrow {
+    color: var(--amber);
+    margin-bottom: 0.5rem;
+}
+
+.intel-box dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 0.9rem;
+}
+
+.intel-box dt {
+    color: var(--ink-dim);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.intel-box dd {
+    margin: 0;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 640px) {
+    main {
+        padding: 1.25rem 1rem 2.5rem;
+    }
+
+    .mission-bar {
+        gap: 1.1rem;
+    }
+
+    .clock-value {
+        font-size: 1.5rem;
+    }
+
+    table {
+        font-size: 0.82rem;
+    }
+
+    thead th, tbody td {
+        padding: 0.4rem 0.5rem;
+    }
+}
