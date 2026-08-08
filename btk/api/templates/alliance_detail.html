@@ -12,6 +12,39 @@
 </div>
 {% endif %}
 
+{% if user %}
+<h2>Intel roster</h2>
+{% if intel_planets %}
+<p class="subtitle">Planets tagged <code>alliance={{ name }}</code> via <code>!intel</code> -- there's no membership list in the game data itself, only what's been scouted.</p>
+<table>
+    <thead>
+        <tr>
+            <th>Coords</th>
+            <th>Planet</th>
+            <th>Ruler</th>
+            <th class="num">Score</th>
+            <th>Nick</th>
+            <th>Comment</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in intel_planets %}
+        <tr>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td>{{ p.planet_name }}</td>
+            <td>{{ p.ruler_name }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td>{{ p.nick or "" }}</td>
+            <td>{{ p.comment or "" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No planets tagged <code>alliance={{ name }}</code> yet. Set one with <code>!intel &lt;x:y:z&gt; alliance={{ name }}</code> in Discord.</p>
+{% endif %}
+{% endif %}
+
 <h2>Log &mdash; most recent 50 ticks</h2>
 {% if history %}
 <table>
