@@ -192,7 +192,11 @@ async def ingest_feed(conn: asyncpg.Connection, round_id: int, rows: list[dict])
     if not rows:
         return
     await conn.executemany(
-        "INSERT INTO feed (round_id, tick_number, category, text) VALUES ($1, $2, $3, $4)",
+        """
+        INSERT INTO feed (round_id, tick_number, category, text)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (round_id, tick_number, category, text) DO NOTHING
+        """,
         [(round_id, row["tick_number"], row["category"], row["text"]) for row in rows],
     )
 

@@ -240,6 +240,66 @@ class Ships(commands.Cog):
             parts.append(f"{a['name']}: {needed} ({num2short(a['total_cost'] * needed // SHIP_VALUE)}) ")
         await ctx.send("".join(parts))
 
+    @commands.command(name="bestagainst")
+    async def bestagainst(self, ctx: commands.Context, *, arg: str) -> None:
+        """Rank ships by cheapest value spent to stop a number of a target. Usage: !bestagainst <number> <ship> [t1|t2|t3]"""
+        match = EFF_RE.match(arg.strip())
+        if not match:
+            await ctx.send("Usage: !bestagainst <number> <ship> [t1|t2|t3]")
+            return
+        raw_num, name, attacker_slot = match.groups()
+        attacker_slot = (attacker_slot or "t1").lower()
+        try:
+            num = short2num(raw_num)
+        except ValueError:
+            await ctx.send(f"Couldn't parse number: {raw_num}")
+            return
+
+        async with acquire() as conn:
+            round_id = await self._current_round_id(conn)
+            if round_id is None:
+                await ctx.send("No round data yet.")
+                return
+            ship = await self._find_ship(conn, round_id, name)
+            if ship is None:
+                await ctx.send(f"No ship called: {name}")
+                return
+
+            attackers = await conn.fetch(
+                f"SELECT * FROM ship WHERE round_id = $1 AND {TARGET_COLUMN[attacker_slot]} = $2 ORDER BY name",
+                round_id,
+                ship["class"],
+            )
+        if not attackers:
+            await ctx.send(f"{ship['name']} are not hit by anything as that category ({attacker_slot})")
+            return
+
+        efficiency = TARGET_EFFICIENCY[attacker_slot]
+        ranked = []
+        for a in attackers:
+            # Ships with no damage stat (e.g. some Cloak-type covert ships) fight
+            # like EMP: guns against the target's empres, not damage against armor.
+            uses_guns = (a["type"] or "").lower() == "emp" or not a["damage"]
+            try:
+                if uses_guns:
+                    needed = int(math.ceil(num / (float(100 - ship["empres"]) / 100) / a["guns"]) / efficiency)
+                else:
+                    needed = int(math.ceil(float(ship["armor"] * num) / a["damage"]) / efficiency)
+            except ZeroDivisionError:
+                continue
+            value_spent = a["total_cost"] * needed // SHIP_VALUE
+            ranked.append((a["name"], needed, value_spent))
+
+        if not ranked:
+            await ctx.send(f"No attacker in that category ({attacker_slot}) could get a needed count.")
+            return
+
+        ranked.sort(key=lambda r: r[2])
+        lines = [f"{n}: {needed} ({num2short(v)})" for n, needed, v in ranked[:5]]
+        await ctx.send(
+            f"Cheapest ways to stop {raw_num} {ship['name']} as {attacker_slot}: " + " | ".join(lines)
+        )
+
     @commands.command(name="prod")
     async def prod(self, ctx: commands.Context, *, arg: str) -> None:
         """Ticks to build <number> <ship> with <factories>. Usage: !prod <number> <ship> <factories> [pop] [gov]"""

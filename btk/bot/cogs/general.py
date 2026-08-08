@@ -11,10 +11,12 @@ class General(commands.Cog):
 
     @commands.command(name="ping")
     async def ping(self, ctx: commands.Context) -> None:
+        """Check the bot is alive and show gateway latency."""
         await ctx.send(f"pong ({round(self.bot.latency * 1000)}ms)")
 
     @commands.command(name="dbcheck")
     async def dbcheck(self, ctx: commands.Context) -> None:
+        """Check the bot can reach the database."""
         async with acquire() as conn:
             value = await conn.fetchval("SELECT 1")
         await ctx.send("db ok" if value == 1 else "db error")

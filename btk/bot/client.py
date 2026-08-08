@@ -6,6 +6,7 @@ import logging
 import discord
 from discord.ext import commands
 
+from btk.bot.access import NotAMember, global_member_check
 from btk.config import get_settings
 from btk.db import close_pool, create_pool
 
@@ -16,18 +17,32 @@ INITIAL_COGS = (
     "btk.bot.cogs.game",
     "btk.bot.cogs.ships",
     "btk.bot.cogs.calcs",
+    "btk.bot.cogs.members",
+    "btk.bot.cogs.scans",
 )
 
 
 class BTKBot(commands.Bot):
     async def setup_hook(self) -> None:
         await create_pool()
+        self.add_check(global_member_check)
         for cog in INITIAL_COGS:
             await self.load_extension(cog)
 
     async def close(self) -> None:
         await close_pool()
         await super().close()
+
+    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
+        if isinstance(error, commands.CommandNotFound | NotAMember):
+            # Strangers (not admin/member) and bogus command names are both
+            # ignored silently -- no reply, so the bot doesn't advertise
+            # itself to non-members.
+            return
+        if isinstance(error, commands.CheckFailure | commands.UserInputError):
+            await ctx.send(str(error))
+            return
+        log.exception("Unhandled command error in !%s", ctx.command, exc_info=error)
 
 
 def build_bot() -> BTKBot:

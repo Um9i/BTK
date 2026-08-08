@@ -41,3 +41,16 @@ RACE_PRODTIME = {
 }
 
 CLASS_ETA = {"fi": 8, "co": 8, "fr": 9, "de": 9, "cr": 10, "bs": 10}
+
+# Requestable scan types (pa.cfg's [P]/[D]/[U]/[N]/[J]/[A] sections --
+# "type" is the waves.pl scan-type id). Landing (L, type 2) and Incoming
+# (I, type 6) are excluded: pa.cfg marks both request=False, since they're
+# automatic rather than player-requestable.
+SCAN_TYPES = {
+    "P": {"name": "Planet", "type": 1},
+    "D": {"name": "Development", "type": 3},
+    "U": {"name": "Unit", "type": 4},
+    "N": {"name": "News", "type": 5},
+    "J": {"name": "Jumpgate Probe", "type": 7},
+    "A": {"name": "Advanced Unit", "type": 8},
+}

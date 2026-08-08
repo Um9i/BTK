@@ -110,12 +110,21 @@ CREATE TABLE IF NOT EXISTS planet_stat (
 -- Merlin's excalibur.py, BTK does not regex-parse content to backfill
 -- alliance/planet/galaxy foreign keys (see btk/dumps/parser.py) -- that's
 -- a follow-up, not part of this scaffold.
+--
+-- The game's own feed is a "recent activity" ticker: the same event line
+-- (keyed by its own tick_number, not the fetching tick) keeps reappearing
+-- in user_feed.txt for as long as it stays in that window, so ingesting
+-- every tick's feed verbatim reinserts the same event dozens to thousands
+-- of times over a round. The unique constraint + ingest_feed's ON CONFLICT
+-- DO NOTHING (btk/dumps/ingest.py) collapse those back down to one row per
+-- distinct event.
 CREATE TABLE IF NOT EXISTS feed (
     id          SERIAL PRIMARY KEY,
     round_id    INTEGER NOT NULL REFERENCES round(id) ON DELETE CASCADE,
     tick_number INTEGER NOT NULL,             -- the feed row's own tick column (not always == tick.number of the fetching tick)
     category    TEXT NOT NULL,
-    text        TEXT NOT NULL
+    text        TEXT NOT NULL,
+    UNIQUE (round_id, tick_number, category, text)
 );
 
 -- api.pl?stats: round-scoped ship stats, ingested once per round (not per tick).
@@ -150,6 +159,36 @@ CREATE TABLE IF NOT EXISTS discord_link (
     linked_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Discord users allowed to use non-admin-only bot commands (see
+-- btk/bot/access.py). Admins are config-only (BTK_DISCORD_ADMIN_IDS,
+-- comma-separated Discord user IDs, not stored here) -- no runtime
+-- promotion, so the bot can never be locked out of its own admin commands.
+-- Anyone not an admin and not in this table is ignored entirely.
+CREATE TABLE IF NOT EXISTS bot_member (
+    discord_user_id BIGINT PRIMARY KEY,
+    added_by        BIGINT NOT NULL,
+    added_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Player-requested planet scans, posted as links to a shared Discord
+-- "scans" channel (BTK_DISCORD_SCANS_CHANNEL_ID) so someone in-game can
+-- scan and report back manually -- unlike Merlin, BTK doesn't ingest scan
+-- results itself, so there's no automatic freshness/quota checking here,
+-- just link generation and a request queue for !reqscan list/cancel.
+CREATE TABLE IF NOT EXISTS scan_request (
+    id              SERIAL PRIMARY KEY,
+    round_id        INTEGER NOT NULL REFERENCES round(id) ON DELETE CASCADE,
+    requested_by    BIGINT NOT NULL,       -- discord_user_id
+    x               INTEGER NOT NULL,
+    y               INTEGER NOT NULL,
+    z               INTEGER NOT NULL,
+    scan_type       TEXT NOT NULL,         -- P/D/U/N/J/A, see btk/bot/paconf.py SCAN_TYPES
+    tick_number     INTEGER NOT NULL DEFAULT 0,
+    active          BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_request_active ON scan_request(round_id, active);
 CREATE INDEX IF NOT EXISTS idx_planet_stat_tick ON planet_stat(tick_id);
 CREATE INDEX IF NOT EXISTS idx_galaxy_stat_tick ON galaxy_stat(tick_id);
 CREATE INDEX IF NOT EXISTS idx_alliance_stat_tick ON alliance_stat(tick_id);

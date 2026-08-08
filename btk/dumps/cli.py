@@ -1,17 +1,20 @@
-"""Fetch + parse + ingest the live game's current tick / ship stats.
+"""Fetch + parse + ingest the live game's current tick / ship stats, or
+backfill a past round from the dumps.dfwtk.com archive.
 
 Usage:
-    uv run btk-ingest live               # fetch + ingest the current live tick
-    uv run btk-ingest live-shipstats     # fetch + ingest the live round's ship stats
+    uv run btk-ingest live                     # fetch + ingest the current live tick
+    uv run btk-ingest live-shipstats           # fetch + ingest the live round's ship stats
+    uv run btk-ingest archive <round> [name]   # backfill every archived tick + ship stats for a round
 """
 
 import asyncio
 import sys
 
 import asyncpg
+import httpx
 
 from btk.config import get_settings
-from btk.dumps import downloader
+from btk.dumps import archive, downloader
 from btk.dumps.ingest import ingest_shipstats, ingest_tick
 from btk.dumps.parser import (
     parse_alliance_listing,
@@ -79,8 +82,61 @@ async def ingest_live_shipstats_once(conn: asyncpg.Connection) -> None:
     print(f"round {status.round_number} ({status.round_name}): {len(ships)} ships")
 
 
+async def ingest_archive_round(
+    conn: asyncpg.Connection, round_number: int, round_name: str | None
+) -> None:
+    """Backfill every archived tick for a past round, plus its ship stats.
+
+    Ticks are fetched and ingested one at a time (not concurrently) since
+    they share both the asyncpg connection and per-tick db rows -- this is a
+    one-off backfill, not a latency-sensitive path like the live timer.
+
+    Re-running is cheap: ticks already present in the `tick` table for this
+    round (from a prior run that was interrupted, e.g. by a transient
+    network error) are skipped rather than re-fetched.
+    """
+    ships = parse_shipstats(await archive.fetch_archive_shipstats(round_number))
+    await ingest_shipstats(conn, round_number, round_name, ships)
+    print(f"round {round_number} ({round_name}): {len(ships)} ships")
+
+    all_ticks = await archive.list_archive_ticks(round_number)
+    already_done = {
+        r["number"]
+        for r in await conn.fetch(
+            "SELECT t.number FROM tick t JOIN round r ON t.round_id = r.id WHERE r.number = $1",
+            round_number,
+        )
+    }
+    ticks = [t for t in all_ticks if t not in already_done]
+    print(
+        f"round {round_number}: {len(all_ticks)} archived ticks, "
+        f"{len(already_done)} already ingested, {len(ticks)} remaining"
+    )
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for i, tick_number in enumerate(ticks, start=1):
+            texts = await archive.fetch_archive_tick(client, round_number, tick_number)
+            dump_tick, planet_rows = parse_planet_listing(texts["planet_listing.txt"])
+            _, galaxy_rows = parse_galaxy_listing(texts["galaxy_listing.txt"])
+            _, alliance_rows = parse_alliance_listing(texts["alliance_listing.txt"])
+            feed_rows = parse_user_feed(texts["user_feed.txt"])[1]
+
+            await ingest_tick(
+                conn,
+                round_number,
+                round_name,
+                planet_rows=planet_rows,
+                galaxy_rows=galaxy_rows,
+                alliance_rows=alliance_rows,
+                feed_rows=feed_rows,
+                tick_number=dump_tick,
+            )
+            if i % 50 == 0 or i == len(ticks):
+                print(f"  [{i}/{len(ticks)}] tick {dump_tick}: {len(planet_rows)} planets ingested")
+
+
 async def main() -> None:
-    if len(sys.argv) < 2 or sys.argv[1] not in ("live", "live-shipstats"):
+    if len(sys.argv) < 2 or sys.argv[1] not in ("live", "live-shipstats", "archive"):
         print(__doc__)
         sys.exit(1)
 
@@ -89,8 +145,15 @@ async def main() -> None:
     try:
         if sys.argv[1] == "live":
             await ingest_live_once(conn)
-        else:
+        elif sys.argv[1] == "live-shipstats":
             await ingest_live_shipstats_once(conn)
+        else:
+            if len(sys.argv) < 3:
+                print(__doc__)
+                sys.exit(1)
+            round_number = int(sys.argv[2])
+            round_name = sys.argv[3] if len(sys.argv) > 3 else None
+            await ingest_archive_round(conn, round_number, round_name)
     finally:
         await conn.close()
 

@@ -12,6 +12,7 @@ class Game(commands.Cog):
 
     @commands.command(name="round")
     async def round_(self, ctx: commands.Context) -> None:
+        """Show the live round status (ticking or not, current tick)."""
         status = await fetch_game_status()
         ticking = "ticking" if status.ticking else "not ticking"
         await ctx.send(
@@ -21,6 +22,7 @@ class Game(commands.Cog):
 
     @commands.command(name="tick")
     async def tick(self, ctx: commands.Context) -> None:
+        """Show the most recently ingested tick."""
         async with acquire() as conn:
             row = await conn.fetchrow(
                 """
