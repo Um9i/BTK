@@ -11,3 +11,25 @@
         {% endfor %}
     {% endif %}
 {% endmacro %}
+
+{% macro delta(value) -%}
+    {%- if value is not none -%}
+        {%- if value > 0 -%}
+        <span class="delta good">+{{ "{:,}".format(value) }}</span>
+        {%- elif value < 0 -%}
+        <span class="delta bad">{{ "{:,}".format(value) }}</span>
+        {%- else -%}
+        <span class="delta flat">&plusmn;0</span>
+        {%- endif -%}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro coverage_pct(pct) -%}
+    {%- if pct is not none -%}
+        {#- Near 100 means the roster is complete and current. Well under means
+        planets are missing or stale; well over means something's mistagged
+        (a planet in the roster that isn't actually this alliance's), so it
+        reads as bad too, not as "extra credit". -#}
+        <span class="delta {% if pct >= 90 and pct <= 110 %}good{% elif pct < 50 or pct > 150 %}bad{% else %}flat{% endif %}">({{ "%.0f"|format(pct) }}%)</span>
+    {%- endif -%}
+{%- endmacro %}

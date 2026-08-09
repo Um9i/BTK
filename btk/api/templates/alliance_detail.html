@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block title %}{{ name }} - BTK{% endblock %}
 {% block content %}
 <h1>{{ name }}</h1>
@@ -7,8 +8,27 @@
 <div class="vitals">
     <div class="vital"><div class="label">Rank</div><div class="value">{{ latest.rank }}</div></div>
     <div class="vital"><div class="label">Members</div><div class="value">{{ latest.members }}</div></div>
-    <div class="vital"><div class="label">Score</div><div class="value">{{ "{:,}".format(latest.score) }}</div></div>
+    <div class="vital vital-trend">
+        <div class="label">Size</div>
+        <div class="value">{{ latest.size }}{{ macros.delta(latest.size_delta) }}</div>
+        {{ size_trend }}
+    </div>
+    <div class="vital vital-trend">
+        <div class="label">Score</div>
+        <div class="value">{{ "{:,}".format(latest.score) }}{{ macros.delta(latest.score_delta) }}</div>
+        {{ score_trend }}
+    </div>
     <div class="vital"><div class="label">Points</div><div class="value">{{ latest.points }}</div></div>
+    <div class="vital vital-trend">
+        <div class="label">Total Score</div>
+        <div class="value">{{ "{:,}".format(latest.total_score) }}{{ macros.delta(latest.total_score_delta) }}</div>
+        {{ total_score_trend }}
+    </div>
+    <div class="vital vital-trend">
+        <div class="label">Total Value</div>
+        <div class="value">{{ "{:,}".format(latest.total_value) }}{{ macros.delta(latest.total_value_delta) }}</div>
+        {{ total_value_trend }}
+    </div>
 </div>
 {% endif %}
 
@@ -16,6 +36,13 @@
 <h2>Intel roster</h2>
 {% if intel_planets %}
 <p class="subtitle">Planets tagged <code>alliance={{ name }}</code> via <code>!intel</code> -- there's no membership list in the game data itself, only what's been scouted.</p>
+{% if intel_coverage %}
+<p class="subtitle">
+    Roster accounts for {{ "{:,}".format(intel_coverage.score) }} / {{ "{:,}".format(intel_coverage.total_score) }} score {{ macros.coverage_pct(intel_coverage.score_pct) }}
+    &middot; {{ "{:,}".format(intel_coverage.value) }} / {{ "{:,}".format(intel_coverage.total_value) }} value {{ macros.coverage_pct(intel_coverage.value_pct) }}
+    &middot; {{ "{:,}".format(intel_coverage.size) }} / {{ "{:,}".format(intel_coverage.total_size) }} size {{ macros.coverage_pct(intel_coverage.size_pct) }}
+</p>
+{% endif %}
 <table>
     <thead>
         <tr>
@@ -23,6 +50,8 @@
             <th>Planet</th>
             <th>Ruler</th>
             <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">Size</th>
             <th>Nick</th>
             <th>Comment</th>
         </tr>
@@ -34,6 +63,8 @@
             <td>{{ p.planet_name }}</td>
             <td>{{ p.ruler_name }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num">{{ "{:,}".format(p.value) }}</td>
+            <td class="num">{{ p.size }}</td>
             <td>{{ p.nick or "" }}</td>
             <td>{{ p.comment or "" }}</td>
         </tr>
@@ -42,6 +73,47 @@
 </table>
 {% else %}
 <p class="empty">No planets tagged <code>alliance={{ name }}</code> yet. Set one with <code>!intel &lt;x:y:z&gt; alliance={{ name }}</code> in Discord.</p>
+{% endif %}
+
+{% if suggested_planets %}
+<h2>Suggested additions</h2>
+<p class="subtitle">
+    Roster is short {{ intel_coverage.remaining_members }} member{{ "s" if intel_coverage.remaining_members != 1 else "" }},
+    averaging ~{{ "{:,}".format(intel_coverage.avg_missing_score | round | int) }} score,
+    ~{{ "{:,}".format(intel_coverage.avg_missing_value | round | int) }} value,
+    ~{{ intel_coverage.avg_missing_size | round | int }} size each.
+    Closest matches below, ranked by fit across all three -- a statistical guess, not a detection,
+    so check before tagging one with <code>!intel &lt;x:y:z&gt; alliance={{ name }}</code> in Discord.
+    A row marked <span class="tag danger">tagged</span> is currently scouted for a <em>different</em>
+    alliance -- shown anyway because it's still the closest fit, which usually means the earlier tag
+    was a mistake worth double-checking, not that this list is wrong.
+</p>
+<table>
+    <thead>
+        <tr>
+            <th>Coords</th>
+            <th>Planet</th>
+            <th>Ruler</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">Size</th>
+            <th>Currently tagged</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in suggested_planets %}
+        <tr>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td>{{ p.planet_name }}</td>
+            <td>{{ p.ruler_name }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num">{{ "{:,}".format(p.value) }}</td>
+            <td class="num">{{ p.size }}</td>
+            <td>{% if p.tagged_alliance %}<span class="tag danger">tagged</span> {{ p.tagged_alliance }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endif %}
 {% endif %}
 
@@ -53,6 +125,7 @@
             <th class="num">Tick</th>
             <th class="num">Rank</th>
             <th class="num">Members</th>
+            <th class="num">Size</th>
             <th class="num">Score</th>
             <th class="num">Points</th>
             <th class="num">Total Score</th>
@@ -65,10 +138,11 @@
             <td class="num">{{ h.tick }}</td>
             <td class="num">{{ h.rank }}</td>
             <td class="num">{{ h.members }}</td>
-            <td class="num">{{ "{:,}".format(h.score) }}</td>
+            <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>
             <td class="num">{{ h.points }}</td>
-            <td class="num">{{ "{:,}".format(h.total_score) }}</td>
-            <td class="num">{{ "{:,}".format(h.total_value) }}</td>
+            <td class="num">{{ "{:,}".format(h.total_score) }}{{ macros.delta(h.total_score_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.total_value) }}{{ macros.delta(h.total_value_delta) }}</td>
         </tr>
         {% endfor %}
     </tbody>

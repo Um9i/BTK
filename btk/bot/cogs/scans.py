@@ -8,6 +8,8 @@ shared Discord channel, plus a lightweight request queue for list/cancel.
 
 import re
 
+import discord
+import httpx
 from discord.ext import commands
 
 from btk.bot.access import is_admin
@@ -16,6 +18,19 @@ from btk.config import get_settings
 from btk.db import acquire
 
 REQ_RE = re.compile(r"(\d+)[:.\-](\d+)[:.\-](\d+)\s+([A-Za-z]+)$")
+
+# The game's own scan-result page -- whoever ran the scan just pastes this
+# link in the scans channel, with no reference back to the request it
+# fulfills. showscan.pl is publicly viewable (no game login needed) and its
+# own heading states exactly what it's a scan of, e.g.
+# "<h2 ...>Planet Scan on 1:1:2 in tick 18</h2>" -- that's the ground truth
+# _match_request uses, rather than guessing from message order.
+SCAN_RESULT_RE = re.compile(r"https?://\S*/showscan\.pl\S*", re.IGNORECASE)
+BOT_REQUEST_ID_RE = re.compile(r"^\[(\d+)\]")
+SCAN_HEADING_RE = re.compile(
+    r"<h2[^>]*>\s*([A-Za-z ]+?)\s+Scan on\s+(\d+):(\d+):(\d+)\s+in tick", re.IGNORECASE
+)
+SCAN_TYPE_BY_NAME = {info["name"].lower(): code for code, info in SCAN_TYPES.items()}
 
 
 class Scans(commands.Cog):
@@ -158,6 +173,125 @@ class Scans(commands.Cog):
         if missing:
             parts.append(f"No open request: {', '.join(map(str, missing))}")
         await ctx.send(" | ".join(parts) if parts else "Nothing to cancel.")
+
+    @commands.Cog.listener("on_message")
+    async def on_scan_result(self, message: discord.Message) -> None:
+        """Whoever ran a requested scan just pastes the result link back into the scans
+        channel -- relay it to whoever asked for it instead of leaving them to notice it."""
+        if message.author.bot:
+            return
+        channel_id = get_settings().discord_scans_channel_id
+        if not channel_id or message.channel.id != channel_id:
+            return
+        match = SCAN_RESULT_RE.search(message.content)
+        if not match:
+            return
+        link = match.group(0)
+
+        async with acquire() as conn:
+            request = await self._match_request(conn, message, link)
+            if request is None:
+                return
+            await conn.execute(
+                "UPDATE scan_request SET active = false WHERE id = $1", request["id"]
+            )
+
+        scan_name = SCAN_TYPES[request["scan_type"]]["name"]
+        notice = (
+            f"{message.author.display_name} posted your {scan_name} scan of "
+            f"{request['x']}:{request['y']}:{request['z']} -- {link}"
+        )
+        requester = self.bot.get_user(request["requested_by"]) or await self.bot.fetch_user(
+            request["requested_by"]
+        )
+        try:
+            await requester.send(notice)
+        except discord.Forbidden:
+            # DMs closed -- the link's already public in-channel, so just ping them there.
+            await message.channel.send(f"{requester.mention} {notice}")
+            return
+        try:
+            await message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
+        except discord.HTTPException:
+            pass
+
+    async def _fetch_scan_page(self, url: str) -> str | None:
+        try:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                return resp.text
+        except httpx.HTTPError:
+            return None
+
+    def _parse_scan_page(self, html: str) -> dict | None:
+        match = SCAN_HEADING_RE.search(html)
+        if not match:
+            return None
+        name, x, y, z = match.groups()
+        return {"name": name.strip(), "x": int(x), "y": int(y), "z": int(z)}
+
+    async def _match_request(self, conn, message: discord.Message, link: str):
+        """An explicit reply to the bot's own "[id] ... requested" post is unambiguous even
+        with several open requests, so it's trusted outright. Otherwise, fetch the scan result
+        itself and match on what it actually reports (coords + scan type) -- never a guess."""
+        if message.reference and message.reference.message_id:
+            ref = message.reference.resolved
+            if ref is None:
+                try:
+                    ref = await message.channel.fetch_message(message.reference.message_id)
+                except discord.HTTPException:
+                    ref = None
+            if isinstance(ref, discord.Message) and ref.author.bot:
+                id_match = BOT_REQUEST_ID_RE.match(ref.content)
+                if id_match:
+                    row = await conn.fetchrow(
+                        "SELECT id, requested_by, x, y, z, scan_type FROM scan_request WHERE id = $1 AND active",
+                        int(id_match.group(1)),
+                    )
+                    if row is not None:
+                        return row
+
+        html = await self._fetch_scan_page(link)
+        if html is None:
+            return None
+        parsed = self._parse_scan_page(html)
+        if parsed is None:
+            return None
+
+        round_id, _ = await self._current_round_and_tick(conn)
+        if round_id is None:
+            return None
+
+        scan_type = SCAN_TYPE_BY_NAME.get(parsed["name"].lower())
+        if scan_type is not None:
+            # The page named a scan type BTK recognizes -- match on it exactly rather than
+            # falling back to coords-only, so a Development scan never gets attributed to an
+            # open Planet-scan request at the same coords.
+            return await conn.fetchrow(
+                """
+                SELECT id, requested_by, x, y, z, scan_type FROM scan_request
+                WHERE round_id = $1 AND active AND x = $2 AND y = $3 AND z = $4 AND scan_type = $5
+                ORDER BY id LIMIT 1
+                """,
+                round_id,
+                parsed["x"],
+                parsed["y"],
+                parsed["z"],
+                scan_type,
+            )
+
+        return await conn.fetchrow(
+            """
+            SELECT id, requested_by, x, y, z, scan_type FROM scan_request
+            WHERE round_id = $1 AND active AND x = $2 AND y = $3 AND z = $4
+            ORDER BY id LIMIT 1
+            """,
+            round_id,
+            parsed["x"],
+            parsed["y"],
+            parsed["z"],
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

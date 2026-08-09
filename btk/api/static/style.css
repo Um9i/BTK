@@ -396,6 +396,43 @@ h2 {
     font-variant-numeric: tabular-nums;
 }
 
+/* The one vital with a trend line -- everything else in the strip stays a
+   plain number, this is the single place the eye should land first. */
+.vital-trend {
+    min-width: 9rem;
+}
+
+.vital-trend .sparkline {
+    display: block;
+    width: 100%;
+    max-width: 10rem;
+    height: 28px;
+    margin-top: 0.5rem;
+    color: var(--fg-dim);
+}
+
+/* ---------- deltas (tick-over-tick change) ---------- */
+
+.delta {
+    font-family: var(--font-data);
+    font-size: 0.78em;
+    font-variant-numeric: tabular-nums;
+    margin-left: 0.5em;
+    white-space: nowrap;
+}
+
+.delta.good {
+    color: var(--good);
+}
+
+.delta.bad {
+    color: var(--bad);
+}
+
+.delta.flat {
+    color: var(--fg-faint);
+}
+
 /* ---------- tables ---------- */
 
 table {

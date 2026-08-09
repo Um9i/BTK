@@ -8,10 +8,26 @@
 <p class="subtitle">'{{ latest.ruler_name }}' ({{ latest.race }}){{ macros.special_tags(latest.special) }}</p>
 <div class="vitals">
     <div class="vital"><div class="label">Rank</div><div class="value">{{ rank }}</div></div>
-    <div class="vital"><div class="label">Size</div><div class="value">{{ latest.size }}</div></div>
-    <div class="vital"><div class="label">Score</div><div class="value">{{ "{:,}".format(latest.score) }}</div></div>
-    <div class="vital"><div class="label">Value</div><div class="value">{{ "{:,}".format(latest.value) }}</div></div>
-    <div class="vital"><div class="label">XP</div><div class="value">{{ "{:,}".format(latest.xp) }}</div></div>
+    <div class="vital vital-trend">
+        <div class="label">Size</div>
+        <div class="value">{{ latest.size }}{{ macros.delta(latest.size_delta) }}</div>
+        {{ size_trend }}
+    </div>
+    <div class="vital vital-trend">
+        <div class="label">Score</div>
+        <div class="value">{{ "{:,}".format(latest.score) }}{{ macros.delta(latest.score_delta) }}</div>
+        {{ score_trend }}
+    </div>
+    <div class="vital vital-trend">
+        <div class="label">Value</div>
+        <div class="value">{{ "{:,}".format(latest.value) }}{{ macros.delta(latest.value_delta) }}</div>
+        {{ value_trend }}
+    </div>
+    <div class="vital vital-trend">
+        <div class="label">XP</div>
+        <div class="value">{{ "{:,}".format(latest.xp) }}{{ macros.delta(latest.xp_delta) }}</div>
+        {{ xp_trend }}
+    </div>
 </div>
 {% else %}
 <h1>Planet {{ external_id }}</h1>
@@ -53,10 +69,10 @@
         <tr>
             <td class="num">{{ h.tick }}</td>
             <td>{{ h.x }}:{{ h.y }}:{{ h.z }}</td>
-            <td class="num">{{ h.size }}</td>
-            <td class="num">{{ "{:,}".format(h.score) }}</td>
-            <td class="num">{{ "{:,}".format(h.value) }}</td>
-            <td class="num">{{ "{:,}".format(h.xp) }}</td>
+            <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.value) }}{{ macros.delta(h.value_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.xp) }}{{ macros.delta(h.xp_delta) }}</td>
         </tr>
         {% endfor %}
     </tbody>

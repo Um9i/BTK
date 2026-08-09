@@ -101,9 +101,13 @@ def _format_intel(row) -> str:
 
 
 def _parse_intel_opts(rest: str) -> tuple[dict[str, str], str | None]:
-    """Space-separated key=value tokens, except "comment=..." which takes the rest of the message."""
+    """Space-separated key=value tokens, except "comment=..." and "alliance=..." which take
+    the rest of the message -- both routinely contain spaces themselves ("Order and
+    Occupation"), which a plain space-split would otherwise cut off after the first word."""
     if rest.lower().startswith("comment="):
         return {}, rest[len("comment=") :].strip()
+    if rest.lower().startswith("alliance="):
+        return {"alliance": rest[len("alliance=") :].strip()}, None
     opts = {}
     for token in rest.split():
         key, sep, val = token.partition("=")
