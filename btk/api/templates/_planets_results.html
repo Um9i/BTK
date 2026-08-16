@@ -19,6 +19,7 @@
             {% if show_flags %}<th class="col-secondary">Flags</th>{% endif %}
             {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
             {% if show_nick %}<th class="col-secondary">Nick</th>{% endif %}
+            {% if show_comment_column %}<th class="col-secondary">Comment</th>{% endif %}
             {% if paginated %}
             {{ macros.sort_th(sort_url, 'size', 'Size', sort, dir, 'num col-secondary') }}
             {{ macros.sort_th(sort_url, 'score', 'Score', sort, dir, 'num') }}
@@ -32,7 +33,6 @@
             {% endif %}
             {% if show_amps %}<th class="num col-secondary">Amps</th>{% endif %}
             {% if show_dists %}<th class="num col-secondary">Dists</th>{% endif %}
-            {% if show_comment_column %}<th class="col-secondary">Comment</th>{% endif %}
         </tr>
     </thead>
     <tbody>
@@ -46,13 +46,13 @@
             {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
             {% if show_alliance %}<td class="col-secondary">{{ p.alliance or "" }}</td>{% endif %}
             {% if show_nick %}<td class="col-secondary">{{ p.nick or "" }} {{ macros.nick_provenance(p.comment) }}</td>{% endif %}
+            {% if show_comment_column %}<td class="col-secondary"><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.xp) }}</td>
             {% if show_amps %}<td class="num col-secondary">{{ "{:,}".format(p.amps) if p.amps is not none else "" }}</td>{% endif %}
             {% if show_dists %}<td class="num col-secondary">{{ "{:,}".format(p.dists) if p.dists is not none else "" }}</td>{% endif %}
-            {% if show_comment_column %}<td class="col-secondary"><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
         </tr>
         {% endfor %}
     </tbody>

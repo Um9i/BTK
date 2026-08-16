@@ -125,6 +125,25 @@ def _avg_delta(history: list[dict], field: str, window: int = AVG_RATE_WINDOW) -
     return sum(deltas) / len(deltas) if deltas else None
 
 
+def _comment_display(rows: list, comment_key: str = "comment") -> tuple[str | None, bool]:
+    """Collapsing a shared comment into one subtitle line only reads right when EVERY row
+    in the set actually carries it -- e.g. an entire CP-SAT-solved roster tagged with the
+    same explanatory note in one pass. If only some rows have it (a mixed search result,
+    a roster with a few manually-scouted outliers), collapsing still hid which row the note
+    was actually about -- a real bug, not just a rare edge case. Returns
+    (uniform_comment, show_comment_column): show a column whenever any row has a comment,
+    unless literally all of them share the exact same one, which is the only case worth a
+    single subtitle instead of N duplicate cells."""
+    values = [r[comment_key] for r in rows]
+    non_empty = [v for v in values if v]
+    if not non_empty:
+        return None, False
+    distinct = set(non_empty)
+    if len(distinct) == 1 and len(non_empty) == len(rows):
+        return next(iter(distinct)), False
+    return None, True
+
+
 async def _current_round(conn: Connection):
     return await conn.fetchrow("SELECT id, number, name FROM round ORDER BY id DESC LIMIT 1")
 
@@ -644,9 +663,7 @@ async def alliance_detail(
     show_amps = any(p["amps"] is not None for p in intel_planets)
     show_dists = any(p["dists"] is not None for p in intel_planets)
     show_nick = any(p["nick"] for p in intel_planets)
-    comment_values = {p["comment"] for p in intel_planets if p["comment"]}
-    uniform_comment = next(iter(comment_values)) if len(comment_values) == 1 else None
-    show_comment_column = len(comment_values) > 1
+    uniform_comment, show_comment_column = _comment_display(intel_planets)
     leading_cols = 4 + (1 if show_flags else 0)  # Coords, Planet, Ruler, Race[, Flags]
     trailing_cols = sum([show_amps, show_dists, show_nick, show_comment_column])
     watching = False
@@ -1060,9 +1077,7 @@ async def planets_list(
     show_nick = user is not None and any(p["nick"] for p in rows)
     show_amps = user is not None and any(p["amps"] is not None for p in rows)
     show_dists = user is not None and any(p["dists"] is not None for p in rows)
-    comment_values = {p["comment"] for p in rows if user is not None and p["comment"]}
-    uniform_comment = next(iter(comment_values)) if len(comment_values) == 1 else None
-    show_comment_column = len(comment_values) > 1
+    uniform_comment, show_comment_column = _comment_display(rows) if user is not None else (None, False)
     context = {
         "round": round_row,
         "planets": rows,

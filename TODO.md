@@ -142,17 +142,19 @@ order across the whole file.
 
 ## Housekeeping
 
-- **Comment column placement.** On `/web/planets` search results, Comment
-  is the last (rightmost) column, so it's the first thing pushed off
-  past the fold on a wide roster -- and it's usually the column with the
-  most actually-useful text (nick-guess provenance, scouting notes).
-  Worth checking whether it reads better earlier, or whether the
-  provenance tag above (separate from free-text comment) makes this
-  moot.
-- **`show_comment_column` collapse edge case.** The single-match "shown
-  as a subtitle instead of a column" behavior (mirrors
-  `alliance_detail.html`) is easy to miss when skimming a wide result
-  set — worth a visual gut-check once a few more search patterns get
-  used in practice.
+- ~~**Comment column placement.**~~ **Done.** Confirmed with a real
+  1280px screenshot before touching anything: Comment was the 15th
+  column, cut to an unreadable sliver even on a fairly wide desktop
+  viewport. Moved it right after Nick (still `col-secondary`, still
+  hidden on mobile) -- reads as one intel block (Alliance, Nick,
+  Comment) ahead of the numeric game-stat columns.
+- ~~**`show_comment_column` collapse edge case.**~~ **Done.** This was a
+  real bug, not just an edge case: it collapsed to a page-level subtitle
+  whenever there was only one *distinct* comment value, even if just one
+  row out of fifty had it -- hiding which row the note was actually
+  about. Added `_comment_display()`, shared by `/web/planets` and
+  `alliance_detail.html`'s roster (same bug, same fix): only collapses
+  when literally every row shares the exact same comment; otherwise
+  shows the column, however few rows populate it.
 
 ---
