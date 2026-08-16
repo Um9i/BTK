@@ -33,6 +33,7 @@ btk-find-joiners = "scripts.find_joiners:main"
 btk-solve-roster = "scripts.solve_roster:main"
 btk-fetch-history = "scripts.fetch_history:main"
 btk-nick-history = "scripts.nick_history:main"
+btk-guess-nicks = "scripts.guess_nicks:main"
 btk-ingest = "btk.dumps.cli:run"
 
 [build-system]
