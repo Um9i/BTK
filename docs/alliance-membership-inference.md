@@ -1851,12 +1851,20 @@ clustering matches and was visible in the Eleventh pass's `top-alliances`
 report too. Worth a rename-alias table if this technique gets reused on
 a future round.
 
-**Running total on the live round-118 database after this pass:** 80 of
+**Running total on the live round-118 database after this pass:** 82 of
 336 confirmed planets now have a guessed `nick` (up from 0 going in),
 across three rounds of insert/retract as the conflict-resolution
 mechanism matured. Alliance confirmations themselves are unchanged by
-this pass — this only adds `nick` to already-confirmed rows, plus 3 fresh
-`nick`-only rows for planets with no confirmed alliance.
+this pass — this only adds `nick` to already-confirmed rows, plus a
+handful of `nick`-only rows for planets with no confirmed alliance.
+
+The 80→82 bump came from a follow-up fix to `apply_galaxy_buddy`: it
+originally ran mechanism 4 as a single hop, but a planet resolved *by*
+galaxy-buddy is itself a valid anchor for a further hop (see the
+mechanism-4 docstring above) — running it to a fixed point instead
+caught two more genuine, non-contradictory matches (`Masterwizard`,
+upgraded from medium confidence via a 2-round galaxy overlap, and
+`shaz`, a fresh nick-only insert) with no new conflicts.
 
 ## Practical recipe
 

@@ -60,7 +60,11 @@ ALLIANCE CORROBORATION, three different mechanisms:
    more past rounds, that's corroboration, and if exactly one candidate
    clears the bar it resolves the planet. This mechanism runs as a second
    pass, after 1-3 above have produced a set of trusted anchors -- it can
-   only use nicks that are already confident, not other guesses. It's also
+   only use nicks that are already confident, not other guesses. It then
+   runs to a FIXED POINT rather than just once: a planet resolved by
+   galaxy-buddy becomes a new anchor itself, which can unlock a *different*
+   neighbor on the next hop -- a buddy pack's third and fourth members,
+   found via the second rather than directly via the first. It's also
    what catches contradictions mechanisms 1-3 miss: when a nick gets
    proposed for two different round-118 planets, only one of them (if
    either) will actually have real galaxy-buddy history backing it.
@@ -323,8 +327,24 @@ def _galaxy_support(
 
 
 def apply_galaxy_buddy(results: list[dict], conn: sqlite3.Connection) -> list[dict]:
-    """Second pass (mechanism 4): try to resolve everything still below "high" using
-    galaxy-mate history against the nicks mechanisms 1-3 already resolved with confidence."""
+    """Mechanism 4, run to a fixed point. Each hop can only use nicks that are already
+    "high" as anchors -- but a planet resolved BY galaxy-buddy becomes a new anchor itself,
+    which can unlock a neighbor of *that* planet on the next hop (a buddy pack's third and
+    fourth members, found via the second, not directly via the first). Iterating stops
+    finding anything new within 2-3 hops in practice; the loop just runs until a hop adds
+    zero new "high" results rather than assuming a fixed hop count."""
+    prev_high = -1
+    while True:
+        results = _galaxy_buddy_hop(results, conn)
+        high = sum(1 for r in results if r["tier"] == "high")
+        if high == prev_high:
+            return results
+        prev_high = high
+
+
+def _galaxy_buddy_hop(results: list[dict], conn: sqlite3.Connection) -> list[dict]:
+    """One hop of mechanism 4: try to resolve everything still below "high" using
+    galaxy-mate history against the nicks already resolved with confidence so far."""
     if not _has_coords(results):
         return results
 
