@@ -46,20 +46,24 @@
 
 {% if user %}
 <h2>Intel</h2>
-{% if intel and (intel.nick or intel.alliance or intel.comment or intel.amps is not none or intel.dists is not none or intel.defwhore is not none) %}
-<div class="intel-box">
-    <dl>
-        {% if intel.nick %}<dt>Nick</dt><dd>{{ intel.nick }}</dd>{% endif %}
-        {% if intel.alliance %}<dt>Alliance</dt><dd>{{ intel.alliance }}</dd>{% endif %}
-        {% if intel.comment %}<dt>Comment</dt><dd>{{ intel.comment }}</dd>{% endif %}
-        {% if intel.amps is not none %}<dt>Amps</dt><dd>{{ intel.amps }}</dd>{% endif %}
-        {% if intel.dists is not none %}<dt>Dists</dt><dd>{{ intel.dists }}</dd>{% endif %}
-        {% if intel.defwhore is not none %}<dt>Defwhore</dt><dd>{{ "yes" if intel.defwhore else "no" }}</dd>{% endif %}
-    </dl>
-</div>
-{% else %}
-<p class="empty">No intel stored. Set some with <code>!intel {{ latest.x }}:{{ latest.y }}:{{ latest.z }} ...</code> in Discord.</p>
-{% endif %}
+<p class="subtitle">Scouted, not guessed -- same <code>planet_intel</code> table as <code>!intel</code> in Discord, either works.</p>
+<form class="intel-form" method="post" action="/web/planets/{{ planet_id }}/intel">
+    <div class="intel-form-grid">
+        <label>Nick<input type="text" name="nick" value="{{ intel.nick if intel else '' }}"></label>
+        <label>Alliance<input type="text" name="alliance" value="{{ intel.alliance if intel else '' }}"></label>
+        <label>Amps<input type="number" name="amps" min="0" value="{{ intel.amps if intel and intel.amps is not none else '' }}"></label>
+        <label>Dists<input type="number" name="dists" min="0" value="{{ intel.dists if intel and intel.dists is not none else '' }}"></label>
+        <label>Defwhore
+            <select name="defwhore">
+                <option value="" {% if not intel or intel.defwhore is none %}selected{% endif %}>&mdash;</option>
+                <option value="yes" {% if intel and intel.defwhore == true %}selected{% endif %}>yes</option>
+                <option value="no" {% if intel and intel.defwhore == false %}selected{% endif %}>no</option>
+            </select>
+        </label>
+    </div>
+    <label class="intel-comment-label">Comment<textarea name="comment" rows="2">{{ intel.comment if intel else '' }}</textarea></label>
+    <button type="submit">Save intel</button>
+</form>
 {% endif %}
 
 <h2>Log &mdash; most recent 50 ticks</h2>

@@ -93,12 +93,12 @@ order across the whole file.
 
 ## Intel tooling
 
-- **Web-based intel editing.** Right now `!intel` is bot-only. A small
-  form on the planet detail page (visible to logged-in users, posting to
-  a new `POST /web/planets/{id}/intel` route reusing the same
-  `planet_intel` upsert `intel.py`'s bot cog already does) would let
-  someone update a nick/comment without leaving the browser tab they're
-  already reading.
+- ~~**Web-based intel editing.**~~ **Done.** `POST /web/planets/{id}/intel`
+  reuses the exact same `planet_intel` upsert the bot's `!intel` cog
+  runs. Replaced the old read-only `.intel-box` with a form that doubles
+  as the view (current values pre-filled) -- unlike the bot's key=value
+  partial update, the web form always submits every field, so a blank
+  field here clears that column rather than leaving it untouched.
 - **Distinguish scouted intel from guessed nicks visually.** Right now a
   guessed nick's provenance is buried in the free-text Comment column
   ("Nick guessed 2026-08-16 via scripts/guess_nicks.py: ..."). A small

@@ -1089,6 +1089,50 @@ async def planet_detail(
     )
 
 
+@router.post("/web/planets/{planet_id}/intel")
+async def update_intel(
+    planet_id: int,
+    nick: str = Form(""),
+    alliance: str = Form(""),
+    comment: str = Form(""),
+    amps: str = Form(""),
+    dists: str = Form(""),
+    defwhore: str = Form(""),
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
+    """Web equivalent of the bot's !intel <x:y:z> ... (btk/bot/cogs/intel.py) -- same
+    upsert, same planet_intel table, just reachable without leaving the browser tab
+    already open on this planet. Unlike the bot's key=value partial update, this form
+    always submits every field, so a blank field here clears that column."""
+    if user is None:
+        raise HTTPException(status_code=401, detail="Login required")
+    exists = await conn.fetchval("SELECT 1 FROM planet WHERE id = $1", planet_id)
+    if not exists:
+        raise HTTPException(status_code=404, detail="No such planet")
+    amps_value = int(amps) if amps.strip().isdigit() else None
+    dists_value = int(dists) if dists.strip().isdigit() else None
+    defwhore_value = {"yes": True, "no": False}.get(defwhore.strip().lower())
+    await conn.execute(
+        """
+        INSERT INTO planet_intel (planet_id, nick, alliance, comment, amps, dists, defwhore, updated_by, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+        ON CONFLICT (planet_id) DO UPDATE SET
+            nick = $2, alliance = $3, comment = $4, amps = $5, dists = $6, defwhore = $7,
+            updated_by = $8, updated_at = now()
+        """,
+        planet_id,
+        nick.strip() or None,
+        alliance.strip() or None,
+        comment.strip() or None,
+        amps_value,
+        dists_value,
+        defwhore_value,
+        user["discord_user_id"],
+    )
+    return RedirectResponse(f"/web/planets/{planet_id}", status_code=303)
+
+
 @router.post("/web/watch")
 async def toggle_watch(
     target_type: str = Form(...),
