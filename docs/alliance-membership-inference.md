@@ -687,7 +687,7 @@ recent stable window per alliance rather than the founding window**:
 | 10× single-member alliances (Alliance of One, CV, Hades, One of One, Questers, PT, Order and Occupation, Three Little Pigs, asf, qetuo) | 1 each | full available range | `OPTIMAL`, all 10 |
 | qq | 2 | 22-44 | `OPTIMAL` |
 | PATSA | 4 | 14-44 | `OPTIMAL` |
-| TiT | 7 | 34-44 | `OPTIMAL`, no ambiguity (see above) |
+| TiT | 7 | 34-44 | `OPTIMAL`, no ambiguity (see above) — but see the Third-pass TiT correction below |
 | Chocolate Starfish | 20 | 15-44 | `INFEASIBLE` — genuine unresolved churn, left out of this pass |
 
 23 planets across 13 alliances confirmed and inserted into `planet_intel`
@@ -1007,6 +1007,18 @@ reconciles to 100% against the live tick: tagged count equals `members`,
 and size/score/value each sum exactly. Every remaining row is proven
 rather than fitted — the first time that has been true this round.
 
+Three further planets were added later in the same session from the
+counted-score gap technique (see below) — Chocolate Starfish's three joiners
+`g1rd963f` (tick 15), `z9jbog80` (69) and `mxw5y0nc` (198) — bringing
+`planet_intel` to **20 rows across 14 alliances**. Those three are a
+**distinct, weaker tier** than the twelve above: each is the unique planet in
+the round carrying the exact score the alliance's gap rose by, which is strong
+evidence and independently validated 3-for-3 elsewhere, but it is not the
+exhaustive all-ticks uniqueness proof the singles and Fairies have. Their
+`planet_intel` comments say so explicitly. Chocolate Starfish therefore shows
+as **partial** (3 of 22) in the reconciliation query, not complete — the other
+13 alliances still reconcile exactly on all three fields at tick 210.
+
 **This is now automated: `uv run btk-verify-rosters`**
 (`scripts/verify_rosters.py`, tests in `tests/test_verify_rosters.py`).
 Read-only by default; `--insert --updated-by <id>` writes. Re-run it as
@@ -1043,6 +1055,164 @@ Both are general, and both nearly produced wrong data:
   planet is claimed by two confirmed rosters rather than letting insert
   order decide.
 
+### The counted-score gap: the first real break on large alliances
+
+Everything above treats `alliance_stat.score` (the dump's `counted_score`) as
+useless, because it isn't a plain sum and so can't be a subset-sum constraint.
+That was a mistake. The in-game manual explains it:
+
+> Only score gained **while in** an alliance counts towards the alliance score.
+> Any score earned before joining will not be counted. When a player leaves,
+> the alliance will lose any score contributed by that planet.
+
+So the difference is exactly the score the current members were carrying when
+they joined:
+
+```
+gap = total_score - counted_score = sum over members of (their score when they joined)
+```
+
+Which makes the gap **piecewise constant**, moving only on a join or a leave.
+Verified on TiT: across 196 ticks the gap changed at exactly five ticks —
+29, 34, 47, 101, 136 — every one of them a tick where `members` also changed.
+Nowhere else.
+
+That gives two tools neither solver could provide:
+
+**1. An exact churn detector.** A flat gap over a span proves no visible join
+or leave happened in it. The member count alone cannot tell you this, since a
+simultaneous leave+join leaves it unchanged — the exact case the doc spent two
+passes chasing.
+
+**2. Joiner identification by lookup, not search.** A rise of D at tick T means
+somebody joined carrying exactly D, and carried-in score is the joiner's own
+score at tick **T-1** (not T — verified: Retribution's score was 81,449 at tick
+21 and 82,040 at tick 22, and qq's gap rose by 81,449 when they joined at 22).
+So the joiner is whichever planet had score exactly D at T-1 — a dictionary
+lookup over ~400 planets.
+
+**This is validated, not assumed.** Run against TiT it returned
+`mz6jsab8` (tick 29), `dn6nfrbp` (34) and `ges5dnee` (47) — the exact three
+joiners an independent CP-SAT subset-sum had separately proven for the
+ticks 47-65 window. Three for three, by a completely different method.
+
+Implemented as **`uv run btk-find-joiners`** (`scripts/find_joiners.py`,
+tests in `tests/test_find_joiners.py`); read-only by default,
+`--insert --updated-by <id>` writes.
+
+#### The 40,000 signature, and what a zero gap means
+
+A planet's score is `Score = XP*60 + Value` (manual; verified exactly for all
+403 planets at tick 210), and the signup grant is 2,000,000 each of
+metal/crystal/eonium = 6,000,000 resources, with `Value = Resources/150`. So a
+planet that founds or joins an alliance **at signup with the bonus unspent**
+carries exactly **40,000**. That signature appears at the first tick of five
+alliances (Hades, Hardliner, Order and Occupation, Questers, qq) — and
+Hardliner's first tick is 142, which proves it tracks *signup*, not round
+start.
+
+A gap of **0** means every member joined holding literally nothing, i.e. they
+formed the alliance at signup *before allocating* the bonus. That is why
+PATSA's `counted_score` and `total_score` are equal all round, and it is a
+property of when its members joined — **not**, as one might assume, a
+consequence of its stable membership. Chocolate Starfish's 19 founders are the
+same case (gap 0 at tick 14): a pre-organised bloc.
+
+#### The blind spot, which is exactly what still blocks us
+
+A member who joined carrying **zero** contributes nothing to the gap, so their
+later departure is invisible to it — and so is a swap in which both parties
+carried zero. Alliances founded at signup consist *entirely* of such members.
+This is precisely why TiT's and Chocolate Starfish's founder blocs remain
+unresolved while every later joiner falls out instantly. **A gap that never
+moves is evidence of no visible churn, not proof of a fixed roster.**
+
+### Solving from deltas instead of absolute totals
+
+A second technique from the same session, worth recording with its result.
+Instead of matching absolute totals, match **tick-to-tick deltas**: for every
+consecutive tick pair, the members' summed deltas must equal the alliance's.
+
+The motivation was that a member frozen in vacation/closed mode is absent from
+`planet_listing` and so breaks absolute matching, but contributes exactly
+**zero** to every delta — so delta matching should still work on the listed
+members alone, and the leftover (alliance total minus the solved members)
+would be a constant equal to the hidden member's stats.
+
+**Validate before trusting it, at the size you care about.** It recovers
+PATSA's 4 and Fairies' 2 instantly, and — the test that matters — a
+**synthetic 21-member** alliance built from known planets is recovered
+*exactly* in 0.0s over a 129-tick window. So `INFEASIBLE` from this model at
+N≈21 is real, not a scaling artifact.
+
+**Result: it does not rescue TiT or Chocolate Starfish.** TiT is `INFEASIBLE`
+for every k from 7 to 10, including on the completely stable 206-210 window
+where no planet enters or leaves the listing. CS is `INFEASIBLE` across each
+of its membership regimes. Since the delta constraint is strictly *weaker*
+than absolute matching, failing it is the stronger negative — and it rules out
+the frozen-hidden-member explanation, because a frozen member would leave the
+deltas satisfiable.
+
+### TiT re-examined, and a correction to the Second pass
+
+The Second pass reported TiT as **7/7 `OPTIMAL`, no ambiguity** at ticks 34-44
+and treated that as settled. It is true *for that window* and false as a
+statement about TiT's roster. Re-solved across the whole round:
+
+| Window | N | Result |
+|---|---|---|
+| 14-28 | 5 | `OPTIMAL` — 4 determined + 1 stub tie |
+| 34-46 | 7 | `OPTIMAL` — **not unique** |
+| 47-65 | 8 | `OPTIMAL` — 7 determined + 1 stub tie |
+| 47-66, and every window touching tick 66 or later | 8-10 | `INFEASIBLE` |
+
+So TiT provably churns at **tick 66**, and is unrecoverable after it. The
+member count does not move there, and neither does the counted-score gap —
+which, per the blind spot above, means the swap was between two members who
+each carried zero. That combination is invisible to *both* instruments, and is
+the single thing blocking TiT.
+
+The infeasibility is robust: it holds for N=6..11, with the exclusion set
+removed entirely (full 403-planet pool), on windows with a bit-stable planet
+set, under a "recruit contributes size but not score" model, and under the
+delta model. Nothing explains it. The bounded hidden-member model is
+*unidentifiable* — minimising and maximising the implied hidden planet's size
+at tick 100 gives the full range 0 to 1115 — so it can be neither confirmed
+nor refuted.
+
+**Two methodological warnings from this, both of which cost real time:**
+
+- **Do not carry a roster across a tick where you have already proven the
+  roster changed.** Combining the ticks 47-65 members with the two later
+  gap-derived joiners produced a confident-looking "9 of 10 identified" that
+  was unsound on its face — it assumed across tick 66 exactly what tick 66
+  disproves. The resulting residual matched no planet at any of 35 ticks.
+- **An unbounded residual proves nothing.** A first pass at the hidden-member
+  test left the leftover free to be `>= 0` rather than forcing it to zero in
+  the control case, so a meaningless "OPTIMAL" came back that merely meant
+  "sums <= target". Always run the null case (zero hidden members) and check it
+  reproduces the known `INFEASIBLE` before believing the k>0 case. Equally:
+  bound the leftover by the largest planet that actually exists, or it will
+  cheerfully absorb 1.4M of value that no planet in the game could hold.
+
+Note also that "no listed planet matches the residual" is **not** evidence
+against a hidden member — a planet absent from the dump cannot match by
+definition. The reason to set that hypothesis aside is the identifiability
+test above, not the absence of a match.
+
+### Counting the search space: why a single field proves nothing
+
+A useful calibration. At tick 210 TiT's `size` fell by exactly 114. The number
+of 10-planet combinations losing exactly 114 is **24,016,173,239,295,299**
+(~2.4x10^16). Only 43 of 403 planets changed size at all; the count is
+dominated entirely by padding with the 360 unchanged ones (`C(360,8)` and
+friends). The genuinely constrained part is tiny — just 3 pairs and 28 triples
+of *changed* planets sum to -114.
+
+The lesson: any single field, on any single tick, is worthless for
+identification, and a "match" on one is not evidence. It is the simultaneous
+multi-field, multi-tick constraint that carries all the information.
+
 ### Where this points next (proposed, not validated)
 
 A single label vector scored across **many** ticks — same 403 unknowns,
@@ -1075,7 +1245,15 @@ recent stable window rather than the longest available one, and step 4
 carries a warning about small-window tractability. Step 0 is new in the
 Third pass.)*
 
-0. **Resolve everything derivable without search first — just run
+0a. **Run `uv run btk-find-joiners` first — it is free and needs no solver.**
+   The counted-score gap names every joiner who carried non-zero score, by
+   lookup, regardless of how large the alliance is. It also tells you exactly
+   which tick spans had no visible churn, which is the information the batch
+   solver most needs and cannot derive. Remember its blind spot: members who
+   joined carrying zero (i.e. any alliance founded at signup) are invisible to
+   it, both joining and leaving.
+
+0. **Then resolve everything derivable without search — run
    `uv run btk-verify-rosters`.** Every 1-member alliance is a direct
    lookup (its totals *are* its member's stats) and every 2-member
    alliance falls to an O(n)-per-tick pair scan. Accept a match only if a
