@@ -1547,6 +1547,49 @@ the ambiguity outright rather than requiring a bisection search.
 planets across 21 alliances (adding KittenZ's full 40 to the Sixth pass's
 137).
 
+## Eighth pass (2026-08-16, continued): Imperium — the cleanest result yet, and another old "drift" explained by the fund
+
+Imperium (40 members, constant the entire round) carries the most
+specific prior grievance in this doc. The Second pass explicitly cleared
+it — "independently re-verified and does still hold up (40/40, no
+drift found)" — and then the Third pass caught it out: at tick 208 its
+stored roster's `score` and `value` were each short by **exactly
+35,058**, an exhaustive single-planet-swap search found no fix, and
+Imperium was condemned alongside Chocolate Starfish as the second "zero
+churn the whole round" claim that had never actually survived
+re-testing. Both of those predate the fund correction.
+
+35,058 sits comfortably inside the 500,000-value fund cap, which was
+already a strong hint before re-testing. The recent 15-tick window
+(200-214) confirmed it: `OPTIMAL` in 0.8s, uniqueness probe `INFEASIBLE`
+immediately — no need to reach for the full-round fallback the way
+KittenZ needed. No member of the solution is fully idle, so there's no
+BBQQ-style unresolved slot either.
+
+Extending the found 40-planet set across the entire round found **zero
+mismatches at any of the 201 ticks** — better even than VGN's near-total
+result, which needed to exclude one anomalous tick. Because the
+15-tick window already proved uniqueness, and any full-round solution
+must also satisfy that 15-tick subset, this is provably the unique
+roster for the whole round without a second CP-SAT run — extending and
+checking by hand was enough.
+
+Combined with VGN (Fifth pass) and KittenZ (Seventh pass), this makes
+**three different 40-member alliances**, each previously treated as
+unsolved or (worse, for Imperium) *wrongly confirmed and then debunked*,
+that turn out to have had no real roster churn at all once the fund is
+accounted for. The old model's "zero churn" claims for Imperium and
+Chocolate Starfish were both wrong in the Second/Third pass — but for
+Imperium specifically, the *original* zero-churn claim turns out to have
+been correct all along; it was the debunking that was wrong, not the
+initial claim. Treat that as a caution in the other direction too: don't
+assume every disproven "confirmed exact" was actually wrong, if the
+disproof itself predates the fund fix.
+
+**Running total on the live round-118 database after this pass:** 217
+planets across 22 alliances (adding Imperium's full 40 to the Seventh
+pass's 177).
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
