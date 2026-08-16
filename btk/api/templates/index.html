@@ -26,6 +26,29 @@
     </div>
 </div>
 
+{% if user %}
+<div class="you-box">
+    {% if you.linked %}
+    <div class="eyebrow">Your planet</div>
+    <div class="you-row">
+        <a class="you-name" href="/web/planets/{{ you.planet.id }}">{{ you.planet.ruler_name }} of {{ you.planet.planet_name }}</a>
+        <span class="you-coords">{{ you.planet.x }}:{{ you.planet.y }}:{{ you.planet.z }}</span>
+    </div>
+    <div class="you-stats">
+        <span>Rank <strong>#{{ you.planet.rank }}</strong></span>
+        <span>Score <strong>{{ "{:,}".format(you.planet.score) }}</strong> {{ macros.delta(you.planet.score_delta) }}</span>
+        {% if you.alliance %}
+        <span>Alliance <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.name }}</a> (#{{ you.alliance.rank }})</span>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="you-row you-nudge">
+        <span>Link your planet to see your own rank and score here &mdash; run <code>!link x:y:z</code> in Discord.</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <div class="stat-grid">
     <a class="stat-card" href="/web/alliances">
         <div class="value">{{ counts.alliances }}</div>

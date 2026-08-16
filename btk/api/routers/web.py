@@ -95,6 +95,56 @@ async def _latest_tick(conn: Connection, round_id: int):
     )
 
 
+async def _you_panel(
+    conn: Connection, user: Record, round_id: int, tick_id: int, prev_tick_id: int | None
+) -> dict:
+    """The logged-in member's own planet, if linked (see !link, btk/bot/cogs/preferences.py).
+
+    discord_link.planet_id points at a specific round's planet row, so it
+    naturally goes stale across rounds -- the "p.round_id = $3" join below
+    is what makes a link from a past round quietly fall back to the
+    "not linked yet" nudge rather than showing another round's planet.
+    """
+    planet = await conn.fetchrow(
+        """
+        WITH ranked AS (
+            SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
+            FROM planet_stat WHERE tick_id = $2
+        )
+        SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.score,
+               pi.alliance, ranked.rank, (ps.score - prev.score) AS score_delta
+        FROM discord_link dl
+        JOIN planet p ON p.id = dl.planet_id AND p.round_id = $3
+        JOIN planet_stat ps ON ps.planet_id = p.id AND ps.tick_id = $2
+        JOIN ranked ON ranked.planet_id = p.id
+        LEFT JOIN planet_intel pi ON pi.planet_id = p.id
+        LEFT JOIN planet_stat prev ON prev.planet_id = p.id AND prev.tick_id = $4
+        WHERE dl.discord_user_id = $1
+        """,
+        user["discord_user_id"],
+        tick_id,
+        round_id,
+        prev_tick_id,
+    )
+    if planet is None:
+        return {"linked": False}
+    alliance = None
+    if planet["alliance"]:
+        alliance = await conn.fetchrow(
+            """
+            SELECT a.id, a.name, s.rank
+            FROM alliance_stat s
+            JOIN alliance a ON a.id = s.alliance_id
+            WHERE s.tick_id = $1 AND a.name ILIKE $2
+            ORDER BY a.name
+            LIMIT 1
+            """,
+            tick_id,
+            planet["alliance"],
+        )
+    return {"linked": True, "planet": planet, "alliance": alliance}
+
+
 @router.get("/")
 async def index(
     request: Request,
@@ -110,6 +160,7 @@ async def index(
     race_distribution = []
     biggest_mover = None
     recent_feed = []
+    you = None
     if tick_row:
         counts["alliances"] = await conn.fetchval(
             "SELECT count(*) FROM alliance_stat WHERE tick_id = $1", tick_row["id"]
@@ -187,14 +238,16 @@ async def index(
             """,
             round_row["id"],
         )
-        # "Biggest mover" needs a previous tick to diff against -- the very
-        # first tick of a round has none, so this stays None rather than
-        # comparing against nothing.
+        # "Biggest mover" (and the "you" panel's delta) need a previous tick
+        # to diff against -- the very first tick of a round has none, so
+        # both stay None rather than comparing against nothing.
         prev_tick_id = await conn.fetchval(
             "SELECT id FROM tick WHERE round_id = $1 AND number < $2 ORDER BY number DESC LIMIT 1",
             round_row["id"],
             tick_row["number"],
         )
+        if user is not None:
+            you = await _you_panel(conn, user, round_row["id"], tick_row["id"], prev_tick_id)
         if prev_tick_id:
             biggest_mover = await conn.fetchrow(
                 """
@@ -226,6 +279,7 @@ async def index(
             "race_distribution": race_distribution,
             "biggest_mover": biggest_mover,
             "recent_feed": recent_feed,
+            "you": you,
         },
     )
 

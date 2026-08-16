@@ -861,6 +861,67 @@ tr.unclaimed td a {
     margin: 0;
 }
 
+/* ---------- "you" panel (homepage, logged-in members only) ---------- */
+
+.you-box {
+    border: 1px solid var(--line);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.you-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
+}
+
+.you-name {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--fg);
+    text-decoration: none;
+}
+
+.you-name:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+}
+
+.you-coords {
+    font-family: var(--font-data);
+    color: var(--fg-dim);
+    font-size: 0.85rem;
+}
+
+.you-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 0.6rem;
+    font-family: var(--font-data);
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+}
+
+.you-stats strong {
+    color: var(--fg);
+    font-weight: 500;
+}
+
+.you-nudge {
+    margin-top: 0;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+}
+
+.you-nudge code {
+    font-family: var(--font-data);
+    color: var(--fg);
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 640px) {
