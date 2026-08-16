@@ -12,12 +12,15 @@ order across the whole file.
 
 ## Data & visualization
 
-- **Rank-delta arrows.** Score deltas already render everywhere
-  (`macros.delta`); rank itself never shows movement. Add a small ▲/▼ +N
-  next to `Rank #371` on planet/alliance/galaxy detail pages and in the
-  homepage movers table -- the rank history is already there (previous
-  tick's `RANK() OVER` is one query away), this is a display gap, not a
-  data gap.
+- ~~**Rank-delta arrows.**~~ **Done.** Added `macros.rank_change()`
+  (inverted sign convention from `delta()` -- a falling rank *number* is
+  the improvement) next to Rank on planet/alliance/galaxy detail pages
+  (both the vitals line and the per-tick log), the homepage's alliance/
+  galaxy mover cards, and the "You" panel's own rank and alliance rank.
+  Galaxy and planet rank aren't stored per tick (unlike alliance_stat,
+  which has a native `rank` column) -- computed via a `RANK() OVER`
+  window scoped to the round, joined into the existing history query
+  rather than an extra round-trip.
 - **Inline sparklines on the movers table.** `btk/api/charts.py`'s
   `sparkline()` already renders a mini trend for detail pages; the
   homepage's "Planet movers this tick" table only shows a single-tick
@@ -122,47 +125,3 @@ order across the whole file.
   used in practice.
 
 ---
-
-## Why didn't Appocomaster get a nick guess?
-
-Checked directly (`btk-nick-history lookup Appocomaster` + the live DB):
-Appocomaster has an extremely long, consistent history -- present in
-nearly every round since round 14, almost always in PATSA, almost always
-in galaxy `1:1`. Round 118's planet at `1:1:6` is real, but:
-
-1. It has **no confirmed round-118 alliance** in `planet_intel` at all --
-   `alliance` is blank. Mechanisms 1 and 3 (recency match, ruler-collision
-   disambiguation) both need a known round-118 alliance to compare
-   against; with nothing to compare, neither can fire.
-2. The ruler string `"Appocomaster"` is **ambiguous on its own** --
-   the same real player renicked to `"Appoco"` for rounds 27-29 while
-   still playing under the ruler name `"Appocomaster"`, so the ruler→nick
-   index has two candidates (`Appocomaster`, `Appoco`) for this one ruler
-   string, and there's no independent alliance signal available to break
-   the tie.
-3. It's an essentially untouched planet this round (score 4,440, size 0
-   -- starting stats), so there's no galaxy-buddy corroboration path
-   either: mechanism 4 only promotes nicks that were already a clean
-   single-candidate match, and this one never got that far.
-
-So it's a real, specific gap: a same-player rename collision plus zero
-scouted intel on that particular planet leaves it silently in the "none"
-bucket (260 of 414 planets), with no line printed in the report at all.
-
-**Fixed** in `scripts/guess_nicks.py` (`_renick_merge`): when a ruler
-name collides across nicks, check whether every candidate's usage window
-is non-overlapping and close together (no two candidates ever used it in
-the same round, and no gap wider than `MAX_RENICK_GAP` rounds between
-consecutive windows) -- that pattern is what one real player's own
-mid-career renick looks like, not two unrelated players coincidentally
-picking an identical ruler string. When it holds, the candidates
-collapse into one identity (canonicalized to the most recent nick) with
-a combined alliance/galaxy history instead of an unresolvable tie.
-Re-running against round 118: Appocomaster now resolves to **high**
-confidence via galaxy-buddy corroboration (96 shared historical rounds
-in galaxy 1:1 with an already-confirmed PATSA anchor) -- exactly the
-signal a human would trust instantly. Verified purely additive against
-the previous report: 82→84 high confidence, 72→73 medium, 260→257 none,
-with every previously-resolved nick unchanged (only their corroboration
-notes grew, since previously-invisible planets now count toward
-clustering).

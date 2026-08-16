@@ -111,15 +111,20 @@ async def _you_panel(
         WITH ranked AS (
             SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
             FROM planet_stat WHERE tick_id = $2
+        ), prev_ranked AS (
+            SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
+            FROM planet_stat WHERE tick_id = $4
         )
         SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.score,
-               pi.alliance, ranked.rank, (ps.score - prev.score) AS score_delta
+               pi.alliance, ranked.rank, (ps.score - prev.score) AS score_delta,
+               (ranked.rank - prev_ranked.rank) AS rank_delta
         FROM discord_link dl
         JOIN planet p ON p.id = dl.planet_id AND p.round_id = $3
         JOIN planet_stat ps ON ps.planet_id = p.id AND ps.tick_id = $2
         JOIN ranked ON ranked.planet_id = p.id
         LEFT JOIN planet_intel pi ON pi.planet_id = p.id
         LEFT JOIN planet_stat prev ON prev.planet_id = p.id AND prev.tick_id = $4
+        LEFT JOIN prev_ranked ON prev_ranked.planet_id = p.id
         WHERE dl.discord_user_id = $1
         """,
         user["discord_user_id"],
@@ -133,15 +138,18 @@ async def _you_panel(
     if planet["alliance"]:
         alliance = await conn.fetchrow(
             """
-            SELECT a.id, a.name, s.rank
+            SELECT a.id, a.name, s.rank,
+                   (s.rank - prev.rank) AS rank_delta
             FROM alliance_stat s
             JOIN alliance a ON a.id = s.alliance_id
+            LEFT JOIN alliance_stat prev ON prev.alliance_id = s.alliance_id AND prev.tick_id = $3
             WHERE s.tick_id = $1 AND a.name ILIKE $2
             ORDER BY a.name
             LIMIT 1
             """,
             tick_id,
             planet["alliance"],
+            prev_tick_id,
         )
     return {"linked": True, "planet": planet, "alliance": alliance}
 
@@ -219,7 +227,8 @@ async def index(
             alliance_movers = await conn.fetch(
                 """
                 SELECT a.id, a.name, cur.rank, cur.total_score,
-                       (cur.total_score - prev.total_score) AS score_delta
+                       (cur.total_score - prev.total_score) AS score_delta,
+                       (cur.rank - prev.rank) AS rank_delta
                 FROM alliance_stat cur
                 JOIN alliance_stat prev ON prev.alliance_id = cur.alliance_id AND prev.tick_id = $2
                 JOIN alliance a ON a.id = cur.alliance_id
@@ -230,14 +239,23 @@ async def index(
                 tick_row["id"],
                 prev_tick_id,
             )
+            # galaxy_stat has no stored rank column -- computed here per tick via a
+            # window function, same approach as galaxy_detail's history query.
             galaxy_movers = await conn.fetch(
                 """
+                WITH cur AS (
+                    SELECT *, RANK() OVER (ORDER BY score DESC) AS rank
+                    FROM galaxy_stat WHERE tick_id = $1
+                ), prev AS (
+                    SELECT *, RANK() OVER (ORDER BY score DESC) AS rank
+                    FROM galaxy_stat WHERE tick_id = $2
+                )
                 SELECT g.id, g.x, g.y, cur.name, cur.score,
-                       (cur.score - prev.score) AS score_delta
-                FROM galaxy_stat cur
-                JOIN galaxy_stat prev ON prev.galaxy_id = cur.galaxy_id AND prev.tick_id = $2
+                       (cur.score - prev.score) AS score_delta,
+                       cur.rank, (cur.rank - prev.rank) AS rank_delta
+                FROM cur
+                JOIN prev ON prev.galaxy_id = cur.galaxy_id
                 JOIN galaxy g ON g.id = cur.galaxy_id
-                WHERE cur.tick_id = $1
                 ORDER BY score_delta DESC
                 LIMIT 3
                 """,
@@ -329,7 +347,7 @@ async def alliance_detail(
         """,
         alliance_id,
     )
-    history = with_deltas(history, ["size", "score", "total_score", "total_value"])
+    history = with_deltas(history, ["rank", "size", "score", "total_score", "total_value"])
     chronological = list(reversed(history))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
@@ -528,25 +546,36 @@ async def galaxy_detail(
     galaxy = await conn.fetchrow("SELECT id, x, y FROM galaxy WHERE id = $1", galaxy_id)
     if galaxy is None:
         raise HTTPException(status_code=404, detail="No such galaxy")
+    # galaxy_stat has no stored rank column (unlike alliance_stat) -- computed here
+    # per tick via a window function scoped to this galaxy's round, so both the
+    # current rank and with_deltas' rank-over-time come from one query.
     history = await conn.fetch(
         """
-        SELECT t.number AS tick, s.name, s.size, s.score, s.value, s.xp
+        WITH ranked AS (
+            SELECT gs.galaxy_id, gs.tick_id,
+                   RANK() OVER (PARTITION BY gs.tick_id ORDER BY gs.score DESC) AS rank
+            FROM galaxy_stat gs
+            JOIN tick t ON t.id = gs.tick_id
+            WHERE t.round_id = (SELECT round_id FROM galaxy WHERE id = $1)
+        )
+        SELECT t.number AS tick, s.name, s.size, s.score, s.value, s.xp, r.rank
         FROM galaxy_stat s
         JOIN tick t ON t.id = s.tick_id
+        JOIN ranked r ON r.galaxy_id = s.galaxy_id AND r.tick_id = s.tick_id
         WHERE s.galaxy_id = $1
         ORDER BY t.number DESC
         LIMIT 50
         """,
         galaxy_id,
     )
-    history = with_deltas(history, ["size", "score", "value", "xp"])
+    history = with_deltas(history, ["rank", "size", "score", "value", "xp"])
     chronological = list(reversed(history))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
     value_trend = sparkline([h["value"] for h in chronological])
     xp_trend = sparkline([h["xp"] for h in chronological])
+    rank = history[0]["rank"] if history else None
     planets = []
-    rank = None
     if history:
         latest_tick_id = await conn.fetchval(
             "SELECT id FROM tick WHERE round_id = (SELECT round_id FROM galaxy WHERE id = $1) ORDER BY number DESC LIMIT 1",
@@ -565,18 +594,6 @@ async def galaxy_detail(
             latest_tick_id,
             galaxy_id,
         )
-        rank = await conn.fetchval(
-            """
-            WITH ranked AS (
-                SELECT galaxy_id, RANK() OVER (ORDER BY score DESC) AS rank
-                FROM galaxy_stat
-                WHERE tick_id = $1
-            )
-            SELECT rank FROM ranked WHERE galaxy_id = $2
-            """,
-            latest_tick_id,
-            galaxy_id,
-        )
     # Alliance tagging is scouted intel, same visibility rule as the roster
     # on an alliance page -- logged-out visitors don't see it. And an empty
     # column is noise, so only show Flags/Alliance if this galaxy actually
@@ -591,6 +608,7 @@ async def galaxy_detail(
             "history": history,
             "planets": planets,
             "rank": rank,
+            "rank_change": history[0]["rank_delta"] if history else None,
             "size_trend": size_trend,
             "score_trend": score_trend,
             "value_trend": value_trend,
@@ -724,42 +742,36 @@ async def planet_detail(
     external_id = await conn.fetchval("SELECT external_id FROM planet WHERE id = $1", planet_id)
     if external_id is None:
         raise HTTPException(status_code=404, detail="No such planet")
+    # planet_stat has no stored rank column -- computed here per tick via a window
+    # function scoped to this planet's round, so both the current rank and
+    # with_deltas' rank-over-time come from one query.
     history = await conn.fetch(
         """
+        WITH ranked AS (
+            SELECT ps.planet_id, ps.tick_id,
+                   RANK() OVER (PARTITION BY ps.tick_id ORDER BY ps.score DESC) AS rank
+            FROM planet_stat ps
+            JOIN tick t ON t.id = ps.tick_id
+            WHERE t.round_id = (SELECT round_id FROM planet WHERE id = $1)
+        )
         SELECT t.number AS tick, s.x, s.y, s.z, s.planet_name, s.ruler_name,
-               s.race, s.size, s.score, s.value, s.xp, s.special
+               s.race, s.size, s.score, s.value, s.xp, s.special, r.rank
         FROM planet_stat s
         JOIN tick t ON t.id = s.tick_id
+        JOIN ranked r ON r.planet_id = s.planet_id AND r.tick_id = s.tick_id
         WHERE s.planet_id = $1
         ORDER BY t.number DESC
         LIMIT 50
         """,
         planet_id,
     )
-    history = with_deltas(history, ["size", "score", "value", "xp"])
+    history = with_deltas(history, ["rank", "size", "score", "value", "xp"])
     chronological = list(reversed(history))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
     value_trend = sparkline([h["value"] for h in chronological])
     xp_trend = sparkline([h["xp"] for h in chronological])
-    rank = None
-    if history:
-        latest_tick_id = await conn.fetchval(
-            "SELECT id FROM tick WHERE round_id = (SELECT round_id FROM planet WHERE id = $1) ORDER BY number DESC LIMIT 1",
-            planet_id,
-        )
-        rank = await conn.fetchval(
-            """
-            WITH ranked AS (
-                SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
-                FROM planet_stat
-                WHERE tick_id = $1
-            )
-            SELECT rank FROM ranked WHERE planet_id = $2
-            """,
-            latest_tick_id,
-            planet_id,
-        )
+    rank = history[0]["rank"] if history else None
     # Scouting notes are player-submitted intel on other alliances, not
     # public data -- only shown to logged-in (Discord-verified) members.
     intel = None
@@ -775,6 +787,7 @@ async def planet_detail(
             "external_id": external_id,
             "history": history,
             "rank": rank,
+            "rank_change": history[0]["rank_delta"] if history else None,
             "size_trend": size_trend,
             "score_trend": score_trend,
             "value_trend": value_trend,

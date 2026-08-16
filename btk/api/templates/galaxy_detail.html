@@ -7,7 +7,7 @@
 {% if history %}
 {% set latest = history[0] %}
 <div class="vitals">
-    <div class="vital"><div class="label">Rank</div><div class="value">{{ rank }}</div></div>
+    <div class="vital"><div class="label">Rank</div><div class="value">{{ rank }}{{ macros.rank_change(rank_change) }}</div></div>
     <div class="vital"><div class="label">Name</div><div class="value">{{ latest.name }}</div></div>
     <div class="vital vital-trend">
         <div class="label">Size</div>
@@ -79,6 +79,7 @@
     <thead>
         <tr>
             <th class="num">Tick</th>
+            <th class="num">Rank</th>
             <th>Name</th>
             <th class="num">Size</th>
             <th class="num">Score</th>
@@ -90,6 +91,7 @@
         {% for h in history %}
         <tr>
             <td class="num">{{ h.tick }}</td>
+            <td class="num">{{ h.rank }}{{ macros.rank_change(h.rank_delta) }}</td>
             <td>{{ h.name }}</td>
             <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
             <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>

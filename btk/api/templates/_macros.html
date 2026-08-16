@@ -24,6 +24,20 @@
     {%- endif -%}
 {%- endmacro %}
 
+{% macro rank_change(raw_delta) -%}
+    {#- Opposite sign convention from delta() -- rank going DOWN in number is an
+    improvement (climbed the board), so a negative raw_delta (cur - prev) renders
+    as a green up-arrow, not red. Silent on 0/none: most ticks don't move rank at
+    all, and an arrow on every single row would be noise, not signal. -#}
+    {%- if raw_delta is not none and raw_delta != 0 -%}
+        {%- if raw_delta < 0 -%}
+        <span class="delta good">&#9650;{{ -raw_delta }}</span>
+        {%- else -%}
+        <span class="delta bad">&#9660;{{ raw_delta }}</span>
+        {%- endif -%}
+    {%- endif -%}
+{%- endmacro %}
+
 {% macro coverage_pct(pct) -%}
     {%- if pct is not none -%}
         {#- Near 100 means the roster is complete and current. Well under means

@@ -35,10 +35,10 @@
         <span class="you-coords">{{ you.planet.x }}:{{ you.planet.y }}:{{ you.planet.z }}</span>
     </div>
     <div class="you-stats">
-        <span>Rank <strong>#{{ you.planet.rank }}</strong></span>
+        <span>Rank <strong>#{{ you.planet.rank }}</strong> {{ macros.rank_change(you.planet.rank_delta) }}</span>
         <span>Score <strong>{{ "{:,}".format(you.planet.score) }}</strong> {{ macros.delta(you.planet.score_delta) }}</span>
         {% if you.alliance %}
-        <span>Alliance <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.name }}</a> (#{{ you.alliance.rank }})</span>
+        <span>Alliance <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.name }}</a> (#{{ you.alliance.rank }} {{ macros.rank_change(you.alliance.rank_delta) }})</span>
         {% endif %}
     </div>
     {% else %}
@@ -71,14 +71,14 @@
     <a class="leader-card" href="/web/alliances/{{ alliance_movers[0].id }}">
         <div class="eyebrow">Alliance gaining most</div>
         <div class="leader-name">{{ alliance_movers[0].name }}</div>
-        <div class="leader-meta">#{{ alliance_movers[0].rank }} &middot; {{ macros.delta(alliance_movers[0].score_delta) }} total score</div>
+        <div class="leader-meta">#{{ alliance_movers[0].rank }} {{ macros.rank_change(alliance_movers[0].rank_delta) }} &middot; {{ macros.delta(alliance_movers[0].score_delta) }} total score</div>
     </a>
     {% endif %}
     {% if galaxy_movers %}
     <a class="leader-card" href="/web/galaxies/{{ galaxy_movers[0].id }}">
         <div class="eyebrow">Galaxy gaining most</div>
         <div class="leader-name">{{ galaxy_movers[0].x }}:{{ galaxy_movers[0].y }} &mdash; {{ galaxy_movers[0].name }}</div>
-        <div class="leader-meta">{{ macros.delta(galaxy_movers[0].score_delta) }} score</div>
+        <div class="leader-meta">#{{ galaxy_movers[0].rank }} {{ macros.rank_change(galaxy_movers[0].rank_delta) }} &middot; {{ macros.delta(galaxy_movers[0].score_delta) }} score</div>
     </a>
     {% endif %}
 </div>
