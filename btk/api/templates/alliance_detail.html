@@ -46,6 +46,7 @@
 {% if uniform_comment %}
 <p class="subtitle">{{ uniform_comment }}</p>
 {% endif %}
+<div class="table-scroll">
 <table class="roster">
     <thead>
         <tr>
@@ -95,6 +96,7 @@
     </tfoot>
     {% endif %}
 </table>
+</div>
 {% else %}
 <p class="empty">No planets tagged <code>alliance={{ name }}</code> yet. Set one with <code>!intel &lt;x:y:z&gt; alliance={{ name }}</code> in Discord.</p>
 {% endif %}
@@ -112,6 +114,7 @@
     alliance -- shown anyway because it's still the closest fit, which usually means the earlier tag
     was a mistake worth double-checking, not that this list is wrong.
 </p>
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -138,11 +141,13 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endif %}
 {% endif %}
 
 <h2>Log &mdash; most recent 50 ticks</h2>
 {% if history %}
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -171,6 +176,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <p class="empty">No stats recorded.</p>
 {% endif %}

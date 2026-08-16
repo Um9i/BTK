@@ -77,9 +77,11 @@ header.mission-bar {
     margin: 0 auto;
     padding: 1.5rem 1.25rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
+    row-gap: 0.9rem;
+    column-gap: 1.5rem;
 }
 
 .wordmark {
@@ -95,13 +97,21 @@ header.mission-bar {
     opacity: 0.7;
 }
 
-.mission-bar nav {
+/* Two independent groups so mobile can reflow them separately: nav-links
+   (the actual page nav) drops to its own full-width row, while nav-controls
+   (identity/theme -- who you are, not where you are) stays put next to the
+   wordmark. See the responsive section for the mobile layout. */
+.nav-links, .nav-controls {
     display: flex;
     align-items: center;
     gap: 1.4rem;
 }
 
-.mission-bar nav a {
+.nav-controls {
+    gap: 1rem;
+}
+
+.nav-link {
     color: var(--fg);
     opacity: 0.55;
     text-decoration: none;
@@ -112,11 +122,11 @@ header.mission-bar {
     transition: opacity 0.15s ease;
 }
 
-.mission-bar nav a:hover {
+.nav-link:hover {
     opacity: 1;
 }
 
-.mission-bar nav a.active {
+.nav-link.active {
     opacity: 1;
     border-bottom: 1px solid var(--fg);
     padding-bottom: 2px;
@@ -547,6 +557,20 @@ h2 {
 
 /* ---------- tables ---------- */
 
+/* Every table on the site is wide -- a roster or a tick log easily runs to
+   8-12 columns -- and on a phone that's always going to be wider than the
+   screen at some point, no matter how much column-priority hiding is done
+   below. This is the universal fallback: scroll the table horizontally
+   inside its own box rather than letting it blow out the page, matching a
+   terminal printout you'd scroll sideways rather than one that gets
+   reformatted. table already carries its own margin-bottom, so this wrapper
+   is otherwise invisible on desktop where nothing overflows.
+   */
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -846,11 +870,21 @@ tr.unclaimed td a {
 
     .mission-bar-inner {
         padding: 1.15rem 1rem;
-        gap: 1rem;
     }
 
-    .mission-bar nav {
-        gap: 1rem;
+    /* nav-controls (identity/theme) stays on row one next to the wordmark;
+       nav-links (the actual page nav) drops to a full-width second row,
+       spaced edge to edge like a tab bar -- two short rows instead of one
+       row that has to fit everything at once. */
+    .nav-controls {
+        order: 1;
+    }
+
+    .nav-links {
+        order: 2;
+        width: 100%;
+        justify-content: space-between;
+        gap: 0.5rem;
     }
 
     h1 {
@@ -861,6 +895,14 @@ tr.unclaimed td a {
         font-size: 1.5rem;
     }
 
+    .clock-row, .stat-grid, .leader-grid {
+        gap: 1.5rem;
+    }
+
+    .vitals {
+        gap: 1.5rem;
+    }
+
     table {
         font-size: 0.8rem;
     }
@@ -868,5 +910,15 @@ tr.unclaimed td a {
     thead th, tbody td {
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
+    }
+
+    /* On the primary list tables (planets, galaxies, alliances) the
+       secondary numeric columns -- present, but not what you scan a
+       leaderboard for on a phone -- step aside so the essentials (rank,
+       name/coords, the one number that matters) fit without scrolling.
+       Every table still scrolls via .table-scroll if it needs to; this
+       just makes the common case not need to. */
+    .col-secondary {
+        display: none;
     }
 }

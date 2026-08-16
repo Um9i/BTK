@@ -6,16 +6,17 @@
     <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
 {% endif %}
 {% if galaxies %}
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
             <th class="num">Rank</th>
             <th>Coords</th>
             <th>Name</th>
-            <th class="num">Size</th>
+            <th class="num col-secondary">Size</th>
             <th class="num">Score</th>
-            <th class="num">Value</th>
-            <th class="num">XP</th>
+            <th class="num col-secondary">Value</th>
+            <th class="num col-secondary">XP</th>
         </tr>
     </thead>
     <tbody>
@@ -24,14 +25,15 @@
             <td class="num{% if g.rank <= 3 %} rank-top{% endif %}">{{ g.rank }}</td>
             <td><a href="/web/galaxies/{{ g.id }}">{{ g.x }}:{{ g.y }}</a></td>
             <td>{{ g.name }}</td>
-            <td class="num">{{ g.size }}</td>
+            <td class="num col-secondary">{{ g.size }}</td>
             <td class="num">{{ "{:,}".format(g.score) }}</td>
-            <td class="num">{{ "{:,}".format(g.value) }}</td>
-            <td class="num">{{ "{:,}".format(g.xp) }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(g.value) }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(g.xp) }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <p class="empty">No galaxy data yet.</p>
 {% endif %}

@@ -6,15 +6,16 @@
     <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
 {% endif %}
 {% if alliances %}
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
             <th class="num">Rank</th>
             <th>Name</th>
             <th class="num">Members</th>
-            <th class="num">Score</th>
-            <th class="num">Points</th>
-            <th class="num">Total Score</th>
+            <th class="num col-secondary">Score</th>
+            <th class="num col-secondary">Points</th>
+            <th class="num col-secondary">Total Score</th>
             <th class="num">Total Value</th>
         </tr>
     </thead>
@@ -24,14 +25,15 @@
             <td class="num{% if a.rank <= 3 %} rank-top{% endif %}">{{ a.rank }}</td>
             <td><a href="/web/alliances/{{ a.id }}">{{ a.name }}</a></td>
             <td class="num">{{ a.members }}</td>
-            <td class="num">{{ "{:,}".format(a.score) }}</td>
-            <td class="num">{{ a.points }}</td>
-            <td class="num">{{ "{:,}".format(a.total_score) }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(a.score) }}</td>
+            <td class="num col-secondary">{{ a.points }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(a.total_score) }}</td>
             <td class="num">{{ "{:,}".format(a.total_value) }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <p class="empty">No alliance data yet.</p>
 {% endif %}

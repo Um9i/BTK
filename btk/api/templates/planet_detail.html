@@ -53,6 +53,7 @@
 
 <h2>Log &mdash; most recent 50 ticks</h2>
 {% if history %}
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -77,6 +78,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <p class="empty">No stats recorded.</p>
 {% endif %}
