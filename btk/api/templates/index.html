@@ -9,9 +9,12 @@
             <h1>Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</h1>
             <div class="subtitle">Tick-by-tick tracker</div>
         </div>
-        <span class="status-pill{% if freshness.live %} live{% endif %}">
-            <span class="dot"></span>{{ freshness.label }}
-        </span>
+        <div class="status-wrap">
+            <span class="status-pill{% if freshness.live %} live{% endif %}" id="status-pill">
+                <span class="dot"></span>{{ freshness.label }}
+            </span>
+            <a href="/" id="new-tick-hint" class="new-tick-hint" hidden>new tick &mdash; reload</a>
+        </div>
     </div>
 
     <div class="clock-row">
@@ -226,6 +229,33 @@
         }
         render();
         setInterval(render, 1000);
+    })();
+    // The countdown above only ever predicts when a tick *should* land, not
+    // whether it actually has -- ingest can lag or skip (see btk-ingest's
+    // ticking check). Poll the tick number itself and surface it plainly
+    // when it moves, rather than leaving the page quietly stale until a
+    // manual reload.
+    (function () {
+        var initialRound = {{ round.number if round else "null" }};
+        var initialTick = {{ tick.number if tick else "null" }};
+        if (initialTick === null) return;
+        var pill = document.getElementById("status-pill");
+        var hint = document.getElementById("new-tick-hint");
+        var POLL_MS = 20000;
+
+        function poll() {
+            fetch("/web/tick-status")
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.round === initialRound && data.tick !== null && data.tick > initialTick) {
+                        hint.hidden = false;
+                        pill.classList.add("flash");
+                        clearInterval(timer);
+                    }
+                })
+                .catch(function () {}); // a failed poll just tries again next interval
+        }
+        var timer = setInterval(poll, POLL_MS);
     })();
 </script>
 {% else %}

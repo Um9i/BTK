@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block title %}Alliances - BTK{% endblock %}
 {% block content %}
 <h1>Alliances</h1>
@@ -10,13 +11,13 @@
 <table>
     <thead>
         <tr>
-            <th class="num">Rank</th>
+            {{ macros.sort_th(sort_url, 'rank', 'Rank', sort, dir, 'num') }}
             <th>Name</th>
-            <th class="num">Members</th>
-            <th class="num col-secondary">Score</th>
-            <th class="num col-secondary">Points</th>
-            <th class="num col-secondary">Total Score</th>
-            <th class="num">Total Value</th>
+            {{ macros.sort_th(sort_url, 'members', 'Members', sort, dir, 'num') }}
+            {{ macros.sort_th(sort_url, 'score', 'Score', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'points', 'Points', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'total_score', 'Total Score', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'total_value', 'Total Value', sort, dir, 'num') }}
         </tr>
     </thead>
     <tbody>

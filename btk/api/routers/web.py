@@ -37,6 +37,35 @@ PLANET_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)[:.\s]+(\d+)")
 GALAXY_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)")
 PLANET_LIST_PAGE_SIZE = 50
 
+ALLIANCE_SORT_COLUMNS = {
+    "rank": "s.rank",
+    "size": "s.size",
+    "members": "s.members",
+    "score": "s.score",
+    "points": "s.points",
+    "total_score": "s.total_score",
+    "total_value": "s.total_value",
+}
+GALAXY_SORT_COLUMNS = {"rank": "rank", "size": "s.size", "score": "s.score", "value": "s.value", "xp": "s.xp"}
+PLANET_SORT_COLUMNS = {"rank": "rank", "size": "ps.size", "score": "ps.score", "value": "ps.value", "xp": "ps.xp"}
+
+
+def _sort_url_factory(current_sort: str, current_dir: str):
+    """Click-to-sort column headers: clicking the active column flips its direction,
+    clicking a different one sorts by it fresh (ascending for "rank" -- 1st, 2nd, 3rd...
+    reads naturally in that order; descending for every stat column -- biggest first is
+    the interesting direction on a first click). Plain query-string GET links, so this
+    needs no client state and works identically with JS off."""
+
+    def sort_url(field: str) -> str:
+        if field == current_sort:
+            new_dir = "asc" if current_dir == "desc" else "desc"
+        else:
+            new_dir = "asc" if field == "rank" else "desc"
+        return f"?sort={field}&dir={new_dir}"
+
+    return sort_url
+
 # Ranks every planet in the tick by score first, then lets each branch below
 # filter that already-ranked set -- so "rank" on a coordinate or galaxy
 # lookup is still the planet's real standing round-wide, not just its
@@ -195,6 +224,19 @@ async def _you_panel(
         f"%{planet['planet_name']}%",
     )
     return {"linked": True, "planet": planet, "alliance": alliance, "feed": feed}
+
+
+@router.get("/web/tick-status")
+async def tick_status(conn: Connection = Depends(db_conn)) -> dict:
+    """Polled client-side (see index.html) so the homepage can flash "new data" the
+    moment a tick actually lands, instead of only finding out on the next manual
+    reload. Deliberately as public as /health and /status/game -- this is operational
+    freshness info, not game data, so it isn't behind the JSON API's login gate."""
+    round_row = await _current_round(conn)
+    if round_row is None:
+        return {"round": None, "tick": None}
+    tick_row = await _latest_tick(conn, round_row["id"])
+    return {"round": round_row["number"], "tick": tick_row["number"] if tick_row else None}
 
 
 @router.get("/")
@@ -410,9 +452,13 @@ async def index(
 @router.get("/web/alliances")
 async def alliances_list(
     request: Request,
+    sort: str = "rank",
+    dir: str = "asc",
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
+    sort = sort if sort in ALLIANCE_SORT_COLUMNS else "rank"
+    dir = "desc" if dir == "desc" else "asc"
     round_row = await _current_round(conn)
     rows = []
     tick_row = None
@@ -420,17 +466,26 @@ async def alliances_list(
         tick_row = await _latest_tick(conn, round_row["id"])
     if tick_row:
         rows = await conn.fetch(
-            """
+            f"""
             SELECT a.id, a.name, s.rank, s.size, s.members, s.score, s.points, s.total_score, s.total_value
             FROM alliance_stat s
             JOIN alliance a ON a.id = s.alliance_id
             WHERE s.tick_id = $1
-            ORDER BY s.rank
+            ORDER BY {ALLIANCE_SORT_COLUMNS[sort]} {dir.upper()}
             """,
             tick_row["id"],
         )
     return templates.TemplateResponse(
-        request, "alliances_list.html", {"round": round_row, "alliances": rows, "user": user}
+        request,
+        "alliances_list.html",
+        {
+            "round": round_row,
+            "alliances": rows,
+            "user": user,
+            "sort": sort,
+            "dir": dir,
+            "sort_url": _sort_url_factory(sort, dir),
+        },
     )
 
 
@@ -633,9 +688,13 @@ async def alliance_detail(
 @router.get("/web/galaxies")
 async def galaxies_list(
     request: Request,
+    sort: str = "rank",
+    dir: str = "asc",
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
+    sort = sort if sort in GALAXY_SORT_COLUMNS else "rank"
+    dir = "desc" if dir == "desc" else "asc"
     round_row = await _current_round(conn)
     rows = []
     tick_row = None
@@ -643,18 +702,27 @@ async def galaxies_list(
         tick_row = await _latest_tick(conn, round_row["id"])
     if tick_row:
         rows = await conn.fetch(
-            """
+            f"""
             SELECT g.id, g.x, g.y, s.name, s.size, s.score, s.value, s.xp,
                    RANK() OVER (ORDER BY s.score DESC) AS rank
             FROM galaxy_stat s
             JOIN galaxy g ON g.id = s.galaxy_id
             WHERE s.tick_id = $1
-            ORDER BY s.score DESC
+            ORDER BY {GALAXY_SORT_COLUMNS[sort]} {dir.upper()}
             """,
             tick_row["id"],
         )
     return templates.TemplateResponse(
-        request, "galaxies_list.html", {"round": round_row, "galaxies": rows, "user": user}
+        request,
+        "galaxies_list.html",
+        {
+            "round": round_row,
+            "galaxies": rows,
+            "user": user,
+            "sort": sort,
+            "dir": dir,
+            "sort_url": _sort_url_factory(sort, dir),
+        },
     )
 
 
@@ -867,9 +935,13 @@ async def planets_list(
     request: Request,
     q: str = "",
     page: int = 1,
+    sort: str = "rank",
+    dir: str = "asc",
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
+    sort = sort if sort in PLANET_SORT_COLUMNS else "rank"
+    dir = "desc" if dir == "desc" else "asc"
     round_row = await _current_round(conn)
     rows = []
     tick_row = None
@@ -914,6 +986,9 @@ async def planets_list(
                     "show_dists": False,
                     "show_comment_column": False,
                     "uniform_comment": None,
+                    "sort": sort,
+                    "dir": dir,
+                    "sort_url": _sort_url_factory(sort, dir),
                 },
             )
         coord_match = PLANET_COORD_RE.fullmatch(q)
@@ -960,7 +1035,7 @@ async def planets_list(
                 "SELECT count(*) FROM planet_stat WHERE tick_id = $1", tick_row["id"]
             )
             rows = await conn.fetch(
-                """
+                f"""
                 SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
                        ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance,
                        pi.nick, pi.comment, pi.amps, pi.dists, pi.defwhore,
@@ -969,7 +1044,7 @@ async def planets_list(
                 JOIN planet p ON p.id = ps.planet_id
                 LEFT JOIN planet_intel pi ON pi.planet_id = p.id
                 WHERE ps.tick_id = $1
-                ORDER BY ps.score DESC
+                ORDER BY {PLANET_SORT_COLUMNS[sort]} {dir.upper()}
                 LIMIT $2 OFFSET $3
                 """,
                 tick_row["id"],
@@ -1004,6 +1079,9 @@ async def planets_list(
         "show_dists": show_dists,
         "show_comment_column": show_comment_column,
         "uniform_comment": uniform_comment,
+        "sort": sort,
+        "dir": dir,
+        "sort_url": _sort_url_factory(sort, dir),
     }
     # The page's own live-filter JS re-fetches just the results fragment on
     # every keystroke instead of a full page reload -- this header (set only

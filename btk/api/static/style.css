@@ -337,6 +337,12 @@ h2 {
     margin-bottom: 0.3rem;
 }
 
+.status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -347,6 +353,29 @@ h2 {
     text-transform: uppercase;
     color: var(--fg-dim);
     white-space: nowrap;
+    margin-top: 0.3rem;
+}
+
+/* A one-off attention pulse (not the continuous .live one) for the moment
+   a poll actually detects a new tick landed -- 4 iterations, then stops
+   rather than pulsing forever like the "LIVE" state does. */
+.status-pill.flash {
+    animation: pulse 0.5s ease-in-out 4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .status-pill.flash {
+        animation: none;
+    }
+}
+
+.new-tick-hint {
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--good);
+    text-decoration: underline;
+    text-underline-offset: 3px;
     margin-top: 0.3rem;
 }
 
@@ -697,6 +726,15 @@ thead th {
     text-transform: uppercase;
     border-bottom: 2px solid var(--fg);
     white-space: nowrap;
+}
+
+thead th a {
+    text-decoration: none;
+}
+
+thead th a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 tbody td {

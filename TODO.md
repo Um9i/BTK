@@ -117,16 +117,24 @@ order across the whole file.
 
 ## Feel / responsiveness
 
-- **Live tick landing, no refresh.** The countdown clock is already
-  client-side; when it hits zero there's no signal that new data has
-  actually landed until a manual reload. A short poll of `/health` or a
-  cheap "latest tick number" endpoint around T-0, with a flash/pulse on
-  the LIVE pill when the number advances, would close that gap.
-- **Sortable list columns.** `/web/planets`, `/web/alliances`,
-  `/web/galaxies` are all fixed-order (`ORDER BY score DESC`, etc). A
-  click-to-sort on column headers (query-param driven, so it stays a
-  plain GET link, no client state) would help when the interesting
-  question isn't "who's #1" but "who's biggest by value, not score."
+- ~~**Live tick landing, no refresh.**~~ **Done.** New public
+  `GET /web/tick-status` (as open as `/health`/`/status/game` -- it's
+  operational freshness, not gated game data), polled every 20s from the
+  homepage. When the tick number advances past what was server-rendered,
+  a "new tick — reload" link appears and the LIVE pill gets a one-off
+  4-iteration pulse (not the continuous "live" one), skipped under
+  `prefers-reduced-motion`. Verified with a real Playwright browser
+  session: loaded the page, inserted a new tick mid-session, watched the
+  hint actually appear.
+- ~~**Sortable list columns.**~~ **Done.** Click-to-sort headers
+  (`macros.sort_th`) on `/web/planets` (default browse only, not search
+  results, which already have their own implied order), `/web/alliances`,
+  `/web/galaxies` -- plain `?sort=field&dir=asc|desc` GET links against a
+  whitelisted column map per page (no raw user input in the SQL), no
+  client state. Caught and fixed a real double-escaping bug along the
+  way: arrow HTML entities written inside a `{{ }}` expression render as
+  literal `&amp;#9660;` text (Jinja auto-escapes expression output) --
+  fixed by using literal Unicode arrows instead.
 
 ## Housekeeping
 

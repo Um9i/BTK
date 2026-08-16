@@ -59,6 +59,14 @@
     {%- endif -%}
 {%- endmacro %}
 
+{% macro sort_th(sort_url, field, label, current_sort, current_dir, extra_class="") -%}
+{#- Unicode arrow characters, not "&#9650;" entities -- those get HTML-escaped
+   (into "&amp;#9650;") when they come out of a {{ }} expression instead of
+   being static template text, unlike rank_change() above which is safe
+   because its entities sit directly in literal HTML, not inside {{ }}. -#}
+<th class="{{ extra_class }}"><a href="{{ sort_url(field) }}">{{ label }}{% if current_sort == field %} {{ '▲' if current_dir == 'asc' else '▼' }}{% endif %}</a></th>
+{%- endmacro %}
+
 {% macro coverage_pct(pct) -%}
     {%- if pct is not none -%}
         {#- Near 100 means the roster is complete and current. Well under means

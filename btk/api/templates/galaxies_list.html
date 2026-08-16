@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block title %}Galaxies - BTK{% endblock %}
 {% block content %}
 <h1>Galaxies</h1>
@@ -10,13 +11,13 @@
 <table>
     <thead>
         <tr>
-            <th class="num">Rank</th>
+            {{ macros.sort_th(sort_url, 'rank', 'Rank', sort, dir, 'num') }}
             <th>Coords</th>
             <th>Name</th>
-            <th class="num col-secondary">Size</th>
-            <th class="num">Score</th>
-            <th class="num col-secondary">Value</th>
-            <th class="num col-secondary">XP</th>
+            {{ macros.sort_th(sort_url, 'size', 'Size', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'score', 'Score', sort, dir, 'num') }}
+            {{ macros.sort_th(sort_url, 'value', 'Value', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'xp', 'XP', sort, dir, 'num col-secondary') }}
         </tr>
     </thead>
     <tbody>
