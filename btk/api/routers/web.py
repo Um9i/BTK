@@ -165,26 +165,22 @@ async def index(
         counts["alliances"] = await conn.fetchval(
             "SELECT count(*) FROM alliance_stat WHERE tick_id = $1", tick_row["id"]
         )
-        # x:200 is PA's reserved/system cluster, not real player space (same
-        # exclusion as the "unclaimed" dimming on the galaxies list) -- left
-        # in here, the headline count wouldn't match what scrolling the
-        # actual list shows.
         counts["galaxies"] = await conn.fetchval(
             """
             SELECT count(*) FROM galaxy_stat s
             JOIN galaxy g ON g.id = s.galaxy_id
-            WHERE s.tick_id = $1 AND g.x != 200
+            WHERE s.tick_id = $1
             """,
             tick_row["id"],
         )
         counts["planets"] = await conn.fetchval(
-            "SELECT count(*) FROM planet_stat WHERE tick_id = $1 AND x != 200", tick_row["id"]
+            "SELECT count(*) FROM planet_stat WHERE tick_id = $1", tick_row["id"]
         )
         race_rows = await conn.fetch(
             """
             SELECT race, count(*) AS planets
             FROM planet_stat
-            WHERE tick_id = $1 AND x != 200
+            WHERE tick_id = $1
             GROUP BY race
             ORDER BY planets DESC
             """,
@@ -241,7 +237,7 @@ async def index(
                 FROM galaxy_stat cur
                 JOIN galaxy_stat prev ON prev.galaxy_id = cur.galaxy_id AND prev.tick_id = $2
                 JOIN galaxy g ON g.id = cur.galaxy_id
-                WHERE cur.tick_id = $1 AND g.x != 200
+                WHERE cur.tick_id = $1
                 ORDER BY score_delta DESC
                 LIMIT 3
                 """,
@@ -255,7 +251,7 @@ async def index(
                 FROM planet_stat cur
                 JOIN planet_stat prev ON prev.planet_id = cur.planet_id AND prev.tick_id = $2
                 JOIN planet p ON p.id = cur.planet_id
-                WHERE cur.tick_id = $1 AND cur.x != 200
+                WHERE cur.tick_id = $1
                 ORDER BY score_delta DESC
                 LIMIT 5
                 """,
@@ -435,7 +431,7 @@ async def alliance_detail(
                         FROM planet_stat ps
                         JOIN planet p ON p.id = ps.planet_id
                         LEFT JOIN planet_intel pi ON pi.planet_id = p.id
-                        WHERE ps.tick_id = $1 AND ps.x != 200
+                        WHERE ps.tick_id = $1
                               AND (pi.alliance IS NULL OR pi.alliance = '' OR pi.alliance NOT ILIKE $5)
                         ORDER BY
                             POWER((ps.score - $2) / NULLIF($2, 0)::float, 2)
@@ -663,12 +659,8 @@ async def planets_list(
             )
             total = len(rows)
         else:
-            # x:200 is PA's reserved/system cluster, not real player space --
-            # excluded from browsing/counts the same way the homepage totals
-            # and the galaxies list already treat it. A direct coordinate or
-            # galaxy lookup above still honors an explicit 200:x search.
             total = await conn.fetchval(
-                "SELECT count(*) FROM planet_stat WHERE tick_id = $1 AND x != 200", tick_row["id"]
+                "SELECT count(*) FROM planet_stat WHERE tick_id = $1", tick_row["id"]
             )
             rows = await conn.fetch(
                 """
@@ -679,7 +671,7 @@ async def planets_list(
                 FROM planet_stat ps
                 JOIN planet p ON p.id = ps.planet_id
                 LEFT JOIN planet_intel pi ON pi.planet_id = p.id
-                WHERE ps.tick_id = $1 AND ps.x != 200
+                WHERE ps.tick_id = $1
                 ORDER BY ps.score DESC
                 LIMIT $2 OFFSET $3
                 """,

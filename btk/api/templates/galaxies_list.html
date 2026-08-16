@@ -21,7 +21,7 @@
     </thead>
     <tbody>
         {% for g in galaxies %}
-        <tr{% if g.x == 200 %} class="unclaimed"{% endif %}>
+        <tr>
             <td class="num{% if g.rank <= 3 %} rank-top{% endif %}">{{ g.rank }}</td>
             <td><a href="/web/galaxies/{{ g.id }}">{{ g.x }}:{{ g.y }}</a></td>
             <td>{{ g.name }}</td>

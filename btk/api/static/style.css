@@ -670,16 +670,6 @@ td.rank-top {
     font-weight: 700;
 }
 
-/* x:200 is PA's reserved/system cluster, not real player space -- fade it
-   so the board reads as the galaxies players actually live in. */
-tr.unclaimed td {
-    color: var(--fg-faint);
-}
-
-tr.unclaimed td a {
-    color: var(--fg-faint);
-}
-
 .empty {
     color: var(--fg-dim);
     font-style: italic;
