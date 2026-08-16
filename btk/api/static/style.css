@@ -963,6 +963,78 @@ td.rank-top {
     color: var(--fg);
 }
 
+/* ---------- cluster map (occupancy grid) ---------- */
+
+.map-key {
+    margin-left: 1.25rem;
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+}
+
+.map-key .slot-empty, .map-key .slot-occupied, .map-key .slot-known, .map-key .slot-mine {
+    margin-right: 0.3rem;
+}
+
+.map-grid {
+    margin-bottom: 2.5rem;
+}
+
+.map-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.map-label {
+    flex: 0 0 4rem;
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+    text-decoration: none;
+}
+
+.map-label:hover {
+    color: var(--fg);
+}
+
+.map-cells {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+}
+
+.map-cell {
+    display: inline-block;
+    width: 1.1rem;
+    text-align: center;
+    font-family: var(--font-data);
+    font-size: 0.9rem;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.slot-empty {
+    color: var(--fg-faint);
+}
+
+.slot-occupied {
+    color: var(--fg-dim);
+}
+
+.slot-known {
+    color: var(--fg);
+}
+
+.slot-mine {
+    color: var(--good);
+}
+
+a.map-cell:hover {
+    opacity: 0.6;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 640px) {
@@ -985,6 +1057,16 @@ td.rank-top {
         order: 2;
         width: 100%;
         max-width: none;
+    }
+
+    /* Cells wrap to their own line under the coord label instead of
+       squeezing a whole galaxy's slots onto one narrow row. */
+    .map-row {
+        flex-wrap: wrap;
+    }
+
+    .map-label {
+        flex-basis: auto;
     }
 
     h1 {

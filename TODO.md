@@ -34,11 +34,16 @@ order across the whole file.
   history rows already fetched for the sparkline (no extra query).
   Deliberately unstyled/no color (`.rate`, `--fg-faint`) so it reads as
   context next to the raw delta, not a second result competing with it.
-- **Galaxy-cluster occupancy map.** A compact monospace grid -- one row
-  per galaxy, one glyph per planet slot, colored/weighted by whether it's
-  occupied and which alliance holds it -- would make "where is everyone"
-  scannable in a way a sorted table can't. Fits the terminal aesthetic
-  directly (think `htop`'s CPU grid, not a starmap).
+- ~~**Galaxy-cluster occupancy map.**~~ **Done.** New `/web/map` page
+  (linked from `/web/galaxies`): one row per galaxy grouped by cluster
+  (shared x), one glyph per planet slot. Deliberately weight/glyph-coded
+  rather than color-coded per alliance, since a full color palette would
+  break the "no color beyond good/bad" rule -- `·` empty, dim `■`
+  occupied (alliance unknown or logged out), full-strength `■` alliance
+  known, green `■` your own alliance (resolved via the same `discord_link`
+  the You panel uses). Anonymous visitors only ever see occupied/empty,
+  same visibility rule as every other alliance-tagging surface on the
+  site.
 
 ## Search & navigation
 

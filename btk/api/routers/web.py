@@ -574,6 +574,86 @@ async def galaxies_list(
     )
 
 
+@router.get("/web/map")
+async def cluster_map(
+    request: Request,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
+    """A galaxy-by-galaxy occupancy grid -- one row per galaxy, one glyph per planet
+    slot, grouped by cluster (galaxies sharing an x, see db/schema.sql's note on
+    clusters). A sorted table answers "who's #1"; this answers "where is everyone"
+    at a glance, closer to reading a seating chart than a leaderboard."""
+    round_row = await _current_round(conn)
+    tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
+    clusters = []
+    viewer_alliance = None
+    if tick_row:
+        galaxy_rows = await conn.fetch(
+            """
+            SELECT g.id, g.x, g.y
+            FROM galaxy_stat gs
+            JOIN galaxy g ON g.id = gs.galaxy_id
+            WHERE gs.tick_id = $1
+            ORDER BY g.x, g.y
+            """,
+            tick_row["id"],
+        )
+        planet_rows = await conn.fetch(
+            """
+            SELECT p.id, ps.x, ps.y, ps.z, ps.ruler_name, ps.planet_name, pi.alliance
+            FROM planet_stat ps
+            JOIN planet p ON p.id = ps.planet_id
+            LEFT JOIN planet_intel pi ON pi.planet_id = p.id
+            WHERE ps.tick_id = $1
+            """,
+            tick_row["id"],
+        )
+        # Alliance tagging is scouted intel, same visibility rule as everywhere
+        # else -- logged-out visitors get occupied/empty only, not who holds a
+        # slot. Only shown at all if this user has actually linked a planet
+        # with a confirmed alliance (see !link, btk/bot/cogs/preferences.py).
+        if user is not None:
+            viewer_alliance = await conn.fetchval(
+                """
+                SELECT pi.alliance
+                FROM discord_link dl
+                JOIN planet p ON p.id = dl.planet_id AND p.round_id = $2
+                LEFT JOIN planet_intel pi ON pi.planet_id = p.id
+                WHERE dl.discord_user_id = $1
+                """,
+                user["discord_user_id"],
+                round_row["id"],
+            )
+        by_coord = {(r["x"], r["y"], r["z"]): r for r in planet_rows}
+        max_z = max((r["z"] for r in planet_rows), default=0)
+
+        by_x: dict[int, list] = defaultdict(list)
+        for g in galaxy_rows:
+            by_x[g["x"]].append(g)
+        for x in sorted(by_x):
+            galaxies = []
+            for g in by_x[x]:
+                cells = []
+                for z in range(1, max_z + 1):
+                    planet = by_coord.get((g["x"], g["y"], z))
+                    mine = (
+                        user is not None
+                        and planet is not None
+                        and viewer_alliance
+                        and planet["alliance"]
+                        and planet["alliance"].strip().lower() == viewer_alliance.strip().lower()
+                    )
+                    cells.append({"z": z, "planet": planet, "mine": mine})
+                galaxies.append({"id": g["id"], "x": g["x"], "y": g["y"], "cells": cells})
+            clusters.append({"x": x, "galaxies": galaxies})
+    return templates.TemplateResponse(
+        request,
+        "map.html",
+        {"round": round_row, "clusters": clusters, "user": user},
+    )
+
+
 @router.get("/web/galaxies/{galaxy_id}")
 async def galaxy_detail(
     request: Request,

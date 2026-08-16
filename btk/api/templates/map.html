@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Map - BTK{% endblock %}
+{% block content %}
+<h1>Cluster map</h1>
+{% if round %}
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %} &middot; <a href="/web/galaxies">galaxy list</a></p>
+{% endif %}
+
+{% if clusters %}
+<p class="subtitle">
+    One row per galaxy, one glyph per planet slot.
+    <span class="map-key"><span class="slot-empty">&middot;</span> empty</span>
+    <span class="map-key"><span class="slot-occupied">&#9632;</span> occupied</span>
+    {% if user %}
+    <span class="map-key"><span class="slot-known">&#9632;</span> alliance known</span>
+    <span class="map-key"><span class="slot-mine">&#9632;</span> your alliance</span>
+    {% endif %}
+</p>
+{% for cluster in clusters %}
+<h2>Cluster {{ cluster.x }}</h2>
+<div class="map-grid">
+    {% for g in cluster.galaxies %}
+    <div class="map-row">
+        <a class="map-label" href="/web/galaxies/{{ g.id }}">{{ g.x }}:{{ g.y }}</a>
+        <span class="map-cells">
+            {% for cell in g.cells %}
+                {% if cell.planet %}
+                <a class="map-cell {% if cell.mine %}slot-mine{% elif cell.planet.alliance %}slot-known{% else %}slot-occupied{% endif %}"
+                   href="/web/planets/{{ cell.planet.id }}"
+                   title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &mdash; {{ cell.planet.ruler_name }} of {{ cell.planet.planet_name }}{% if cell.planet.alliance %} ({{ cell.planet.alliance }}){% endif %}">&#9632;</a>
+                {% else %}
+                <span class="map-cell slot-empty" title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &mdash; unclaimed">&middot;</span>
+                {% endif %}
+            {% endfor %}
+        </span>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+{% else %}
+<p class="empty">No galaxy data yet.</p>
+{% endif %}
+{% endblock %}
