@@ -1,10 +1,10 @@
 from asyncpg import Connection
 from fastapi import APIRouter, Depends, HTTPException
 
-from btk.api.deps import db_conn, resolve_round_id
+from btk.api.deps import db_conn, require_user, resolve_round_id
 from btk.models.schemas import Round
 
-router = APIRouter(prefix="/rounds", tags=["rounds"])
+router = APIRouter(prefix="/rounds", tags=["rounds"], dependencies=[Depends(require_user)])
 
 
 @router.get("", response_model=list[Round])

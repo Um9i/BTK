@@ -21,12 +21,10 @@
     <header class="mission-bar">
         <div class="mission-bar-inner">
             <a class="wordmark" href="/">BTK</a>
-            <nav class="nav-links">
-                <a class="nav-link{% if request.url.path.startswith('/web/alliances') %} active{% endif %}" href="/web/alliances">Alliances</a>
-                <a class="nav-link{% if request.url.path.startswith('/web/galaxies') %} active{% endif %}" href="/web/galaxies">Galaxies</a>
-                <a class="nav-link{% if request.url.path.startswith('/web/planets') %} active{% endif %}" href="/web/planets">Planets</a>
-                <a class="nav-link" href="/docs">API</a>
-            </nav>
+            <form class="header-search" method="get" action="/web/planets">
+                <span class="prompt">&gt;</span>
+                <input type="text" name="q" placeholder="planet, ruler, x:y:z or x:y&hellip;" autocomplete="off">
+            </form>
             <div class="nav-controls">
                 {% if user %}
                 <span class="account">

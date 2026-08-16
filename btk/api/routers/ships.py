@@ -1,9 +1,9 @@
 from asyncpg import Connection
 from fastapi import APIRouter, Depends
 
-from btk.api.deps import db_conn
+from btk.api.deps import db_conn, require_user
 
-router = APIRouter(prefix="/ships", tags=["ships"])
+router = APIRouter(prefix="/ships", tags=["ships"], dependencies=[Depends(require_user)])
 
 
 @router.get("")

@@ -1,9 +1,9 @@
 from asyncpg import Connection
 from fastapi import APIRouter, Depends, HTTPException
 
-from btk.api.deps import db_conn, resolve_round_id, resolve_tick_id
+from btk.api.deps import db_conn, require_user, resolve_round_id, resolve_tick_id
 
-router = APIRouter(prefix="/alliances", tags=["alliances"])
+router = APIRouter(prefix="/alliances", tags=["alliances"], dependencies=[Depends(require_user)])
 
 
 @router.get("")

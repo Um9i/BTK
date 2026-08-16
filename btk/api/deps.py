@@ -42,6 +42,15 @@ async def current_user(
     return row
 
 
+async def require_user(user: asyncpg.Record | None = Depends(current_user)) -> asyncpg.Record:
+    """Same session check as current_user, but for routes with no logged-out view at all --
+    the JSON game-data API isn't meant to be publicly browsable (unlike the web pages, which
+    show a trimmed anonymous view and gate only specific sections like intel)."""
+    if user is None:
+        raise HTTPException(status_code=401, detail="Login required")
+    return user
+
+
 async def resolve_round_id(conn: asyncpg.Connection, round_number: int) -> int:
     """Look up a round's internal id from its game round number.
 

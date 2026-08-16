@@ -97,17 +97,49 @@ header.mission-bar {
     opacity: 0.7;
 }
 
-/* Two independent groups so mobile can reflow them separately: nav-links
-   (the actual page nav) drops to its own full-width row, while nav-controls
-   (identity/theme -- who you are, not where you are) stays put next to the
-   wordmark. See the responsive section for the mobile layout. */
-.nav-links, .nav-controls {
+/* header-search (in place of a page-nav link list -- alliances/galaxies/
+   planets are all one query away, see .search-form on /web/planets) and
+   nav-controls (identity/theme -- who you are, not where you are) reflow
+   independently on mobile; see the responsive section. */
+.header-search {
     display: flex;
     align-items: center;
-    gap: 1.4rem;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 12rem;
+    max-width: 24rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.3rem;
+}
+
+.header-search .prompt {
+    font-family: var(--font-data);
+    color: var(--fg-faint);
+    font-size: 0.85rem;
+}
+
+.header-search input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    padding: 0.15rem 0;
+    font-family: var(--font-data);
+    font-size: 0.82rem;
+}
+
+.header-search input:focus {
+    outline: none;
+}
+
+.header-search input::placeholder {
+    color: var(--fg-faint);
 }
 
 .nav-controls {
+    display: flex;
+    align-items: center;
     gap: 1rem;
 }
 
@@ -934,18 +966,16 @@ tr.unclaimed td a {
     }
 
     /* nav-controls (identity/theme) stays on row one next to the wordmark;
-       nav-links (the actual page nav) drops to a full-width second row,
-       spaced edge to edge like a tab bar -- two short rows instead of one
-       row that has to fit everything at once. */
+       header-search drops to a full-width second row -- two short rows
+       instead of one row that has to fit everything at once. */
     .nav-controls {
         order: 1;
     }
 
-    .nav-links {
+    .header-search {
         order: 2;
         width: 100%;
-        justify-content: space-between;
-        gap: 0.5rem;
+        max-width: none;
     }
 
     h1 {

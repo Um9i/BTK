@@ -1,9 +1,9 @@
 from asyncpg import Connection
 from fastapi import APIRouter, Depends
 
-from btk.api.deps import db_conn, resolve_round_id
+from btk.api.deps import db_conn, require_user, resolve_round_id
 
-router = APIRouter(prefix="/feed", tags=["feed"])
+router = APIRouter(prefix="/feed", tags=["feed"], dependencies=[Depends(require_user)])
 
 
 @router.get("")
