@@ -8,7 +8,7 @@ dist/
 build/
 
 .env
-data/
+/data/
 .claude
 CLAUDE.md
 .DS_Store

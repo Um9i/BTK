@@ -1,0 +1,741 @@
+rank|ruler|planet|nick|alliance|score|value|xp|size|race|coords
+1|Kershin|Planetarium|Kershin|Black Flag|9956315|4165535|96513|686|Zik|8:2:4
+2|The Main Line|Kings Indian|Shhhhhhh|KittenZ|9530287|7274227|37601|1841|Cat|10:4:7
+3|Mohinder|Returns|VenoX|Conspiracy|9168995|7655795|25220|183|Xan|1:9:4
+4|Jon Snow|Winterfell|Wk|p3nguins|9108649|2680069|107143|1761|Xan|4:1:1
+5|SOVIET UNION|IRONCURTAIN|CBA|Howling Rain|8493407|7109807|23060|612|Ter|8:5:7
+6|Cayde_6|The Vanguard|MRG|Howling Rain|8443367|5950427|41549|1326|Ter|8:5:6
+7|LUCIFER|END GAME|Veil|p3nguins|8178993|1899273|104662|650|Cat|6:7:6
+8|Gluteus|Maximus|Hans|KittenZ|8155610|5644670|41849|1105|Ter|8:9:7
+9|Dennis Reynolds|Paddys Pub|Caridiaa|KittenZ|8154283|6023023|35521|1369|Cat|10:4:8
+10|vertical|smile|Redrush|Apprime|8141683|6948763|19882|1709|Ter|7:7:3
+11|R u l e r|P l a n e t|Morgothhhhhhh|KittenZ|8123571|6722811|23346|2244|Ter|4:6:2
+12|Love Luke|Love Life|LukeyLove|NewDawn|8121959|6253319|31144|1154|Cat|7:7:2
+13|Swe_Caligula|Faceless|Swe_Caligula|Howling Rain|8098742|4396802|61699|1062|Ter|8:7:5
+14|Dark Side|the Moon|Andi|Conspiracy|8071832|5848592|37054|440|Cat|10:2:4
+15|another round|idle|Njall|Ultores|7992031|4086991|65084|976|Etd|8:3:2
+16|The End|Reason|adastra|Howling Rain|7966183|4602463|56062|477|Ter|1:10:6
+17|TuRjAkEs|PeRSoNaL-DeF|Dany|NewDawn|7877692|5433472|40737|903|Etd|1:3:7
+18|Dark Chest|Wonders|micmic|VGN|7782785|6274325|25141|1401|Cat|5:8:6
+19|Tao Tao|Ehonkan|Turjake|NewDawn|7774702|4614742|52666|675|Cat|1:3:4
+20|The Strategy|Tension|f1nch|Ultores|7773880|2415700|89303|419|Xan|6:3:4
+21|Xzap|stedtin|Xzap|KittenZ|7726896|5899056|30464|874|Ter|10:5:2
+22|Planet|The Apes|Brutus|VGN|7726770|6707550|16987|2089|Xan|8:1:5
+23|Thor|Avengers|R@tcha|VGN|7670282|6541142|18819|1199|Ter|10:1:8
+24|The Insane Amount|Time Wasted On PA|The PK|KittenZ|7662114|5822454|30661|1445|Zik|3:7:7
+25|Patrikc|Hydraaaa|Patrikc|Howling Rain|7648483|4641583|50115|895|Etd|6:6:4
+26|Admiral_Payne|Nobram|Admiral_Payne|CatZ|7647354|4248954|56640|490|Cat|8:8:8
+27|Juraxxus Eredar Lord|The Burning Legion|Pointy|KittenZ|7636141|5269321|39447|833|Etd|4:3:3
+28|MEESO|SOUP|omb|Apprime|7606217|3653417|65880|645|Etd|3:8:2
+29|Another Round|Roid Rage Incidents|RexDrax|Howling Rain|7603297|4791757|46859|938|Ter|4:8:2
+30|Chris|Cornell|Appie|Howling Rain|7530749|5590769|32333|628|Ter|7:5:7
+31|GeorgE CanTStandYa|FestiVus !|Mano|p3nguins|7524912|4725312|46660|820|Zik|3:2:6
+32|Mude|Feindseligkeiten|DarK AnGeL|KittenZ|7519405|5691085|30472|1284|Etd|6:4:4
+33|Puppe|Hariti|Puppe|KittenZ|7516554|5218314|38304|852|Cat|7:9:8
+34|Greytonic|This game seriously|Greytonic|Black Flag|7501458|3882438|60317|1540|Xan|4:2:4
+35|Avada|Kedavra|Zwanstic Mofo|Ultores|7474454|4930874|42393|1350|Xan|7:7:4
+36|Muffydinkelstein|Greenwarden|Asmodeos|KittenZ|7461191|5364491|34945|647|Etd|6:2:7
+37|John Cena|You Cant See Me|Foxxx|NewDawn|7455790|6063790|23200|875|Xan|10:4:4
+38|wwtoo|H-A_Legend|Greg|KittenZ|7407148|4847308|42664|678|Cat|3:7:2
+39|The Ends|Invention|booji|p3nguins|7390174|4481554|48477|633|Cat|4:8:5
+40|Yuri|Uglich|Sandvold|Apprime|7319424|5980884|22309|444|Zik|6:1:5
+41|Boss|Hog|Rgat|Howling Rain|7294328|4741448|42548|909|Ter|5:5:6
+42|I SHOULD GO OUTSIDE INSTEAD|JUST SITTING HERE|Phantasm|Apprime|7282575|5945115|22291|1050|Ter|3:8:4
+43|Chef Cook|Burning Waffles|Roshar|KittenZ|7229726|4685546|42403|943|Cat|9:3:5
+44|gmufc|The Heathens|gmufc|Conspiracy|7221262|5680882|25673|580|Xan|10:1:6
+45|At least I can be proud|my hugging fleet|BaasB|p3nguins|7211170|3702250|58482|919|Cat|6:6:5
+46|cocteau|Asian DC|cocteau|Apprime|7196005|5860285|22262|1605|Etd|7:7:6
+47|Point|Existence|Xentric|VGN|7181663|6176903|16746|1987|Etd|4:7:7
+48|Writer|The Book|green_cat|KittenZ|7167396|5572896|26575|534|Ter|10:6:1
+49|jawbreaker|the oslo nightlife|aksel|Black Flag|7159483|3001963|69292|1056|Cat|2:2:4
+50|Game Over|No Planet B|Obliterate|p3nguins|7138793|4638713|41668|1136|Zik|6:7:3
+51|Flatfoot|Nile|Chappy|RainbowS|7136005|4652065|41399|1447|Cat|6:4:6
+52|Why do we do|This to ourselves|rob6985|NewDawn|7124116|5425396|28312|539|Zik|6:9:5
+53|Dokumentideta|Vooras linnas|lowmmm|KittenZ|7112677|5433277|27990|1171|Etd|4:6:6
+54|wannacry|in the garden|jnz|KittenZ|7094339|5606399|24799|656|Ter|10:4:3
+55|Guardian|The Galaxy|Dacrius|VGN|7092692|4910612|36368|1174|Cat|3:6:5
+56|BBC|Jamaica|Prisco|KittenZ|7090341|4970421|35332|342|Ter|10:3:7
+57|Magic|Roundabout|Specciee|VGN|7067622|4933782|35564|2088|Etd|6:5:1
+58|Treamer|Xezhada|Treamer|Howling Rain|7057802|5646182|23527|382|Ter|10:1:3
+59|BE MY BODYGUARD|LONG LOST PAL|Norton|Illuminati|7014180|4233240|46349|957|Etd|6:8:8
+60|expert|Trusted|Babarian|p3nguins|7006092|3207072|63317|1163|Cat|4:3:5
+61|The Black Sheep|A Retarded Flock|Virall|Apprime|7001701|5686261|21924|446|Etd|9:4:7
+62|sdfsf|gfhgfhgf|Brik|CatZ|6998987|4392287|43445|573|Cat|10:3:5
+63|Hilarious emo|obsessed cr player|Shafuka|Black Flag|6991379|2790839|70009|996|Cat|6:3:7
+64|Broc|Bothy|Broc|NewDawn|6967983|5101203|31113|907|Xan|8:8:4
+65|Dangers|Head Calcs|Direwolf|Black Flag|6955369|3635389|55333|776|Zik|3:5:4
+66|long|short|Theodore|Howling Rain|6940480|4600660|38997|1041|Ter|1:7:5
+67|No Dutch No Glory|No Guts No Story|ReconNL|NewDawn|6924903|4551363|39559|761|Cat|9:7:1
+68|Master|Orion|Sprallly|Conspiracy|6920664|5757624|19384|301|Xan|7:3:2
+69|One|You|Kossu|KittenZ|6913818|4662858|37516|336|Etd|9:3:7
+70|DarkJedi|Omen|Killmark|VGN|6896176|5453416|24046|1749|Xan|6:5:2
+71|TheLooser|Pa|Morgan|Black Flag|6895312|3343612|59195|1398|Zik|8:6:6
+72|Gizmo|Gremlins|Ramirez|KittenZ|6883862|5307782|26268|1319|Ter|7:9:6
+73|VonTessel|Tesla Productions|VonTessel|Howling Rain|6866867|4163627|45054|1647|Etd|5:5:7
+74|Water Cannons|Blastoise|SioNeon|Howling Rain|6864874|3978274|48585|586|Etd|2:10:5
+75|Rubber Duck|BubbleBath|Stargazer|NewDawn|6831022|4850242|33013|365|Cat|6:4:8
+76|Best movie|Interstellar|Sleipnes|Apprime|6830070|4979790|30838|1470|Ter|7:3:1
+77|The Butcher|Anderson Station|KhanNS|Apprime|6825174|5679114|19101|1665|Xan|7:7:8
+78|ab|cd|Dealer|Ultores|6801888|4074888|45450|662|Zik|2:5:1
+79|America First|Germany Foerster|Steffken|Black Flag|6799008|3937728|47688|590|Cat|3:5:1
+80|Timeline|Photographs|Carpeia|p3nguins|6774827|4015787|45984|991|Cat|4:1:7
+81|Commander|Mercenaries|Bazza|Ultores|6769421|3962021|46790|1665|Zik|9:8:7
+82|Out|Good Ideas|Hybbe|p3nguins|6763723|3766663|49951|1195|Zik|1:9:2
+83|RIP CLOUDS|I AM GOBLIN|Kheros|Black Flag|6758875|2946175|63545|1095|Zik|9:5:7
+84|Pythag|Rus|Blacky23|Howling Rain|6754921|3462001|54882|1555|Etd|4:5:5
+85|DO OR DO NOT|THERE IS NO TRY|iBorg|Ultores|6748476|4524696|37063|1182|Xan|8:3:4
+86|Ryan|Kesler|Swainey|p3nguins|6744780|4618020|35446|942|Cat|2:8:2
+87|WISHFUL THINKING|A BETTER TOMORROW|TheoDD|NewDawn|6742016|4592336|35828|752|Cat|8:3:7
+88|turciul|carcat|zagaveg|VGN|6716005|5541745|19571|1689|Zik|8:7:1
+89|a parton|a proton|charliesheen|Howling Rain|6714710|2645390|67822|990|Xan|5:1:5
+90|4 fingers|aint enough|big al|p3nguins|6711424|3879364|47201|1041|Zik|4:4:4
+91|Dire Wolf|House Stark|Link27|Apprime|6688040|4750700|32289|1080|Ter|9:4:4
+92|4355vj6h4vz5|ftr4gw5454z|Tezur0|NewDawn|6675006|4565106|35165|818|Cat|6:6:3
+93|Prof Fransworth|Planet Express|Quin|Howling Rain|6673193|4202153|41184|351|Etd|6:1:7
+94|GLORIOUS LEADER PASYYL|APPRIME DICTATOR|carDi|Apprime|6667109|4955969|28519|366|Zik|1:9:3
+95|Avenger|An eye for an eye|Avenger|CatZ|6664131|3257691|56774|398|Cat|5:2:3
+96|Get|f that phone|Dekker|CatZ|6659374|4393714|37761|291|Etd|5:2:7
+97|Leto|House Atreides|Veni|p3nguins|6652373|4312553|38997|862|Cat|6:7:5
+98|Home|The sexy people|ClimaX|KittenZ|6640410|4576530|34398|889|Etd|6:6:2
+99|The original space|combat browser game|Joepie|Howling Rain|6636490|3570790|51095|1231|Ter|1:8:1
+100|Freedom|Speech|Foxxi|Howling Rain|6633959|3742379|48193|1243|Etd|1:7:1
+101|more|this|crotalus|KittenZ|6614119|5125459|24811|837|Etd|10:3:6
+102|TIL|your dirty secret|Meischter|KittenZ|6611197|4836817|29573|1085|Cat|4:6:3
+103|Angry|Scotsman|[DDK]gm|Conspiracy|6569827|4839907|28832|290|Xan|3:4:5
+104|Alvis|Kado|Sogar|Black Flag|6560561|3414761|52430|890|Xan|8:2:7
+105|o_O|O_o|o_O|KittenZ|6543485|4213445|38834|1339|Cat|4:3:6
+106|it is|what it is|zonny|Norsemen|6522543|4910043|26875|340|Zik|8:3:3
+107|Heroes|Earth|Henkka|NewDawn|6509176|4890976|26970|739|Zik|5:8:3
+108|Theorem|Atomizer|Shrike|Howling Rain|6505057|3779257|45430|788|Etd|2:5:6
+109|The Worst|All Defplanets|Satyr|Apprime|6495139|4897219|26632|376|Xan|3:7:3
+110|Odin|Asgard|Ultramar|p3nguins|6468468|3961788|41778|564|Cat|6:7:2
+111|The Hormonal Inbalance|A Radgie Blobstrop|JUDO|VGN|6462341|5231081|20521|1491|Etd|2:3:7
+112|Teal c|Chulak|DannyB|Black Flag|6462076|3268996|53218|812|Xan|5:7:2
+113|Archon|Aiqunea|cif|p3nguins|6454319|4300559|35896|510|Zik|2:8:6
+114|MY HANS|JUST DONT WORK|mygodahippo|KittenZ|6452367|4125387|38783|359|Etd|8:9:5
+115|StarLord|the Guard1ans|TC|p3nguins|6451469|4476269|32920|530|Zik|1:2:2
+116|Ruler|MyPlanet|FrostyZ|NewDawn|6432467|4852007|26341|679|Etd|8:8:6
+117|Saltiest|Dogs|THK|Howling Rain|6430193|4001873|40472|1234|Ter|1:7:4
+118|man|war|CaShY|Apprime|6428691|5452791|16265|470|Zik|1:3:2
+119|One devious|Motherpoker|Chimpie|Ultores|6427432|2636392|63184|730|Xan|8:6:7
+120|Hansa MagiC Hollywood|Dag The Dog PiddPegg|Neps|Apprime|6426982|4556422|31176|858|Zik|8:3:6
+121|THE HEART|A CHAMPION|DeeJay|Ultores|6418884|3146364|54542|493|Xan|7:1:3
+122|The Rats Only Win|With Teamviewer|Wolf|Ultores|6415771|3552331|47724|926|Xan|9:3:8
+123|Top|Cat|Zurg|KittenZ|6399624|3931044|41143|516|Cat|10:9:7
+124|Donkey|Kong|munkee|p3nguins|6399402|4735482|27732|1104|Zik|4:1:3
+125|eZZa KaT|Metallica|eZZa|CatZ|6391838|4310558|34688|935|Ter|3:1:5
+126|Nameofyourruler|Nameofyourplanet|PhoeniX|KittenZ|6382400|4356380|33767|424|Ter|4:3:7
+127|me|course|canard|Black Flag|6373065|3157845|53587|793|Xan|8:2:5
+128|GET THE EFF OFF|MY LAWN|TadrayToday|Black Flag|6365079|3517959|47452|739|Ter|9:5:4
+129|Badger Brocktree|Rigel 7|Badger Brocktree|p3nguins|6364045|4407745|32605|1243|Cat|6:4:1
+130|Reaper|Souls|Hris|p3nguins|6361965|4302285|34328|1207|Zik|10:7:3
+131|Oh no|Not again|Tomayro|NewDawn|6360895|3643195|45295|729|Xan|2:2:2
+132|Dont Fear|The Reaper|paragon|NewDawn|6360351|3998451|39365|563|Xan|2:2:7
+133|Kelsier|Luthadel|Ghanima|NewDawn|6359016|4953456|23426|781|Xan|1:3:5
+134|Alaus|Alausss|DiMeX|Apprime|6347635|5080435|21120|821|Ter|3:2:3
+135|Player|The Rustytrombone|Dimvin|KittenZ|6346033|4299973|34101|604|Etd|5:1:3
+136|Meiljer|Wizard of Miami|snoopeh|Apprime|6343676|4772036|26194|2017|Xan|7:7:5
+137|Huckleberry|finn|Heimdall|KittenZ|6325026|4853226|24530|1037|Zik|6:6:7
+138|Life|Broken Dreams|Freakshow|Howling Rain|6322572|4405632|31949|256|Etd|7:5:3
+139|The most awesome|Russian Party Girls|Dorf|Ultores|6318996|4350516|32808|1313|Zik|6:4:7
+140|DZA ASIAN ADVENTURE|CATCHING GONORRHEA|arc|p3nguins|6308073|4226073|34700|538|Zik|7:7:1
+141|Edward|Woodstock|Kublai|NewDawn|6297896|2906036|56531|1482|Zik|8:8:5
+142|Max_A_Buck|Space Odyssey|Max_A_Buck|KittenZ|6293904|3139044|52581|691|Cat|3:7:4
+143|prince|zarco|apolo__|KittenZ|6292249|3608209|44734|688|Ter|5:1:4
+144|Some Dude|Some Planet|D3st|Conspiracy|6244186|4941346|21714|676|Cat|1:9:6
+145|BTC|HERO|m0rph3us|p3nguins|6243612|3736332|41788|1323|Xan|7:7:7
+146|Xpic|Insufficient spoons|Xpic|p3nguins|6232898|4248098|33080|830|Zik|1:4:6
+147|Eye|The Tiger|Driver|CatZ|6229927|4686787|25719|882|Ter|9:3:6
+148|THIS IS SUCH|A DRAIN ON MY TIME|Shark|Apprime|6221452|4474312|29119|386|Etd|8:6:8
+149|allahu akbar|xeres planet|Spammer|Apprime|6216728|4714328|25040|281|Etd|8:7:8
+150|Storm01|Stormandia|Storm01|p3nguins|6203575|3659875|42395|897|Cat|6:1:8
+151|The Marisal|Walldo Experience|Walldo|NewDawn|6203184|3989664|36892|1102|Zik|5:6:7
+152|Heman|Eternia|Evil FLiNT|NewDawn|6189370|4720630|24479|1112|Zik|2:2:3
+153|[HOONIGAN]|KILLALLTIRES|Rich_|Howling Rain|6171507|3594147|42956|218|Cat|2:5:4
+154|Lynx|Soz|Lynx|p3nguins|6164952|3647412|41959|1176|Zik|4:1:6
+155|Warrens|Thought|BOP_B_3AKOHE|Illuminati|6148522|4050742|34963|1102|Ter|3:8:3
+156|Radiostar|Cathaaria|Snagge|p3nguins|6148111|4191991|32602|685|Cat|2:8:7
+157|Betguardian|Getbux|Betguardian|KittenZ|6136975|4297435|30659|318|Ter|5:9:4
+158|Help out|Darkness|Arty|Black Flag|6121341|2358261|62718|1190|Xan|9:5:1
+159|Roger|Moore|AdvantiX|Norsemen|6116607|3307047|46826|606|Xan|9:4:6
+160|The 2nd Law|Isolated System|Ryky|Apprime|6107358|4283958|30390|720|Etd|5:4:2
+161|Smasher|Pasties|Anty|NewDawn|6098160|4426980|27853|881|Xan|9:7:2
+162|New|Improved|hoops|VGN|6098122|4720462|22961|1363|Ter|6:8:6
+163|Aes Seidi|Tar Valon|FuriousBee|p3nguins|6096008|3630248|41096|722|Zik|10:5:3
+164|Lusterous|Busterous|[ViruS]Ladybug|VGN|6085620|4716600|22817|1768|Etd|3:6:2
+165|Y0ndu|Th3 GuardianS|Spycors|Ultores|6069046|3168886|48336|868|Zik|1:2:1
+166|MrHatnCloggs|Bleach|JDD|NewDawn|6061630|3897010|36077|832|Etd|9:7:6
+167|Mystikal|Little Freeze|Mystikal|p3nguins|6053680|3220420|47221|879|Cat|7:4:2
+168|jonnypoD|Silence|jonnypoD|NewDawn|6042898|4177498|31090|986|Etd|9:7:7
+169|NO|P4IN|Hulken|RainbowS|6038311|4788031|20838|1253|Xan|1:4:7
+170|Mr Robot|Robotworld|Hulemandd|RainbowS|6009338|3609878|39991|1275|Zik|7:5:5
+171|Harbinger|Happiness|Coder|Conspiracy|5998424|4350524|27465|659|Xan|2:10:4
+172|Andrew|Jackson|Monroe|Conspiracy|5997433|4090213|31787|1018|Xan|6:3:3
+173|k3nn|Planetoid IV|k3nn|NewDawn|5984362|4403062|26355|399|Zik|2:5:5
+174|Pixma|Ampix|Pixma|CatZ|5982867|3523647|40987|1056|Zik|10:5:1
+175|CloseGuard|SafeSpace|CloseGuard|None|5966141|4693541|21210|318|Etd|1:9:7
+176|bow bow|your boat|BloodyButch3r|RainbowS|5965739|3287039|44645|488|Cat|5:8:9
+177|Alexander|Pythagoras|Alexander|KittenZ|5953290|4728450|20414|1025|Ter|5:2:4
+178|The Anunnaki|Babylonia|Anunnaki|VGN|5928118|3837178|34849|1470|Cat|1:6:6
+179|none|your bussiness|none|p3nguins|5926428|3758748|36128|480|Cat|5:3:3
+180|Televised Marathon|Me doing shtfckall|titsy|KittenZ|5911539|4360179|25856|754|Ter|10:9:6
+181|When Canada Takes Over|Everyone wil B Sorry|BadAss|Black Flag|5908211|4431431|24613|746|Ter|2:1:7
+182|SMELLS LIKE TEEN SPIRIT|NIRVANA|lince|p3nguins|5900848|4094608|30104|309|Zik|3:2:7
+183|Eddy|Betts|[Turbo]|RainbowS|5893747|3844867|34148|1121|Zik|10:2:2
+184|Restoration|Ecosystems|colypse|RainbowS|5892696|3639456|37554|658|Cat|2:8:4
+185|I am like Godzilla|Without the Zilla|Donar|KittenZ|5888075|3679655|36807|843|Zik|2:5:3
+186|NSA|CIA|lord_of_blood|NewDawn|5887307|3876767|33509|781|Zik|5:7:4
+187|POWAH|TO THE PEOPLE|Wuschel|NewDawn|5874165|3387945|41437|757|Cat|5:7:5
+188|The King|Hoss Style|VampireLord|KittenZ|5871706|4532986|22312|638|Etd|4:6:5
+189|Nyssa Al Ghul|Nanda Parbat|Nicolos|Black Flag|5857650|3374310|41389|501|Xan|4:8:8
+190|Cpt Mal Lorca|USS Discovery|Gkar|p3nguins|5857346|3290006|42789|609|Cat|4:4:6
+191|Punaposkiset inkkarit|Turvattomat kyher�t|Bream|Conspiracy|5849165|4670165|19650|489|Xan|3:5:7
+192|Mrs Shaw|Guignol Theater|Mandarin|KittenZ|5838601|4501861|22279|612|Etd|10:8:2
+193|The Way|His Saints|Amnion|Apprime|5830173|3905073|32085|403|Ter|2:1:3
+194|banana|fruitbasket|nexsky|p3nguins|5823154|4395934|23787|327|Cat|9:4:3
+195|Wizard|Ozzy|Topmaker|p3nguins|5821560|3307560|41900|835|Cat|10:5:7
+196|gallzilla|Lithium|gallzilla|Black Flag|5819873|2770613|50821|668|Xan|3:5:8
+197|dezz|Valhalla|dezz|p3nguins|5806642|3760282|34106|877|Cat|4:9:1
+198|One|Us|anImaru|p3nguins|5802415|3570055|37206|141|Xan|5:4:5
+199|Caelis|Physics is a beeotch|TheroCortex|CatZ|5795562|3804222|33189|726|Ter|10:3:3
+200|War whats it good for|Absolutely nothing|carlosus|p3nguins|5789656|3827356|32705|673|Cat|3:2:1
+201|THE CELTIC WARRIOR|THE OLD ORDER|Demort|KittenZ|5777318|3697898|34657|372|Cat|10:9:4
+202|Jules Verne|Hetzel|RRanger|KittenZ|5772718|3349078|40394|1115|Cat|5:1:2
+203|Hardzen|Kackfass|Hardzen|p3nguins|5770850|3549890|37016|630|Cat|2:5:8
+204|bankeris|and Cardinal|bankeris|Apprime|5767108|4585708|19690|1319|Ter|7:4:8
+205|Easter|American Gods|Mistwraith|Howling Rain|5765698|3660298|35090|982|Ter|9:8:4
+206|list|insomnia|mct|KittenZ|5763379|3938599|30413|576|Ter|3:7:6
+207|ALL HAIL APPRIME|THE LAST SUPERPOWER|tobbe|Apprime|5744654|4175414|26154|699|Etd|3:8:6
+208|The Adventures|Captain Underpants|Villeh|Apprime|5737193|4679873|17622|925|Etd|10:1:5
+209|Glue|Kos|Starch|VGN|5732297|4799717|15543|1360|Etd|9:1:4
+210|I have|Returned|Doza|Conspiracy|5724879|4534419|19841|588|Xan|4:4:7
+211|Konrad Cruze|Nostramo|Coraxx|Black Flag|5724081|3132981|43185|1148|Xan|5:4:3
+212|MGK|LCH|MGK|Conspiracy|5718654|4005774|28548|714|Cat|2:10:3
+213|Out|Memory|Mini|NewDawn|5709032|3110492|43309|1077|Cat|6:9:1
+214|APPRIME NIGHT|LURKER|vex|Apprime|5699223|4071663|27126|889|Zik|3:8:5
+215|The Absolute Horror|Cardinals DCing|Paisley|Apprime|5689925|4129865|26001|756|Ter|1:9:1
+216|jya|arimus|hone|Apprime|5674252|4132312|25699|544|Ter|2:7:4
+217|Moostar|Da Farm|Moostar|Illuminati|5668443|1926723|62362|1180|Etd|5:2:8
+218|Tick Tick|Yet Another Round|DeadOps|Ultores|5661997|3551437|35176|1219|Zik|9:8:2
+219|Sir Vivor|Crash|PF|p3nguins|5654821|2953801|45017|379|Zik|9:7:5
+220|Deep|Snow|Davidsr|Conspiracy|5641125|4514445|18778|673|Cat|2:10:7
+221|Dull|Critters|Dull|KittenZ|5632080|4324560|21792|620|Ter|9:9:7
+222|Pob|Pob|Pob|KittenZ|5629941|4547961|18033|349|Xan|7:9:2
+223|THIS WORKS|LETS NERF IT|Motti|Apprime|5629513|4417753|20196|856|Zik|3:8:7
+224|oh no|i did it again|Storm_K|KittenZ|5616922|3943342|27893|492|Ter|10:6:4
+225|Destruction|Ships|Ex0|KittenZ|5611823|3783563|30471|749|Ter|9:3:1
+226|Nightmarket|Gili Trawangan|marv|NewDawn|5602576|3944296|27638|635|Xan|5:7:3
+227|TEKNO|AIRLINES|TEKNO|Illuminati|5601291|3776031|30421|571|Ter|7:3:5
+228|cbk|denmark|Cbk1|Apprime|5599148|4286648|21875|525|Etd|6:1:3
+229|On A Friday|EverybodyKnows|TT|RainbowS|5583894|3622674|32687|1068|Cat|10:2:7
+230|fuuv|Doxio|fuuv|3m0|5583509|3257669|38764|1096|Zik|4:5:4
+231|Un legion honed|With stuff|Harry Nutsack|NewDawn|5581813|3790273|29859|938|Xan|2:7:3
+232|Mercenaries|Planetarion|Rexty|Conspiracy|5579012|3941072|27299|571|Xan|9:8:6
+233|WAR|THE PROXY|raven187|Apprime|5574669|4205409|22821|957|Xan|5:8:8
+234|Paping76|Planet76|Paping76|KittenZ|5572955|3997595|26256|823|Ter|10:8:4
+235|Question|the Day|Swimmer|VGN|5566995|4592415|16243|1174|Etd|4:7:5
+236|Dark One|Thera|steece|VGN|5565929|4508189|17629|1584|Zik|6:5:7
+237|minor headache|Mordor|McLord|NewDawn|5565084|3135144|40499|889|Cat|3:9:7
+238|General|Snubbamafian|raysyv85|RainbowS|5552791|3420871|35532|699|Cat|10:1:7
+239|Spritfire|NewDawn|Spritfire|NewDawn|5539449|4089429|24167|781|Etd|10:7:1
+240|Help me get|This roundabout|bigbob|Conspiracy|5536968|4154568|23040|324|Xan|5:6:5
+241|Diarrhea|Asian food|fresel|NewDawn|5526515|2915435|43518|1092|Xan|5:7:6
+242|Robin|The Hood|StarlockUV|VGN|5507916|4459236|17478|1434|Cat|3:6:4
+243|Gustave Hooghmoed|Baron 1898|Ariff|NewDawn|5499192|4115592|23060|699|Cat|8:8:1
+244|President|Impeachment|Bigfoot|NewDawn|5497011|3239451|37626|1192|Zik|3:9:1
+245|clash|clans|darts|Ultores|5492406|3626286|31102|439|Zik|7:1:4
+246|Captain Lewis|The Black Seas|Lewis|Black Flag|5479330|3059950|40323|696|Zik|4:8:1
+247|Keeper|Your Roids|Pablitem|Apprime|5477006|4749506|12125|600|Ter|10:1:2
+248|Exploring the Ghosts|Former Glories|Kenny|Conspiracy|5474069|3395129|34649|402|Xan|10:7:2
+249|Danger|Rock|Chok|Black Flag|5469152|3557792|31856|454|Cat|10:8:1
+250|Feuer|Eye of the tiger|Feuer|None|5461963|1840843|60352|626|Xan|6:4:3
+251|Bad Bad Guys|The Fake News Media|Forest|Conspiracy|5460722|3857942|26713|236|Xan|3:4:4
+252|Dark Templar|Xelnaga|Prottoss|FAnG|5441512|3328612|35215|70|Cat|8:9:1
+253|Pixel|Ye Olde Lazy Towne|widget5|Howling Rain|5436587|2918267|41972|484|Cat|5:6:4
+254|You are the girl|My Dreams Kal|Cowgonemad|RainbowS|5415116|4095656|21991|1082|Etd|3:7:1
+255|Overmind|Scar|Doler|p3nguins|5409568|2488888|48678|905|Zik|3:1:3
+256|bob|Monkhouse|TheRealJuice|Conspiracy|5397060|4433160|16065|594|Xan|9:3:2
+257|Creature|Respawned|Smasher|Apprime|5394826|3393706|33352|869|Ter|5:4:4
+258|Distortion|My Fleet|imagination|p3nguins|5363721|2439201|48742|988|Xan|3:1:2
+259|Two Steps From Hell|Skyworld|Kalipso|Black Flag|5329929|4139889|19834|374|Zik|6:7:7
+260|Better Late|Than Pregnant|FaMuLa|Howling Rain|5316094|4048834|21121|469|Cat|5:5:5
+261|Hogwarts|Games with chains|ginge3987|Conspiracy|5298394|4012354|21434|465|Xan|5:2:5
+262|The Idiocracy|Voting Trump|TYJO|Black Flag|5298226|3325066|32886|1324|Zik|4:8:6
+263|MoorSchrat|Vetrara|MoorSchrat|Ultores|5296073|3195353|35012|526|Xan|6:4:2
+264|yo ho and a bottle|rum|Serio|Black Flag|5293589|2647289|44105|487|Xan|3:3:7
+265|grilorf|chamillion|Hobster|Black Flag|5291907|1358187|65562|545|Xan|4:2:3
+266|RAGE|Summoner|Mithrandir|FAnG|5284967|3112787|36203|164|Cat|4:2:1
+267|The Sweet Dreams|Paris Hilton|Mystic|Ultores|5250669|2978409|37871|1173|Xan|8:6:4
+268|Gates|Hell|Tyr|CatZ|5221378|3773398|24133|579|Etd|10:4:2
+269|Ovide|Lv223|Ovide|CatZ|5218227|2171607|50777|449|Etd|6:9:8
+270|Bruh|do you even lift?|ReaperHasASmallPenis|p3nguins|5215463|2432423|46384|1122|Xan|10:7:4
+271|Destroyer|Chips|Tuck|Ultores|5214674|2034794|52998|629|Xan|3:5:5
+272|Shabootiquiqui|North West|HappyDrugs|VGN|5210087|3955787|20905|1687|Xan|4:2:7
+273|Durven|Doen|Berten|Ultores|5208185|3636845|26189|421|Zik|2:1:2
+274|Solid State|My Mind|Murfdawgg|Howling Rain|5204522|3667142|25623|581|Cat|8:5:4
+275|Jerk|Material|Razock|p3nguins|5203660|3583060|27010|762|Xan|6:7:8
+276|still sleeping|come again later|mystery|Black Flag|5193721|3381121|30210|730|Cat|4:1:8
+277|Trump|PeaceOnEarth|Gunz|KittenZ|5167869|3420189|29128|200|Ter|5:9:7
+278|Peter|The Wolf|Napoleon|p3nguins|5156631|3797211|22657|408|Zik|9:3:3
+279|Inactive|Bible|Bible|CatZ|5152849|2862469|38173|507|Ter|10:5:5
+280|Squeak|The Igloo|Look4Me|KittenZ|5150381|2789381|39350|928|Cat|10:8:5
+281|they made|me do it|Apostle|RainbowS|5150176|3172396|32963|409|Zik|10:5:8
+282|Rancor|Dathomir|Rancor|NewDawn|5143889|3360269|29727|1300|Cat|2:2:6
+283|Pink Leader|The Goons|Bowlsey|FAnG|5131731|2886171|37426|262|Zik|9:3:4
+284|Zim|E-arth|MrSevenx7|p3nguins|5121349|2196649|48745|857|Zik|4:9:7
+285|Leaping|Lemurs|Jaric|Conspiracy|5121047|3671207|24164|391|Xan|2:10:6
+286|Aetsch baetsch|You got the zonk|carjay|KittenZ|5103995|3175655|32139|818|Etd|10:6:3
+287|Suicida|Brazil|Suicida|None|5101547|3927527|19567|626|Ter|2:8:3
+288|jimjilbang|south korean slave|SubmarineWifi|RainbowS|5088707|3611027|24628|966|Zik|10:2:3
+289|Foot Rot Flats|a dogs tail|Roadrunner83|Conspiracy|5065239|3338859|28773|678|Xan|4:8:9
+290|Squirrel|Yggdrasil|Amig|Black Flag|5055693|2959173|34942|1618|Zik|8:2:2
+291|Eater|Food|THEGREAT1|p3nguins|5054398|3124138|32171|354|Cat|4:4:2
+292|Symbol|Unity|H1dd3n_Ag3nda|Ultores|5049964|3442564|26790|685|Zik|3:7:5
+293|Seven|Nine|Idiot|CatZ|5044039|3351559|28208|589|Cat|6:6:9
+294|The Hardmen|Hammersmith|Centurius|RainbowS|5027910|3616230|23528|680|Zik|1:10:2
+295|KING OF|MUTRETAS|TheMaN|Black Flag|5019803|3270443|29156|304|Cat|6:1:6
+296|mua|World of the Muuuuuu|mua|KittenZ|5018992|3962212|17613|788|Cat|4:7:8
+297|Wolf|Pack|Icer|VGN|5004636|3891456|18553|745|Ter|4:7:3
+298|knaw|Blue|knaw|VGN|5004160|3681700|22041|1440|Cat|10:9:8
+299|Synch|Wolfhowl|Synch|NewDawn|5003467|3748567|20915|800|Zik|3:9:5
+300|ALOT|ANGINA|bcg|Apprime|4983474|3819714|19396|730|Zik|8:6:3
+301|KICHIGAI|KOZURE OKAMI|Zato1|Black Flag|4977309|2819169|35969|453|Zik|8:7:4
+302|Rocket Raccoon|teh Guardians|mac_|Ultores|4951479|2407059|42407|674|Xan|1:2:6
+303|Triggers|Broom|Dev|Conspiracy|4944125|3180065|29401|557|Cat|1:7:3
+304|Songs|Praise|Maverick396|p3nguins|4936713|3857133|17993|414|Zik|3:4:2
+305|JedAh|Barbapapa|JedAh|CatZ|4915062|2688582|37108|701|Cat|10:5:6
+306|PASSER|WIND|KFC|Illuminati|4913487|3131187|29705|660|Etd|8:5:3
+307|Vice|Wordl off Vice|Vice|VGN|4910985|3134625|29606|1429|Etd|2:10:1
+308|Penetration|Tightness|Tok|p3nguins|4909560|3382140|25457|928|Xan|2:8:5
+309|ABCDEFGHIJKLMNOPQRSTUVWXYZ|ZYXWVUTSRQPONMLKJIHG|COUSIN|Apprime|4900559|3680759|20330|868|Etd|3:8:1
+310|Hansi|Eindhoven|Hansi|Apprime|4899180|3046920|30871|625|Zik|5:4:7
+311|Moracchioli|Frog Leap Studios|Rabbagast|Apprime|4895874|3571674|22070|359|Etd|1:9:5
+312|Pile|Shit|sjakal1|Apprime|4892278|3576478|21930|784|Etd|7:3:8
+313|HonestRepresentative|the People|wastedd|NewDawn|4871836|3241096|27179|453|Xan|1:3:6
+314|Tour|Heroes|eXdEaTh|p3nguins|4856201|3040961|30254|380|Zik|6:7:1
+315|King|Noobs|zapp|Ultores|4855180|348700|75108|613|Xan|3:10:3
+316|MusicalLover|LaLaLand|Moridin|Black Flag|4842445|3477865|22743|310|Cat|9:1:5
+317|House|Lego Bricks|Rio|Conspiracy|4835703|4099383|12272|460|Xan|3:5:6
+318|UvuveveEntenveve|megemegeOssas|[Irvine]|FAnG|4833825|2900445|32223|83|Zik|2:4:6
+319|_________|_________|Hunter|Apprime|4832669|3638849|19897|595|Etd|5:8:7
+320|Virtuoso|Virtuality|Virt|Black Flag|4821145|3525925|21587|300|Cat|9:1:1
+321|Predator|The Colony|Shogon|RainbowS|4818066|3429846|23137|759|Cat|8:1:4
+322|Ministry|Pirates|moonless|FAnG|4813311|3042711|29510|87|Cat|5:2:6
+323|Baby Driver|Atlanta|Magnus|Howling Rain|4812693|3653733|19316|893|Etd|4:5:2
+324|The Legend|Zelda|Jazz|Apprime|4800539|4101059|11658|183|Ter|1:9:8
+325|Slumdog Mignolet|Finally Made It|Frode|Black Flag|4793739|2625219|36142|447|Xan|9:1:6
+326|Knotpong84|skjelstadmarka|Knotpong84|VGN|4767378|2835258|32202|1453|Xan|5:3:9
+327|Bohemond IV|Antioch|Splinter|VGN|4762680|4198140|9409|630|Cat|7:3:3
+328|SK Brann|Bergens Stolthet|Paris|Black Flag|4745813|3548573|19954|330|Etd|3:2:8
+329|Creator|Everything|Omnimushu|Conspiracy|4745351|3714251|17185|643|Xan|1:4:3
+330|Raiders|TheLostArk|archangel_|p3nguins|4739131|3285511|24227|509|Zik|4:1:4
+331|0o|o0|Bilium|KittenZ|4723580|2179700|42398|486|Cat|4:3:4
+332|Fat Ginger|Knunt|Connovar|FAnG|4710634|2968774|29031|135|Cat|1:8:3
+333|Fruit|My Loines|DG|p3nguins|4705454|2762174|32388|373|Cat|3:1:1
+334|Deja vu|Fourloko|AJames|KittenZ|4699422|3579042|18673|1161|Zik|10:7:5
+335|Ante|Lappoloball|Fowler|VGN|4690993|4243633|7456|870|Cat|2:3:3
+336|jose116|Endor|jose116|KittenZ|4681669|2923969|29295|674|Ter|9:9:1
+337|Jan Egeland|Rock n Roll|Shaed|RainbowS|4678120|2974600|28392|998|Xan|2:2:5
+338|Irn Bru|Barr|Ijrn Bru|VGN|4663542|3907962|12593|1218|Ter|9:6:6
+339|Hider|Bodies|Hider|VGN|4661233|3755053|15103|1188|Cat|9:6:7
+340|WE ARE BACK SEARCHING|FOR ARCS WALLET|ekseri|Ultores|4647763|2990683|27618|627|Cat|2:4:4
+341|Destroyer|Worlds|agar3s|Ultores|4634416|3535996|18307|408|Xan|7:1:7
+342|madwog|the fever|madwog|Conspiracy|4633383|3212163|23687|685|Cat|9:2:8
+343|Dark Side|Moon|Atilla|Apprime|4623984|4008204|10263|546|Ter|10:9:1
+344|FIDGET SPINNING|AUTIST ACE|vuLgAr|Illuminati|4619640|3281580|22301|444|Etd|10:5:4
+345|The return|Hellkicker|walki|RainbowS|4618668|3351108|21126|589|Zik|2:2:1
+346|spotty|bewal|spotty|KittenZ|4618037|2888357|28828|371|Etd|7:9:3
+347|Bacon|Burger|Merlin|RainbowS|4618012|2822152|29931|615|Cat|7:4:1
+348|Destroyed Dreams|Fort Hood|Zmerquise|VGN|4608852|3329772|21318|793|Cat|6:5:5
+349|THE TRUE FEAR|INDONESIAN PIRATES|UltimateNewbie|RainbowS|4608389|2901809|28443|2051|Xan|10:2:6
+350|Rul3r|Pl4n3t|GuPPie|Ultores|4605731|3317531|21470|379|Cat|2:1:5
+351|I am Groot|The Guardians|lonney|Ultores|4600244|3167264|23883|382|Xan|1:2:4
+352|Jelly Bean|Peach|C0bra|KittenZ|4592699|4251059|5694|319|Ter|8:9:2
+353|THE CORE OF ULTORES|RAGE QUIT PREROUND|Darkzidane|Ultores|4578054|3323034|20917|426|Zik|6:4:5
+354|The Dude|White Russians|Foo|Howling Rain|4565006|3142166|23714|685|Ter|6:9:3
+355|LookOut|the Yard|LookOut|VGN|4560389|3541649|16979|790|Cat|8:3:5
+356|Dogz|Dog Pound|Dogz|Conspiracy|4549706|3032486|25287|695|Cat|5:8:2
+357|The Burden|Extraordinary Genius|GenChaos|KittenZ|4542681|2871261|27857|195|Cat|9:9:3
+358|Hades|Purgatory|Hades|Howling Rain|4530530|2900210|27172|891|Etd|3:9:4
+359|polyjuice|potion|Nugget2|NewDawn|4522686|3564486|15970|687|Xan|7:1:5
+360|T3nt4cl3s|Jen Xia|Squidy|Apprime|4509067|3341047|19467|469|Zik|7:1:6
+361|gangster|The Mighty Ultores|gangster|Ultores|4496104|3161824|22238|502|Xan|3:9:2
+362|Element|HeathersFoof|Element|VGN|4480574|3053054|23792|1167|Zik|4:7:2
+363|Sucide|Fleets|Un4208|Ultores|4469268|2604168|31085|532|Xan|2:7:5
+364|YOU KILLED MY FATHER|PREPARE TO DIE|zazael|p3nguins|4452503|2761403|28185|669|Zik|9:2:5
+365|DANNY RAND|KUN-LUN|ChronoX|Black Flag|4444660|2958640|24767|276|Zik|3:3:1
+366|DO IT URSELF|HUEHUEHUE|Timur|Howling Rain|4437791|3286751|19184|221|Etd|1:8:2
+367|Robbie Rotten|LazyTown|rotten|Howling Rain|4437382|2358082|34655|761|Cat|5:6:6
+368|Peace|Mind|Cagoo|NewDawn|4430892|3569952|14349|439|Cat|9:8:1
+369|MUUMIPAPPA|MUUMILAAKSO|cyzzy|Apprime|4425725|3182585|20719|578|Ter|8:3:1
+370|I AM|MEGATRON|WarRock|DFWTK|4420180|3153400|21113|1267|Xan|9:2:3
+371|Malinovka|Lowe|bitesized|Ultores|4396158|3291018|18419|684|Etd|6:3:5
+372|Bad names|Are not allowed|Dogg|Black Flag|4387767|1343727|50734|386|Xan|9:5:2
+373|Sam|Winchester|Nitemare|RainbowS|4374869|2521109|30896|776|Cat|7:4:4
+374|PASYYL THE APPRIME DICTATOR IS|MAKING TRUMP ENVIOUS|LIKE TOMAS|Apprime|4369398|3308598|17680|225|Etd|5:8:1
+375|What|?????????|Talis|Ultores|4368818|3151118|20295|370|Zik|2:1:6
+376|m1nd0|hooprotzooi|m1nd0|3m0|4363641|2840001|25394|525|Cat|4:5:3
+377|Dashiva|Kenn|Dashiva|Howling Rain|4342306|2539366|30049|743|Etd|8:7:7
+378|REMEMBER|THE NORTH|Gabba|Apprime|4339560|2479740|30997|718|Zik|6:2:6
+379|Mr Q|The Q Continuum|Legion85|Conspiracy|4337513|2695853|27361|992|Cat|2:7:6
+380|Just Idliing|Test Account|Mujukka|KittenZ|4334193|3554253|12999|822|Etd|7:1:8
+381|Masterwizard|Dragons|Masterwizard|Ultores|4332925|3768805|9402|321|Cat|1:2:8
+382|The Russian Spy|Donald Trump|Recluse|Ultores|4308827|3687407|10357|375|Cat|5:2:1
+383|King|my castle|AAndreAS|RainbowS|4298534|2337974|32676|648|Cat|7:5:8
+384|PetroMan|Again why|PetroMan|KittenZ|4295498|3808298|8120|674|Ter|1:10:7
+385|Rik|The Young Ones|Montoya|RainbowS|4293200|2814620|24643|581|Cat|1:10:1
+386|King|Queens|bano|RainbowS|4292455|2443915|30809|885|Xan|3:6:6
+387|HIPPOS|AUSTRALIA|shak|Ultores|4283342|2755022|25472|575|Zik|8:9:6
+388|Bad Egg|Addled Egg|Exor|Black Flag|4254401|2478941|29591|267|Zik|3:5:3
+389|Trenger en|Varm sommer|Olav|Black Flag|4254260|3181580|17878|689|Zik|8:6:2
+390|eagleon|Happy Parrots|eagleon|Happy Parrots|4253446|3592186|11021|445|Zik|1:7:7
+391|Lockhead|Cabaeza|Lockhead|Conspiracy|4242737|3202097|17344|808|Xan|5:5:4
+392|Rekksuzan|Locdario|Rekksuzan|RainbowS|4234904|2667944|26116|756|Cat|6:6:1
+393|Unicorn Poop|Rainbow Ice Cream|Sirius654|Black Flag|4232577|2538777|28230|365|Etd|10:4:5
+394|Stadler|Muppetshow|DerEins|Conspiracy|4229423|1940423|38150|798|Xan|8:6:1
+395|Donald Trump|The White House|Pokes1|None|4204601|2824541|23001|341|Xan|8:9:4
+396|Lady|Leisure|Jeno|Conspiracy|4183101|3212601|16175|580|Cat|1:4:2
+397|Dani|Halfman|Zorro|Black Flag|4140975|3528015|10216|335|Cat|8:2:8
+398|Nymfo|Original G0onster|Nymfo|FAnG|4139941|2106001|33899|177|Zik|3:10:4
+399|Mike|Hunt|SnEaK|Ultores|4137661|2733961|23395|517|Zik|6:2:5
+400|Tone|Swiss|Tone|CatZ|4119170|2801870|21955|443|Cat|3:7:8
+401|Farmer John|Planet of bugs|Uly|RainbowS|4116569|3020129|18274|806|Xan|7:4:5
+402|Utah|The Glory|Utah|Ultores|4088211|2989071|18319|540|Xan|2:3:6
+403|LEGATOR|VISION|rasputin|Ultores|4087633|2097613|33167|475|Cat|2:4:7
+404|the cost|wholesale|archster|Black Flag|4046301|2429001|26955|451|Xan|8:6:5
+405|iiv|Real boobs|iiv|CatZ|4033175|3440075|9885|413|Cat|5:9:2
+406|THE DONALD|DOES NOT CARE|ADJUHH|Ultores|3991042|1177342|46895|678|Xan|3:3:8
+407|Alex Atala|Dom|Joseph|None|3981321|3313941|11123|161|Zik|6:1:1
+408|MOST USELESS|THIS GENERATION|mxy|Ultores|3954477|2873637|18014|355|Xan|6:6:8
+409|out|ideas|Cochese|Apprime|3948793|2369773|26317|1011|Zik|7:5:2
+410|Unknown|Planet|DoubleD|NewDawn|3948111|2934891|16887|633|Cat|2:1:8
+411|Eren|Yeager|Tizza|DFWTK|3945911|2882891|17717|323|Cat|6:8:3
+412|Sponsored By|AMD Ryzen 5 1600|Jumper|Ultores|3940801|3026641|15236|396|Xan|7:1:2
+413|Anakin Skywalker|Tatooine|Zavva|p3nguins|3936192|2720592|20260|273|Cat|3:2:2
+414|Guardian|The Primes|Tasha|Apprime|3936120|3144120|13200|272|Etd|4:4:1
+415|Deliberate|Actions|signs|None|3934469|3108869|13760|1256|Cat|200:8:1
+416|I cant bench cos|my poorly shoulder|Damakles|p3nguins|3933397|2361397|26200|453|Zik|10:7:6
+417|Person|Interest|Cheggers|Black Flag|3931608|2829648|18366|281|Xan|9:1:7
+418|Gerald|Rivia|Renex|Ultores|3929521|2453641|24598|282|Xan|2:2:8
+419|The Al Bhed|Bikanel|pholl|p3nguins|3924585|2569965|22577|684|Cat|1:2:7
+420|Dreams|Wolfsrudel|Sphyrna|Conspiracy|3904357|2215117|28154|977|Cat|3:6:1
+421|Yoruichi Tsubasa|Asobi ni Iku yo|Maxi|DFWTK|3898404|3448824|7493|584|Cat|9:2:7
+422|Woooo|Boooo|DanielO|Illuminati|3894978|2644578|20840|419|Xan|3:10:1
+423|Pteppic|Djelibeybi|OldTinfoil|VGN|3886410|3040770|14094|1220|Ter|9:6:3
+424|The Dude|Abides|kafka|p3nguins|3868753|749293|51991|270|Cat|2:7:7
+425|CRYING IN THE RUINS|MY OWN SALVAGE|tektronik|Apprime|3852598|2978398|14570|436|Cat|7:3:9
+426|DWORSCHI|AUSTRIA|Dworschi|3m0|3850649|2931449|15320|327|Xan|1:8:6
+427|Mikazuki|Tekkadan|Zookie|Black Flag|3840316|3273496|9447|348|Zik|9:2:2
+428|Annihilator|Aiur|[RB]Annihilator|Astatores|3835842|2812302|17059|277|Cat|9:8:5
+429|RaUlZiToS|Vai Corinthians!|RaUlZiToS|FAnG|3831069|2366529|24409|117|Xan|2:4:1
+430|Ricky Bobby|Wonderbread|Ricky Bobby|None|3804731|2937251|14458|579|Cat|2:3:5
+431|Why|Why|winY|Ultores|3796614|2757474|17319|466|Xan|1:4:1
+432|Ace|Spades|BEER|Black Flag|3768920|3166160|10046|405|Xan|8:4:7
+433|Lundez|deep heat|Lundez|Apprime|3766287|3016527|12496|213|Cat|1:3:9
+434|That guy|Your dream life|Buddah|FAnG|3752244|2205564|25778|199|Zik|9:4:8
+435|Lumpy Spurtings|Custard Nut Syndrome|The Jizzmeister|VGN|3746523|2860443|14768|420|Ter|2:3:1
+436|New Integrant|Famous Goon Squad|Anakyn|FAnG|3745726|2629426|18605|180|Etd|4:4:3
+437|Benediktina|Planet of SPA|Benediktina|Apprime|3739076|2767856|16187|490|Etd|9:9:8
+438|THE AWESOME SOUNDS|BARRY WHITE|macen|Apprime|3734958|2065938|27817|313|Etd|9:4:2
+439|CARDI BOSS|KITCHEN|Keara|Astatores|3713012|3490232|3713|174|Xan|9:4:5
+440|VIGILANTE WARRIOR|KEKISTAN REEEEEEEEEE|Caj|Astatores|3712860|2718360|16575|92|Cat|1:9:9
+441|Car|Norway|Car|FAnG|3707248|2620768|18108|480|Zik|5:4:1
+442|apollo|h8 club|r6|3m0|3694666|3034666|11000|247|Xan|4:4:5
+443|Im going to win|The crashing game|legofski|CatZ|3681417|2097597|26397|570|Ter|8:4:2
+444|Augustus Justinius|SPQR|Xerxes|Ultores|3669908|2325248|22411|298|Xan|1:2:5
+445|In search|Incredible|sima_kosmos|Illuminati|3661837|3442177|3661|357|Etd|10:9:5
+446|Fuji|X Series|josh|Ultores|3650481|3535281|1920|100|Cat|2:6:3
+447|MC|LIP GLOSS|Mc|Howling Rain|3622927|3027067|9931|383|Cat|1:7:8
+448|Nikola|Tesla|IsNoGoOd|FAnG|3621435|2155275|24436|71|Cat|7:3:4
+449|Paradox|Perceptions|AlphanInfidel|RainbowS|3620244|2839044|13020|456|Zik|7:4:6
+450|Junkie|Woolfardisworthy|Junkie|VGN|3595293|2828553|12779|901|Zik|3:6:7
+451|The Real Goblin King|Horse Outside|Clouds|Black Flag|3594061|2529901|17736|264|Zik|3:3:6
+452|A Primarch|Holy Terra|Macaroth|Conspiracy|3581559|2648679|15548|218|Xan|4:5:6
+453|Frankablu|Atlantis|Frankablu|Howling Rain|3574541|3226901|5794|300|Cat|4:5:1
+454|Chant|Rage|Xmad|Conspiracy|3572899|1483999|34815|455|Xan|5:7:7
+455|Purveyor|Fine Wine|Lozz_|Black Flag|3562970|2862650|11672|373|Xan|8:4:4
+456|OAP|WHERES ARCS WALLET|dza|None|3560170|3157390|6713|304|Zik|3:4:9
+457|The house|the rising sun|Legacy1|None|3555917|2472677|18054|369|Zik|2:4:3
+458|Mistress|Spikey|Hedgie|None|3553191|1716471|30612|585|Xan|3:4:6
+459|Laughing Jack|plymouth|Laughing Jack|FAnG|3537521|2004221|25555|420|Cat|6:9:4
+460|987|654|Nicole|Apprime|3532878|2882898|10833|430|Zik|7:3:6
+461|[delerium]|istandalone|[delerium]|NewDawn|3526599|2612259|15239|748|Zik|5:5:1
+462|George|Dewinn|Punther|Apprime|3519160|2949760|9490|346|Xan|7:3:7
+463|_____|_____|Darkkon_|Astatores|3517581|3337701|2998|273|Zik|1:10:5
+464|rover|range|Deliverer|Conspiracy|3515906|3126326|6493|206|Etd|10:4:1
+465|Racetrack|Raptor 312|Sera|VGN|3509094|2936334|9546|305|Zik|6:8:1
+466|Ruikai|Ruitheday|Ruikai|Howling Rain|3503318|2738618|12745|479|Zik|4:9:5
+467|Nakfah|Egredior|Nakfah|RainbowS|3491760|2581860|15165|671|Etd|7:6:7
+468|STFlamingo|Velvet Balm|STFlamingo|Apprime|3484900|2850640|10571|233|Cat|6:7:9
+469|KARADJATA|Bulgaria|KARADJATA|VGN|3480899|2612999|14465|1047|Ter|9:8:8
+470|shiiiiiny|mooon|jayzinho|FAnG|3473478|2315838|19294|228|Zik|6:5:6
+471|Mass Transit|Junkie|NitinA|None|3461042|2556122|15082|624|Cat|1:4:4
+472|GONNA BE TIRED|ME PITCHING EMO FITS|Papadoc_|Black Flag|3457877|2658437|13324|231|Cat|6:3:2
+473|Mistress|Pain|Fuyu|Ultores|3440730|2242470|19971|434|Zik|1:4:9
+474|hqrYSc4W792Xm6AW<iframe>|XMkUS998qTWtzPVi|Bram|None|3430505|2678045|12541|463|Cat|5:5:3
+475|jhdg|fbvdf|Drew|DFWTK|3415017|2766657|10806|420|Xan|9:2:6
+476|The art|Funky farts|Enzo|Ultores|3403117|2897797|8422|227|Xan|8:3:9
+477|HELLO|IM HERE|JoVe82|Ultores|3393550|3103210|4839|252|Etd|1:8:8
+478|WhoWhat|Where|Toedelie|CatZ|3392702|772022|43678|607|Xan|5:9:8
+479|dogmeat|raizo|dogmeat|RainbowS|3391369|2470489|15348|865|Zik|1:2:3
+480|Defender|Faith|tinygreen|VGN|3373619|3024239|5823|364|Cat|6:8:2
+481|Flasheart|Pondlife|Flasheart|RainbowS|3369687|2762967|10112|202|Xan|3:10:7
+482|Home of your roids|Elysium|Loynis|FAnG|3368056|2213416|19244|192|Cat|2:7:1
+483|Captain Trips|Rezzontract|galla|Ultores|3350452|2454172|14938|370|Xan|2:1:4
+484|icewind|Furious Angels|icewind|FAnG|3348365|2533445|13582|188|Etd|5:9:3
+485|Licuri|Oxente|Licuri|Ultores|3345176|2958656|6442|300|Cat|10:6:7
+486|Sardaukar|one more time|Sardaukar|Ultores|3344609|3065549|4651|157|Cat|5:3:6
+487|Delas|The Sword|Delas|Apprime|3327015|1861875|24419|487|Xan|6:3:8
+488|Phil Collins|Against All Odds|InNeed|Black Flag|3318613|2479453|13986|186|Xan|2:4:8
+489|Dragon|Reborn|kirk|Howling Rain|3316934|2980514|5607|597|Etd|2:5:9
+490|Vufer|Random One|Vufer|RainbowS|3309386|1701866|26792|944|Cat|3:1:7
+491|zebr0|webworld|zebr0|Apprime|3298085|2699405|9978|165|Cat|7:5:1
+492|Blue Eyes|White Dragon|Kai|FAnG|3297893|2206733|18186|94|Ter|10:4:6
+493|EPIC FLEET USAGE|LANDING ON OWN INC|Traktorius|Apprime|3295237|2691997|10054|250|Cat|9:5:6
+494|Big|Jumper|CRISMT|Ultores|3277263|2892303|6416|368|Xan|1:3:3
+495|blood in|blood out|Lexxx|RainbowS|3272696|2951516|5353|614|Zik|9:2:1
+496|THE RETURN|WALLET CREW|Sleepless|Ultores|3271155|2705775|9423|489|Zik|2:4:5
+497|Learning to play|Trial and error|DemonKacper|p3nguins|3250404|2434584|13597|197|Xan|9:9:5
+498|Slayer|Tacos|slayeroftacos|Howling Rain|3247011|3098331|2478|360|Ter|9:6:1
+499|Oompa Loompa|The ChocolateFactory|Mysteries|NewDawn|3245668|3014008|3861|458|Etd|7:9:4
+500|summer|holiday|Noctis|RainbowS|3241094|3003674|3957|469|Xan|2:3:4
+501|RESPECT THE MAN|IN THE ICE CREAM VAN|Sevenseas|Black Flag|3238031|1154531|34725|315|Xan|9:5:3
+502|Pope|Rome|nelito|Apprime|3226551|2490351|12270|333|Xan|9:4:1
+503|Revenge|Relic|Pa_Bear|KittenZ|3201679|1927939|21229|789|Ter|6:6:6
+504|Paranoia|Planet Cold|Paranoia|KittenZ|3187545|1873785|21896|578|Cat|10:8:7
+505|Boost Tech|Falcon Labs|Crywolf|Illuminati|3184124|2352284|13864|449|Xan|10:1:1
+506|Guttorm|Grevling|Salminator|Howling Rain|3184050|2631030|9217|215|Cat|4:2:8
+507|McCap|Capland|McCap|KittenZ|3179836|1130836|34150|531|Cat|5:1:1
+508|Anja|The Golden Circle|Anja|None|3172611|2910891|4362|300|Etd|8:1:6
+509|VLGHRO|GHAJ|DEATHDOG|Howling Rain|3166060|2525440|10677|532|Zik|5:3:5
+510|Blessing|Unicorns|moldypenguins|p3nguins|3158393|1583813|26243|228|Zik|4:9:4
+511|SilverAce5|D23|SilverAce5|456|3135124|2828824|5105|304|Etd|3:9:3
+512|King Arthur|Camelot|EvilMonkey|Black Flag|3119109|2200989|15302|239|Zik|8:2:3
+513|Storebo|Apprime|Storebo|Apprime|3099558|2207418|14869|340|Ter|6:1:4
+514|Litany|The Dead|NoXiouS|Black Flag|3090644|1906364|19738|970|Zik|4:2:5
+515|Knight|Ult|Knight|Ultores|3085084|2563984|8685|323|Zik|6:2:4
+516|Vip3r|Def planet|Vip3r|RainbowS|3080987|1354667|28772|827|Etd|5:1:8
+517|tojo89uk|eadyville|Frojo|VGN|3075894|2274594|13355|621|Xan|2:3:2
+518|Overmind|Char|Psy|Conspiracy|3068611|2358511|11835|436|Xan|4:9:8
+519|Devaco|Rugby! Rugby! Rugby!|Devaco|Conspiracy|3060989|2541029|8666|377|Cat|4:2:2
+520|Schizo|Paranoia|Beast|NewDawn|3057588|1730148|22124|430|Ter|9:7:4
+521|Gratwein|Strassengel|yuuzh|Ultores|3050430|2813070|3956|318|Cat|5:9:1
+522|Daocan|Avalon|Daocan|KittenZ|3045205|1137985|31787|433|Cat|5:9:5
+523|Planet|old school|wintah|None|3031611|2429571|10034|306|Etd|10:6:6
+524|Hans von Bulow|The Lawyer|Offmind|FAnG|3001648|2123188|14641|117|Xan|3:3:4
+525|asdf|asdf|Xsploit|Conspiracy|2954124|2660484|4894|205|Xan|10:6:2
+526|Most Compromising|Positions|Abbadon|NewDawn|2947608|2647608|5000|241|Cat|8:4:6
+527|Weee|Sssht|Jlitts|p3nguins|2945393|1691273|20902|394|Zik|2:8:1
+528|Sn0w|winters knight|Sn0w|FAnG|2938721|2754641|3068|127|Cat|3:4:3
+529|Lula|Na Jaula|LordCaos|None|2935344|2563224|6202|225|Xan|1:3:1
+530|Night|Chade|Basilisk|NewDawn|2932256|2790716|2359|792|Xan|2:7:9
+531|Silence|Death|SiIencer|Illuminati|2926748|1827968|18313|442|Xan|8:3:8
+532|Conn|McD watchers|X e r x e s|FAnG|2917897|2563417|5908|199|Cat|9:5:5
+533|Zikkkkkkkkkkkkk|983,210,803,218|Zikkkkkkkkkkkkk|RainbowS|2887137|1727337|19330|637|Zik|2:6:6
+534|Conjack|Serie B|Conjack|Apprime|2877499|1927699|15830|338|Xan|1:6:3
+535|ALI|SPLASH|Alison|North Korea|2875223|1884323|16515|159|Cat|8:7:6
+536|g0atspace|FC|g0atspace|Illuminati|2862135|2106675|12591|295|Xan|6:9:6
+537|I build a lot|RAFTS|Wishmaster|FAnG|2859113|1772933|18103|287|Cat|6:2:8
+538|Fritz|New York City|harold1066|Howling Rain|2848702|2304262|9074|540|Etd|5:3:1
+539|Brain|Fear of a ruffplanet|Brain|NewDawn|2845149|2552469|4878|180|Etd|10:3:4
+540|abe|afk|abe|RainbowS|2831964|2734164|1630|156|Cat|5:6:3
+541|GladiatorLT|Roman Empire|GladiatorLT|None|2807639|1610279|19956|1020|Zik|4:8:7
+542|Kayil|Not this crap game|Kayil|FAnG|2803082|1740002|17718|166|Cat|1:8:5
+543|celtic|jamboree|celtic|NewDawn|2799902|2692442|1791|263|Etd|8:1:2
+544|REPEATED USE|THE WALLET THEME|BENNEH|Black Flag|2797938|2701998|1599|308|Zik|7:2:4
+545|Every|Little Thing|Shaz|FAnG|2795337|2011077|13071|101|Cat|2:4:2
+546|The Rest|Soundgarden|Anne|None|2787802|1988602|13320|397|Ter|3:1:8
+547|M3dic Man|I Sav3 Liv3s|M3dic Man|VGN|2787037|2196037|9850|1177|Xan|1:7:6
+548|failure|sign up|FatTony|Astatores|2779584|2176284|10055|300|Cat|3:10:5
+549|Azreal2016|DarwinCity2017|Azreal2016|None|2775197|2622737|2541|879|Etd|4:3:1
+550|Revenge|The Fallen|Cervantes|Conspiracy|2766085|2441125|5416|597|Xan|10:9:2
+551|Hae you guys|Goonies Squadron|bignik|FAnG|2761699|1513759|20799|198|Zik|3:10:2
+552|Amon|Juno|Amon|NewDawn|2753017|2621917|2185|261|Cat|4:9:2
+553|YOUR CLOUDS THE GK|LIK YOURE SPREDSHEET|ENYEEZ_|Black Flag|2751143|2049623|11692|203|Cat|5:7:8
+554|PARTYNEXTDOOR AaHH AaHH THAT|SMILE ON YOUR FACE!!|Delgado|FAnG|2747439|1213059|25573|177|Etd|4:2:6
+555|Rounding|Numbers|Rounding1|Howling Rain|2737969|2482249|4262|494|Etd|8:8:7
+556|Remmington|20 Guage|Judge|NewDawn|2729505|2098605|10515|690|Xan|7:8:2
+557|Jessara|Rogue World|Jessara|CatZ|2720543|1555943|19410|834|Zik|6:2:2
+558|Maximus Damage|Brotherhood of Steel|NightVault|FAnG|2717637|2057277|11006|234|Cat|10:8:3
+559|Tosser|Coins|Tosser|RainbowS|2711905|2072725|10653|252|Etd|1:6:8
+560|alitheg|Botanis III|alitheg|VGN|2711184|2178564|8877|869|Zik|9:6:4
+561|We|Love boat|Chacal|FAnG|2654459|1876079|12973|132|Xan|4:9:6
+562|Purgamentum|Terra Podex|Purgamentum|3m0|2628014|2509394|1977|678|Zik|10:8:6
+563|Vault Boy|Fallout 4|Kopite|p3nguins|2618713|999673|26984|304|Zik|3:1:4
+564|kragothe|galaxy|kragothe|None|2616372|2129292|8118|510|Cat|3:8:8
+565|Pointblack|Pointblack|Shadowman|CatZ|2592817|1919917|11215|107|Ter|7:2:5
+566|MADMAN|INSANEWORLD|zub0|RainbowS|2587328|1765928|13690|271|Cat|10:2:5
+567|meatman|Zergstar|meatman|FAnG|2575805|2396465|2989|179|Zik|8:4:8
+568|Lost History|Our Ancestors|Stender|Howling Rain|2562388|1689568|14547|162|Cat|5:8:4
+569|Gamma85|Jaraxxus Prime|Gamma85|VGN|2556783|2394843|2699|351|Xan|1:6:1
+570|Scatter|Gun|BaDD|NewDawn|2549418|2281338|4468|963|Xan|7:8:1
+571|TomSawyer|TreeHouse|TomSawyer|CatZ|2547442|1837822|11827|340|Cat|10:7:7
+572|Kheidira|Paragon|Kheidira|Illuminati|2527330|1711030|13605|357|Xan|7:5:6
+573|Sobraine|London|Chuck|Ultores|2522172|2175372|5780|629|Cat|1:10:8
+574|Goff|boff|Adm|VGN|2515428|2337108|2972|330|Xan|4:5:7
+575|Its|Work|Ragnarokh|None|2498538|1932678|9431|274|Zik|200:1:1
+576|t0k3r|The Green Planet|t0k3r|None|2494305|2144205|5835|700|Xan|4:9:9
+577|Sleeper|Nighttime|Two Times|VGN|2494089|2328009|2768|300|Cat|8:1:3
+578|The Guardian|Cakes|Cactus|RainbowS|2490493|2318173|2872|210|Xan|3:5:2
+579|Chinelo|Borracha|RegesPR|None|2477127|2181747|4923|187|Xan|3:2:4
+580|cup|tea|Catwoman|NewDawn|2471483|2266643|3414|322|Cat|3:9:6
+581|MasterDiver|The Ocean|MasterDiver|TheForce|2442334|2406814|592|301|Xan|4:7:1
+582|The Count|Gibralter|rebel|FAnG|2434892|2069252|6094|334|Zik|6:9:2
+583|Crash_Prince|Bel_Air|Prince Martin|Black Flag|2430402|1759782|11177|855|Zik|9:1:2
+584|Lord Ivan|R01DM46N3T|Lord Ivan|Conspiracy|2424806|1965626|7653|177|Etd|1:5:2
+585|Dubious|Max1mus|hiall|FAnG|2418674|796094|27043|288|Cat|4:8:3
+586|In Search|More Emo|darkage|Ultores|2416698|284838|35531|1091|Xan|5:8:5
+587|sirad|Madcows|sirad|Ultores|2412352|1321012|18189|423|Xan|9:9:2
+588|Ariel|Composer|Stravi|NewDawn|2409197|2194757|3574|239|Cat|8:4:5
+589|Karma|Sutra|MonkeyNutz|Black Flag|2384194|1483474|15012|300|Cat|6:2:3
+590|Link|Hyrule|Link1|Howling Rain|2380436|1655276|12086|526|Cat|3:6:3
+591|ready|no|bird|day of days|2365167|1730907|10571|135|Zik|4:6:8
+592|Kneggy|Kneggy|Kneggy|None|2327252|2106332|3682|1281|Ter|3:6:8
+593|brow|mpz|brow|None|2320223|2304023|270|151|Cat|7:6:6
+594|CRASh KING|GUESS WHO|n30|Illuminati|2320161|1932621|6459|236|Etd|1:10:3
+595|Another Round|This Sheet|RapterRed|NewDawn|2288899|2106739|3036|422|Etd|7:8:6
+596|Feeling|Being underrated|Foxymaay|NewDawn|2251460|1782500|7816|434|Zik|5:7:1
+597|Final Round|Spreadsheet Emo|Jimbo|Black Flag|2236130|1853270|6381|267|Zik|6:3:6
+598|XiCoT|So observo|XiCoT|None|2228690|865850|22714|95|Cat|200:12:2
+599|Grim Reaper|shadowland|Grim Reaper|None|2220948|2027268|3228|515|Zik|2:3:9
+600|WHO CARES ABOUT|YOUR DAMN HORSE|baggy|Black Flag|2214295|1022275|19867|163|Xan|3:3:3
+601|All mine|Pure madness|Madman1989|RainbowS|2207717|1900697|5117|486|Zik|10:2:8
+602|Ultra|Bright|United|Astatores|2206695|2131575|1252|159|Cat|5:6:1
+603|I <3 Manchester|No Surrender  2 ISIS|XTC69|Howling Rain|2170827|1391547|12988|211|Xan|7:5:4
+604|Adds|WWpals|Adds|Ultores|2168091|953451|20244|372|Xan|2:7:2
+605|Red leader|Go0n Squ4d|_Matt_|FAnG|2155048|891148|21065|227|Cat|6:2:1
+606|You Drink|To Get Drunk|bavaria|Conspiracy|2142303|1738023|6738|858|Cat|3:7:9
+607|Darkest|Red XIII|Darkest|KittenZ|2131586|1634426|8286|190|Cat|9:9:4
+608|Urubu Rei|Makinvel|Urubu Rei|CatZ|2112283|1731163|6352|517|Xan|9:9:9
+609|Utd|Treble|MaD|None|2086415|1885175|3354|224|Etd|8:7:3
+610|Fox|Hanoger|Fox|RainbowS|2040287|1400507|10663|616|Zik|10:9:3
+611|king org|nog|steve04|None|2035102|1855222|2998|360|Cat|8:8:2
+612|Nacon|Planet Bacon|Muaziz|VGN|2011955|1685975|5433|418|Zik|9:6:5
+613|Pheidias|Olympia|Pheidias|None|2007267|1967427|664|310|Cat|3:10:9
+614|Holee|Chit|bigron|VGN|1993676|1795016|3311|600|Zik|4:7:4
+615|Bobksi|The Builder|Bobksi|Apprime|1987621|910201|17957|285|Ter|10:6:5
+616|Green|house|Hempz|NewDawn|1966494|1778934|3126|239|Xan|7:6:2
+617|The_Bane|Warner Bross|The_Bane|Illuminati|1957498|1379158|9639|371|Xan|10:3:1
+618|Rainy|Days|Werewolf|FAnG|1939775|1823015|1946|91|Xan|7:8:5
+619|granpa|oldmansville|granpa|VGN|1930077|1376997|9218|304|Xan|10:3:8
+620|Darth Maelstrom|Sol|Darth Maelstrom|VGN|1927257|1833057|1570|173|Ter|7:2:2
+621|Here|weGo|eboGer|Astatores|1922682|1634982|4795|114|Xan|1:6:2
+622|neXt|Ragnarok|neXt|ULTRON|1909274|1592714|5276|115|Zik|3:9:8
+623|Avocado|Del diablo|Shinuxx|VGN|1908986|1617146|4864|285|Cat|4:9:3
+624|Dnut|King|Dnut|RainbowS|1904137|966997|15619|323|Cat|1:5:8
+625|Ravenmanc|Republik Of Mancunia|Ravenmanc|None|1898791|1885051|229|202|Ter|4:7:6
+626|Help me|Help you|Xeophex|None|1894522|835282|17654|175|Cat|7:8:3
+627|speed|is not key|Dubz|FAnG|1892612|1477052|6926|298|Xan|3:10:6
+628|Ezbon Charles|Granville Road|Alfred Chicken|RainbowS|1828322|1221002|10122|277|Cat|200:6:1
+629|bethasa|homer|raven69|FAnG|1826974|1787974|650|141|Cat|1:5:3
+630|Prophet Nozick|Anarchy State Utopia|Pius|Astatores|1818111|1628991|3152|274|Xan|8:6:9
+631|Soul|Train|Buly|None|1816633|1350133|7775|175|Cat|8:1:8
+632|Decepticon|Cybertron|Decepticon|RainbowS|1802880|1701480|1690|327|Cat|200:9:1
+633|MASTER|COMPLETING TINDER|Cheetos|Black Flag|1798787|1777967|347|238|Xan|7:4:7
+634|Cin|Away|Cin|PATSA|1780715|1708775|1199|195|Etd|1:1:4
+635|FANATIC|MUSCULATION|PZio|None|1720283|1626263|1567|400|Ter|4:1:5
+636|Beef Supreme|BEEFY|Rick Nackson|Conspiracy|1681621|1450021|3860|142|Ter|1:5:4
+637|One|the Confused|Kallysandra|NewDawn|1643954|913034|12214|100|Cat|5:6:2
+638|The morbid relations|life and death|MntrX|Black Flag|1633271|639371|16565|298|Cat|4:8:4
+639|Sample|That Please|Carrington|None|1629690|1019370|10172|271|Xan|6:9:7
+640|Sevenseas|Got crabz|SoulS|Black Flag|1570806|1257786|5217|300|Zik|5:4:6
+641|spud|shot|Grey|Lower league|1562050|1494790|1121|198|Cat|8:1:7
+642|Jimmerson|Voskuyrilia|Jimmerson|VGN|1558930|1425550|2223|167|Xan|1:5:6
+643|FEAR MY ROID COUNT|THREE FLEET DEFENCE|Garbanele|Apprime|1531614|603834|15463|312|Xan|10:1:9
+644|bringer|of death|bringer|VGN|1524151|1319131|3417|566|Cat|10:4:9
+645|Delusions|Grandeur|ReligFree|None|1480786|1252786|3800|143|Ter|200:4:1
+646|tomjames|Legion|tomjames|None|1470574|1294054|2942|417|Ter|7:9:5
+647|Alexodia|Serfuria|Alexodia|None|1466674|1141534|5419|232|Etd|2:6:7
+648|Appocomaster|Sudoku Addict|Appocomaster|PATSA|1421157|1365777|923|47|Xan|1:1:1
+649|Ace|JSB|Ace|PATSA|1395901|1367221|478|39|Zik|1:1:5
+650|Fnar|Fnarland|Idl3r|CatZ|1384831|856831|8800|236|Cat|4:3:2
+651|Creator|My Planet|Superfly|FAnG|1381840|1259080|2046|182|Zik|5:3:2
+652|Watchman|Retrobution|Watchman|VGN|1340532|1313412|452|433|Zik|6:8:5
+653|Fiery|Inferno|Fiery|PATSA|1326857|1210397|1941|100|Cat|1:1:6
+654|Sjor____|Noooooooob|Sjor____|FAnG|1303892|902852|6684|200|Etd|9:2:4
+655|Btimson|Nagarocketh|Btimson|3m0|1301908|1165528|2273|56|Cat|1:5:1
+656|centipedes|1200th Leg|vargl|None|1285408|1134268|2519|283|Xan|7:2:6
+657|Jewid|Lateness|Jewid|Success|1272218|994358|4631|386|Cat|7:9:1
+658|One|the few|Jegg|Howling Rain|1261037|823397|7294|315|Ter|2:5:2
+659|Paradox|Life|Migi|Black Flag|1253236|290596|16044|200|Ter|2:6:4
+660|Random Racer|NoIdeaWhatImDoing|Farmer|None|1252753|1234033|312|144|Ter|1:5:7
+661|rUl3r|Ultores|rUl3r|Ultores|1252236|890136|6035|166|Ter|2:6:2
+662|Alliance Fleet|ArmAgeddon|ArmAgeddon|Black Flag|1245202|567562|11294|432|Xan|6:1:2
+663|Berk|The Trap Door|Chaos|Conspiracy|1243481|303521|15666|397|Ter|3:4:1
+664|Sergeant|Tanith|Sergeant|RainbowS|1241632|1028872|3546|242|Ter|7:4:3
+665|Just here to|Defend you|Wurmy|None|1218856|1138096|1346|205|Etd|200:5:1
+666|voidmastah|Xenon445|voidmastah|CatZ|1201717|1090957|1846|370|Cat|2:10:2
+667|Invalid_username|Invalid_planet_name|Invalid_username|p3nguins|1200632|1022492|2969|355|Ter|4:1:2
+668|lannomal|Knoxvegas|lannomal|Conspiracy|1193803|944863|4149|360|Cat|9:7:3
+669|LadyoftheLake|Caerleon|LadyoftheLake|RainbowS|1183607|640247|9056|390|Ter|4:6:4
+670|aNgRyDuCk|VOYEURISM|aNgRyDuCk|Conspiracy|1129362|809022|5339|150|Ter|8:4:1
+671|Buntot|The Kambing|outtoride|Howling Rain|1113965|866765|4120|391|Xan|6:8:7
+672|Dominion|The_Dominion|Dominion|None|1113811|1089211|410|209|Xan|7:8:4
+673|Ideafix|untouchable|Ideafix|Apprime|1109401|457981|10857|280|Xan|9:1:8
+674|Searoth|Royalspalace|Royalsking|None|1069115|548315|8680|376|Cat|7:6:1
+675|Xyphistor|Phiorstyx|Xyphistor|Ultores|1038434|472454|9433|198|Ter|1:4:5
+676|4MOTION|Cupra|4MOTION|None|985447|752347|3885|538|Xan|2:7:8
+677|gide|fakker|gide|Conspiracy|960111|903051|951|301|Zik|4:6:1
+678|[VtS]Vegeta|Winning|[VtS]Vegeta|Astatores|914915|778475|2274|162|Ter|9:1:3
+679|DragonGeneral|Draconia|DragonGeneral|None|893701|663601|3835|159|Ter|200:18:2
+680|Snitch|Stitch|Snitch|None|883135|860275|381|152|Cat|7:2:7
+681|atomz|Atom|atomz|None|867741|854721|217|191|Ter|10:9:9
+682|Viper|Maverick|kudzu|FAnG|845541|756201|1489|189|Etd|7:2:1
+683|glennwiz|DevZone|glennwiz|None|826551|821391|86|95|Ter|2:10:8
+684|a117yogi|AE|a117yogi|None|776708|668108|1810|105|Zik|7:6:9
+685|Markb|IRC|Markb|PATSA|757670|743810|231|56|Ter|1:1:2
+686|Jazz|The Autobots|obiwan|NewDawn|748549|202669|9098|100|Ter|2:1:9
+687|HELLO|KITTY|ProSc|None|747518|230378|8619|201|Ter|5:6:8
+688|Agrajag|Stavromula Beta|Will|Howling Rain|741646|277786|7731|200|Ter|1:7:2
+689|TugaMatos|SLB|TugaMatos|None|741196|677356|1064|429|Xan|1:10:4
+690|Windschreiter|Steelton|Windschreiter|None|727142|648962|1303|510|Ter|1:8:7
+691|StanManLit|Gunge|StanManLit|None|721009|603769|1954|491|Cat|3:1:6
+692|just_me|just_looking|[ND]Adama|None|639273|622593|278|100|Cat|2:6:8
+693|testres|Randomplanet|testres|bolian|633546|526386|1786|1000|Ter|6:5:4
+694|LordAndy|HaugaLan|LordAndy|None|620845|523885|1616|185|Ter|7:6:3
+695|Nras|Ofenerdiek|Nras|None|604550|594650|165|285|Ter|3:2:5
+696|Henk de Tank|HandigeHarrie|Thor_Odinson|None|573287|473087|1670|582|Ter|5:4:8
+697|iMarius|Dune|iMarius|None|540436|506176|571|231|Cat|2:8:8
+698|Finrod|Nargothrond|Finrod|None|510971|489911|351|381|Cat|3:3:5
+699|Sek|Stekt|Egheh|None|481895|449855|534|219|Cat|8:1:1
+700|Hyperion|Hyperionus|Hyperion|None|481738|461098|344|166|Zik|4:5:8
+701|Dark Legion|Dark Star|Dark Legion|CatZ|443683|424123|326|469|Xan|9:5:8
+702|Feydrauter|Horst|Feydrauter|None|428643|398763|498|424|Ter|9:8:3
+703|Incogni87|Omikron|Knowledge|None|385469|385469|0|132|Ter|7:8:7
+704|DRDragon|Apple|DRDragon|None|385083|349983|585|296|Ter|5:1:7
+705|Atzimot|Brasov|Atzimot|None|384603|374163|174|297|Cat|5:3:7
+706|Archmage|Ymitury|Pit|Howling Rain|366530|158570|3466|198|Ter|1:6:4
+707|masgon|Baa|masgon|None|291780|291780|0|138|Etd|10:8:8
+708|Blah|Blah|mPulse|None|225060|225060|0|138|Xan|5:1:6
+709|Doxxistor|Fskoia|Doxxistor|None|223071|223071|0|147|Ter|6:8:4
+710|DiasAida|Midgar|DiasAida|None|221806|203806|300|450|Xan|8:9:8
+711|Celan|Cenera|Celan|None|216472|215272|20|167|Etd|2:10:9
+712|kjsdfkjs|sadlkfjsflkj|Sebace|None|216110|216110|0|90|Ter|2:6:1
+713|Rafiki|WiseRafiki|Rafiki|None|212242|212242|0|150|Ter|8:9:3
+714|dgtjmartin|Barzaaria|dgtjmartin|None|212105|212105|0|147|Xan|8:4:3
+715|Miranda|Im here dont worry|Vistion|Howling Rain|206145|192105|234|300|Xan|8:8:3
+716|Tekbear|Baal Secundus|Tekbear|None|205755|173355|540|500|Xan|10:3:2
+717|CONF|CONF|CONF|None|201233|201233|0|135|Cat|7:2:8
+718|Pandaerus|Tigal|Pandaerus|None|200559|200559|0|147|Zik|200:14:1
+719|Riki_tiki_tavi|First planet|Riki_tiki_tavi|None|200177|200177|0|138|Ter|3:4:7
+720|crasynobbis|maraleasrevenge|crasynobbis|None|198120|198120|0|153|Cat|3:3:2
+721|Claybot|Omicron Persei 3|Claybot|None|189528|189528|0|156|Ter|7:6:5
+722|useroverride|useroverride|useroverride|Howling Rain|173445|149085|406|534|Xan|7:9:7
+723|aldin|Krahen|aldin|None|172659|172659|0|129|Zik|200:13:1
+724|new|world|Oba|None|164395|164395|0|150|Zik|7:6:4
+725|Maul|Sin|Maul|None|156140|156140|0|153|Cat|200:19:1
+726|miroto1998|Sharklsok|miroto1998|None|154460|154460|0|129|Cat|200:7:1
+727|x3|Ten|x3|None|152970|152970|0|153|Ter|1:6:5
+728|udgauf|fjfjtdtu|Urge|None|145540|145540|0|144|Ter|200:2:1
+729|SerbZ|SerbZ|SerbZ|None|143060|143060|0|141|Ter|200:16:1
+730|LORRY BRAKE DISK|ALMOST KILLED DAV|euler|None|142092|142092|0|0|Cat|200:3:3
+731|figar|Magrathea|figar|None|141300|141300|0|138|Zik|200:15:1
+732|Sembado|Sembadoeia|Sembado|None|136720|136720|0|171|Ter|200:10:1
+733|Wyzevice|Shaazar|Wyzevice|None|135155|135155|0|159|Zik|5:3:4
+734|Skydivenaked|Round Off|Skydivenaked|None|130990|130990|0|162|Etd|200:1:2
+735|morwind|Damnation|morwind|None|89910|89910|0|174|Zik|10:7:8
+736|puy|ptya|njeb|None|84730|84730|0|174|Ter|7:2:3
+737|Pasyyl|Tetragrammaton|Pasyyl|None|44140|44140|0|0|Ter|200:17:1
+738|CKeurgia|Giavulwan|CKeurgia|None|34990|34990|0|42|Etd|200:18:1
+739|Lunar_Lamp|The Server Hamsters|Lunar_Lamp|None|23211|23211|0|0|Ter|1:1:3
+740|Martian Fish|Mars Aqueous|Rokkan|None|2850|2850|0|0|Ter|200:11:51
