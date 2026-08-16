@@ -58,10 +58,14 @@ order across the whole file.
   Debounced (300ms) input listener re-fetches and swaps `#planets-results`
   via `history.replaceState` instead of a real navigation. The plain
   `<form>` still works untouched with JS off -- same GET, same URL.
-- **Command-style search shortcuts.** The header search already
-  disambiguates `x:y:z` / `x:y` / free text. Extend the grammar: `@name`
-  jumps straight to an alliance page, `#123` jumps to a rank position.
-  Keeps the single-input "prompt" metaphor instead of adding more UI.
+- ~~**Command-style search shortcuts.**~~ **Done.** `@name` redirects to
+  the matching alliance (exact/prefix/substring tiers, same as the bot's
+  `!lookup`); `#123` redirects to whoever currently holds that score
+  rank. Both work from the header search (plain navigation) and the
+  on-page `/web/planets` search -- the latter's live-filter JS treats
+  `@`/`#` as an exemption, letting the form submit for real instead of
+  a per-keystroke fetch, since a redirect mid-typing or fetch()
+  silently following one would both be wrong.
 - **Recent-searches memory.** Store the last few header-search queries in
   `localStorage` and show them as a dropdown on focus -- no backend
   change, just a few lines of JS, and it's the kind of thing that gets

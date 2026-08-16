@@ -740,6 +740,44 @@ async def galaxy_detail(
     )
 
 
+async def _find_alliance_by_name(conn: Connection, tick_id: int, name: str) -> Record | None:
+    """Exact match first, then prefix, then substring -- same tiered fallback as the
+    bot's !lookup (btk/bot/cogs/intel.py's _find_alliance_stat), reused here for the
+    header search's `@name` shortcut."""
+    for pattern in (name, f"{name}%", f"%{name}%"):
+        row = await conn.fetchrow(
+            """
+            SELECT a.id, a.name
+            FROM alliance_stat s
+            JOIN alliance a ON a.id = s.alliance_id
+            WHERE s.tick_id = $1 AND a.name ILIKE $2
+            ORDER BY a.name
+            LIMIT 1
+            """,
+            tick_id,
+            pattern,
+        )
+        if row is not None:
+            return row
+    return None
+
+
+async def _planet_id_at_rank(conn: Connection, tick_id: int, rank: int) -> int | None:
+    """The planet currently holding a given score rank -- backs the header search's
+    `#123` shortcut ("jump to whoever's #123 right now")."""
+    return await conn.fetchval(
+        """
+        WITH ranked AS (
+            SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
+            FROM planet_stat WHERE tick_id = $1
+        )
+        SELECT planet_id FROM ranked WHERE rank = $2 LIMIT 1
+        """,
+        tick_id,
+        rank,
+    )
+
+
 @router.get("/web/planets")
 async def planets_list(
     request: Request,
@@ -757,6 +795,43 @@ async def planets_list(
         tick_row = await _latest_tick(conn, round_row["id"])
     if tick_row:
         q = q.strip()
+        # "@name" / "#123" are command-style shortcuts on top of the normal
+        # coord/galaxy/name search below -- @ jumps straight to an alliance,
+        # # jumps to whoever currently holds that score rank. An unresolved
+        # command falls through to the ordinary empty-results state rather
+        # than being searched as literal text (an alliance name almost never
+        # collides with a real planet/ruler name starting with "@" or "#").
+        command_redirect = None
+        if q.startswith("@") and len(q) > 1:
+            alliance = await _find_alliance_by_name(conn, tick_row["id"], q[1:].strip())
+            command_redirect = f"/web/alliances/{alliance['id']}" if alliance else False
+        elif q.startswith("#") and len(q) > 1 and q[1:].isdigit():
+            planet_id = await _planet_id_at_rank(conn, tick_row["id"], int(q[1:]))
+            command_redirect = f"/web/planets/{planet_id}" if planet_id else False
+        if command_redirect:
+            return RedirectResponse(command_redirect, status_code=303)
+        if command_redirect is False:
+            return templates.TemplateResponse(
+                request,
+                "planets_list.html",
+                {
+                    "round": round_row,
+                    "planets": [],
+                    "q": q,
+                    "page": page,
+                    "total": 0,
+                    "page_size": PLANET_LIST_PAGE_SIZE,
+                    "paginated": False,
+                    "user": user,
+                    "show_flags": False,
+                    "show_alliance": False,
+                    "show_nick": False,
+                    "show_amps": False,
+                    "show_dists": False,
+                    "show_comment_column": False,
+                    "uniform_comment": None,
+                },
+            )
         coord_match = PLANET_COORD_RE.fullmatch(q)
         galaxy_match = None if coord_match else GALAXY_COORD_RE.fullmatch(q)
         if coord_match:
