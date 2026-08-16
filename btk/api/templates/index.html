@@ -77,7 +77,7 @@
     <tbody>
         {% for p in watched_planets %}
         <tr>
-            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }} &mdash; {{ p.ruler_name }}</a></td>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }} &mdash; {{ p.ruler_name }}</a> <span class="tag quiet">planet</span></td>
             <td class="num">#{{ p.rank }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num">{{ macros.delta(p.score_delta) }}</td>
@@ -93,7 +93,7 @@
         {% endfor %}
         {% for a in watched_alliances %}
         <tr>
-            <td><a href="/web/alliances/{{ a.id }}">{{ a.name }}</a></td>
+            <td><a href="/web/alliances/{{ a.id }}">{{ a.name }}</a> <span class="tag quiet">alliance</span></td>
             <td class="num">#{{ a.rank }} {{ macros.rank_change(a.rank_delta) }}</td>
             <td class="num">{{ "{:,}".format(a.total_score) }}</td>
             <td class="num">{{ macros.delta(a.score_delta) }}</td>
@@ -202,7 +202,7 @@
 </div>
 {% endif %}
 
-<p class="links-line"><a href="/status/game">Live game status</a> &middot; <a href="/docs">JSON API docs</a></p>
+<p class="links-line"><a href="/status/game">Live game status</a>{% if user %} &middot; <a href="/docs">JSON API docs</a>{% endif %}</p>
 
 <script>
     // PA ticks hourly, 1 minute past the hour (UTC) -- no server round-trip

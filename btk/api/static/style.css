@@ -659,8 +659,24 @@ h2 {
    is otherwise invisible on desktop where nothing overflows.
    */
 .table-scroll {
+    position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+/* A table that overflows its box has no other hint it does -- the last
+   column just gets clipped with nothing to suggest swiping for more.
+   A quiet fade on the trailing edge is the standard affordance for that;
+   harmless to render even when a table happens to fit with no overflow. */
+.table-scroll::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1.5rem;
+    background: linear-gradient(to right, transparent, var(--bg));
+    pointer-events: none;
 }
 
 table {
@@ -816,7 +832,10 @@ td.rank-top {
     color: var(--fg-faint);
 }
 
-.search-form button {
+/* Shared "primary action" button -- bordered outline, inverts on hover.
+   Used wherever a form's main action needs a button, not a link (Query,
+   Save intel, ...). One declaration so every such button stays in sync. */
+.btn {
     background: none;
     color: var(--fg);
     border: 1px solid var(--fg);
@@ -829,7 +848,7 @@ td.rank-top {
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.search-form button:hover {
+.btn:hover {
     background: var(--fg);
     color: var(--bg);
 }
@@ -1000,24 +1019,6 @@ td.rank-top {
 .intel-form input:focus, .intel-form select:focus, .intel-form textarea:focus {
     outline: none;
     border-color: var(--fg);
-}
-
-.intel-form button[type="submit"] {
-    background: none;
-    color: var(--fg);
-    border: 1px solid var(--fg);
-    padding: 0.4rem 0.9rem;
-    font-family: var(--font-data);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.intel-form button[type="submit"]:hover {
-    background: var(--fg);
-    color: var(--bg);
 }
 
 /* ---------- "you" panel (homepage, logged-in members only) ---------- */

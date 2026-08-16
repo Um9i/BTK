@@ -8,7 +8,7 @@
 <form class="search-form" method="get" action="/web/planets" id="planets-form">
     <span class="prompt">&gt;</span>
     <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler{% if user %}/nick{% endif %} name" autocomplete="off" id="planets-query">
-    <button type="submit">Query</button>
+    <button type="submit" class="btn">Query</button>
 </form>
 <p class="subtitle">Shortcuts: <code>@name</code> jumps to an alliance, <code>#123</code> jumps to whoever holds rank 123 right now.</p>
 <div id="planets-results">
