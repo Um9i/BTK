@@ -66,10 +66,11 @@ order across the whole file.
   `@`/`#` as an exemption, letting the form submit for real instead of
   a per-keystroke fetch, since a redirect mid-typing or fetch()
   silently following one would both be wrong.
-- **Recent-searches memory.** Store the last few header-search queries in
-  `localStorage` and show them as a dropdown on focus -- no backend
-  change, just a few lines of JS, and it's the kind of thing that gets
-  used constantly by anyone actively scouting.
+- ~~**Recent-searches memory.**~~ **Done.** Last 6 header-search queries
+  (deduped, most recent first) saved to `localStorage` on submit, shown
+  as a dropdown on focus -- pure client-side, no backend change. Wrapped
+  the search form in `.header-search-wrap` (`position: relative`) so the
+  dropdown anchors under the box instead of the whole header row.
 
 ## Personalization ("You" panel and beyond)
 

@@ -21,11 +21,14 @@
     <header class="mission-bar">
         <div class="mission-bar-inner">
             <a class="wordmark" href="/">BTK</a>
-            <form class="header-search" method="get" action="/web/planets">
-                <span class="prompt">&gt;</span>
-                <input id="site-search" type="text" name="q" placeholder="planet, ruler{% if user %}, nick{% endif %}, x:y:z or x:y&hellip;" autocomplete="off">
-                <span class="tag kbd-hint" aria-hidden="true">/</span>
-            </form>
+            <div class="header-search-wrap">
+                <form class="header-search" method="get" action="/web/planets" id="header-search-form">
+                    <span class="prompt">&gt;</span>
+                    <input id="site-search" type="text" name="q" placeholder="planet, ruler{% if user %}, nick{% endif %}, x:y:z or x:y&hellip;" autocomplete="off">
+                    <span class="tag kbd-hint" aria-hidden="true">/</span>
+                </form>
+                <ul id="recent-searches" class="recent-dropdown" hidden></ul>
+            </div>
             <div class="nav-controls">
                 {% if user %}
                 <span class="account">
@@ -68,6 +71,69 @@
                 input.addEventListener("focus", function () { hint.style.display = "none"; });
                 input.addEventListener("blur", function () { hint.style.display = ""; });
             }
+        })();
+        // Remember the last few header-search queries in localStorage and
+        // offer them back as a dropdown on focus -- no backend involved,
+        // this is purely a per-browser convenience for repeated lookups.
+        (function () {
+            var STORAGE_KEY = "btk_recent_searches";
+            var MAX_ENTRIES = 6;
+            var form = document.getElementById("header-search-form");
+            var input = document.getElementById("site-search");
+            var list = document.getElementById("recent-searches");
+            if (!form || !input || !list) return;
+
+            function load() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                } catch (e) {
+                    return [];
+                }
+            }
+            function remember(q) {
+                q = q.trim();
+                if (!q) return;
+                var items = load().filter(function (v) { return v.toLowerCase() !== q.toLowerCase(); });
+                items.unshift(q);
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_ENTRIES)));
+                } catch (e) {
+                    // Storage full or disabled (private browsing) -- not worth surfacing.
+                }
+            }
+            function render() {
+                var items = load();
+                list.innerHTML = "";
+                if (!items.length) {
+                    list.hidden = true;
+                    return;
+                }
+                items.forEach(function (q) {
+                    var li = document.createElement("li");
+                    var btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = q;
+                    // mousedown (not click) fires before the input's blur, so the
+                    // dropdown is still open and readable when this handler runs.
+                    btn.addEventListener("mousedown", function (e) {
+                        e.preventDefault();
+                        input.value = q;
+                        form.submit();
+                    });
+                    li.appendChild(btn);
+                    list.appendChild(li);
+                });
+                list.hidden = false;
+            }
+
+            form.addEventListener("submit", function () { remember(input.value); });
+            input.addEventListener("focus", render);
+            input.addEventListener("blur", function () {
+                setTimeout(function () { list.hidden = true; }, 100);
+            });
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") list.hidden = true;
+            });
         })();
         (function () {
             var btn = document.getElementById("theme-toggle");
