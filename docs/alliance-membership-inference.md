@@ -1506,6 +1506,47 @@ hand as it was here.
 planets across 20 alliances (adding BBQQ's 28 confirmed to the Fifth
 pass's 109; one slot deliberately left unresolved).
 
+## Seventh pass (2026-08-16, continued): KittenZ — a full-round win, and a reminder that short windows can be genuinely ambiguous, not just idle-slot ambiguous
+
+KittenZ (40 members, constant the entire round) has the same profile as
+VGN in the Fifth pass: a counted-score gap that moves at nearly every
+tick, which the pre-fund model has no way to distinguish from continuous
+swap churn. It's also a familiar name in this doc for the wrong reasons —
+the Third pass specifically singled out KittenZ's old `INFEASIBLE`
+results as ones that "evaporated into `UNKNOWN`" once an unverified
+exclusion set was removed, and the original (pre-wipe) session had it at
+only 39 of 40 confirmed. Both of those predate the fund correction.
+
+Following the Fifth pass's VGN playbook, the recent 15-tick window
+(200-214) was tried first — and came back `OPTIMAL` but genuinely **not
+unique**: the second solution found by the uniqueness probe differs from
+the first in far more than one planet, which rules out the BBQQ-style
+single-idle-slot explanation. This is a useful negative data point on its
+own: not every short-window ambiguity is an idle-planet artifact, so a
+`NOT UNIQUE` result shouldn't be reflexively treated as "probably fine,
+just re-run the idle check" — sometimes the window is simply too short,
+exactly as the doc's small-windows-are-harder finding predicts.
+
+Skipping straight to the **full 201-tick window** (rather than bisecting
+up from 15 ticks) resolved this in one step: `OPTIMAL` in 6.0 seconds, and
+the uniqueness probe `INFEASIBLE` — unique across the entire round, no
+tick exclusions needed (unlike VGN's tick-59 anomaly). The roster was also
+checked for BBQQ-style fully-idle members before inserting; none of the
+40 are `(size=0, xp=0)` for the whole window, so this roster has no
+unresolved slot.
+
+**Practical upshot:** when a short recent window comes back `NOT UNIQUE`
+for an alliance with no known join history (so there's no longest-interval
+trick to fall back on, per the Fourth pass's Chocolate Starfish approach),
+don't assume it's just an idle-slot problem — try the full round window
+directly. It costs one more solve (a few seconds, per every result so far
+this round) and, if the alliance really had no visible churn, resolves
+the ambiguity outright rather than requiring a bisection search.
+
+**Running total on the live round-118 database after this pass:** 177
+planets across 21 alliances (adding KittenZ's full 40 to the Sixth pass's
+137).
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
