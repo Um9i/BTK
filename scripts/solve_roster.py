@@ -5,6 +5,7 @@ Usage:
     uv run btk-solve-roster "PussycatZ" 95 213 --round 118
     uv run btk-solve-roster "Chocolate Starfish" 69 197 \\
         --force-in z9jbog80 --insert --updated-by <discord_user_id>
+    uv run btk-solve-roster "Tal Shiar" 186 213 --extend       # check outside the window too
 
 `btk-verify-rosters` proves 1- and 2-member alliances by exact index lookup;
 beyond that the search space needs a real solver. This is exact subset-sum
@@ -21,7 +22,8 @@ where the alliance has this member count -- the more ticks, the tighter the
 search, since a spurious subset that satisfies one tick's equations almost
 never satisfies the next tick's too.
 
-TWO THINGS THAT MATTER FOR A CORRECT SOLVE, learned the hard way:
+THREE THINGS THAT MATTER FOR A CORRECT SOLVE, learned the hard way and now
+built in rather than left as manual follow-ups:
 
 1. EXCLUDE PLANETS ALREADY CLAIMED ELSEWHERE. By default the candidate pool
    drops any planet already confirmed to a *different* alliance in
@@ -41,16 +43,34 @@ TWO THINGS THAT MATTER FOR A CORRECT SOLVE, learned the hard way:
    gap; the interval between two consecutive joins is the longest window at
    a fixed count, and its solution is a strict subset of every later
    roster -- so solve there, then union in the known joiners named by
-   `btk-find-joiners` to reach the current roster (see docs for the CS
-   round-trip: 21-of-342 unique over 129 ticks, versus ambiguous over the
-   current 16).
+   `btk-find-joiners` to reach the current roster.
 
-Every solve should be followed by a UNIQUENESS PROBE: re-solve with the
-found set's members forbidden (sum <= n-1). INFEASIBLE proves the roster is
-the only one consistent with every tick in the window; a second OPTIMAL
-means the window was too short and the result must not be trusted or
-inserted. This script always runs the probe and refuses to report a result
-as confirmed unless it comes back INFEASIBLE.
+3. A FULLY IDLE MEMBER (size=0, xp=0 for the whole window) IS INVISIBLE TO
+   THE EQUATIONS. Its `value` only needs to fit inside the fund slack, not
+   match exactly, so any other equally idle planet can silently substitute
+   -- this is a worse version of the "generic idle planet" ambiguity
+   (BBQQ's 151-tick window had 15 mutually-substitutable idle candidates
+   for one slot). After confirming uniqueness, this script automatically
+   detects any solved member that's idle for the entire window, excludes
+   every idle candidate in the pool, and re-solves at the same N: if that
+   comes back INFEASIBLE, the non-idle members are proven and the idle
+   slot(s) are reported and left out of the insert rather than guessed.
+   Pass --no-check-idle to skip this (matching the pre-automation behavior).
+
+Every solve is followed by a UNIQUENESS PROBE: re-solve with the found set's
+members forbidden (sum <= n-1). INFEASIBLE proves the roster is the only one
+consistent with every tick in the window; a second OPTIMAL means the window
+was too short and the result must not be trusted or inserted.
+
+--extend checks the confirmed roster against every tick in the WHOLE round,
+not just [lo, hi] -- useful both to see how far a "zero churn" result
+actually extends (Imperium and Pink Fluffy Unicorns held for all 201 ticks
+of round 118; VGN held for all but one anomalous tick) and to catch a
+departure or arrival the moment it happens: at any tick just outside the
+window where the alliance's member count is exactly N-1 or N+1, it tries
+every single-planet removal or addition and reports a unique match by name
+(this is how Tal Shiar's tick-214 departure, v1dl47xr, was identified and
+its now-stale planet_intel row removed).
 """
 
 import argparse
@@ -144,9 +164,63 @@ async def load(
     }
 
 
+async def load_full(conn: asyncpg.Connection, round_id: int, alliance: str) -> dict[str, Any]:
+    """Like `load`, but unbounded by any tick window -- every tick in the round for both the
+    alliance's history and every planet's stats. Used by --extend, which needs to see ticks
+    outside [lo, hi] to check how far a solved roster holds and to catch departures/arrivals.
+    Kept separate from `load` so the common path (solve a window) stays a cheap, bounded query.
+    """
+    async with conn.transaction(isolation="repeatable_read", readonly=True):
+        alliance_rows = await conn.fetch(
+            """
+            SELECT t.number AS tick, ast.members, ast.size, ast.total_score, ast.total_value
+            FROM alliance_stat ast
+            JOIN alliance a ON a.id = ast.alliance_id
+            JOIN tick t ON t.id = ast.tick_id
+            WHERE t.round_id = $1 AND a.name = $2
+            ORDER BY t.number
+            """,
+            round_id,
+            alliance,
+        )
+        planet_rows = await conn.fetch(
+            """
+            SELECT p.external_id, t.number AS tick, ps.size, ps.xp, ps.value
+            FROM planet_stat ps
+            JOIN planet p ON p.id = ps.planet_id
+            JOIN tick t ON t.id = ps.tick_id
+            WHERE t.round_id = $1 AND p.round_id = $1
+            """,
+            round_id,
+        )
+
+    stats: dict[str, dict[int, tuple[int, int, int]]] = {}
+    for r in planet_rows:
+        stats.setdefault(r["external_id"], {})[r["tick"]] = (r["size"], r["xp"], r["value"])
+
+    history = [
+        {
+            "tick": r["tick"],
+            "members": r["members"],
+            "size": r["size"],
+            "xp": (r["total_score"] - r["total_value"]) // 60,
+            "value_cap": r["total_value"],
+        }
+        for r in alliance_rows
+    ]
+
+    return {"stats": stats, "history": history}
+
+
 def build_model(
-    data: dict[str, Any], force_in: set[str], exclude_claimed: bool
+    data: dict[str, Any],
+    force_in: set[str],
+    exclude_claimed: bool,
+    extra_exclude: set[str] = frozenset(),
 ) -> tuple[cp_model.CpModel, dict[str, Any], list[dict[str, Any]], list[str]]:
+    """`extra_exclude` is orthogonal to `exclude_claimed` -- it's how the idle-member check
+    removes idle candidates from the pool for a re-solve without touching the claimed-elsewhere
+    exclusion the caller already chose."""
     history = data["history"]
     stats = data["stats"]
     ticks = [r["tick"] for r in history]
@@ -157,7 +231,7 @@ def build_model(
             "narrow the window to a span with no join/leave (see btk-find-joiners)"
         )
 
-    pool = data["claimed_elsewhere"] if exclude_claimed else set()
+    pool = (data["claimed_elsewhere"] if exclude_claimed else set()) | extra_exclude
     cands = [e for e, by in stats.items() if all(t in by for t in ticks) and e not in pool]
 
     m = cp_model.CpModel()
@@ -181,6 +255,92 @@ def solve(model: cp_model.CpModel, time_limit: float) -> tuple[cp_model.CpSolver
     solver.parameters.num_search_workers = 12
     solver.parameters.max_time_in_seconds = time_limit
     return solver, solver.Solve(model)
+
+
+def find_idle_members(data: dict[str, Any], roster: set[str], lo: int, hi: int) -> set[str]:
+    """Members of `roster` that are (size=0, xp=0) at every tick in [lo, hi] -- invisible to the
+    exact size/xp equations, so any other equally idle planet could silently substitute."""
+    stats = data["stats"]
+    ticks = range(lo, hi + 1)
+    return {
+        c
+        for c in roster
+        if all(t in stats.get(c, {}) and stats[c][t][0] == 0 and stats[c][t][1] == 0 for t in ticks)
+    }
+
+
+def find_idle_candidates(
+    data: dict[str, Any], lo: int, hi: int, exclude: set[str] = frozenset()
+) -> set[str]:
+    """Every candidate in the pool (not just the solved roster) that is (size=0, xp=0) at every
+    tick in [lo, hi] -- the full set an idle roster member is indistinguishable from."""
+    stats = data["stats"]
+    ticks = range(lo, hi + 1)
+    return {
+        c
+        for c, by in stats.items()
+        if c not in exclude and all(t in by and by[t][0] == 0 and by[t][1] == 0 for t in ticks)
+    }
+
+
+def reconcile(
+    stats: dict[str, dict[int, tuple[int, int, int]]], roster: set[str], target: dict[str, Any]
+) -> tuple[bool, int | None]:
+    """Check whether `roster` matches one alliance_stat row exactly: size and xp exact, value
+    within the fund's slack. `target` is one row from a `history` list."""
+    if target["members"] != len(roster):
+        return False, None
+    rows = []
+    for c in roster:
+        by = stats.get(c, {})
+        if target["tick"] not in by:
+            return False, None
+        rows.append(by[target["tick"]])
+    size = sum(r[0] for r in rows)
+    xp = sum(r[1] for r in rows)
+    value = sum(r[2] for r in rows)
+    fund = target["value_cap"] - value
+    ok = size == target["size"] and xp == target["xp"] and 0 <= fund <= FUND_MAX_VALUE
+    return ok, fund
+
+
+def extend_check(full: dict[str, Any], roster: set[str]) -> list[dict[str, Any]]:
+    """Check a solved `roster` against every tick in the alliance's full round history."""
+    results = []
+    for target in full["history"]:
+        ok, fund = reconcile(full["stats"], roster, target)
+        results.append(
+            {"tick": target["tick"], "ok": ok, "members": target["members"], "fund": fund}
+        )
+    return results
+
+
+def find_single_change(
+    full: dict[str, Any], roster: set[str], tick: int, exclude: set[str] = frozenset()
+) -> set[str]:
+    """At `tick`, find every single-planet change to `roster` -- one member leaving, or one
+    outside planet joining -- that makes it reconcile exactly. Tries removals if the alliance's
+    real member count was one lower at this tick, additions if one higher; anything else returns
+    empty, since a single-planet change can't explain a bigger jump."""
+    target = next((r for r in full["history"] if r["tick"] == tick), None)
+    if target is None:
+        return set()
+    delta = target["members"] - len(roster)
+    stats = full["stats"]
+    found = set()
+    if delta == -1:
+        for c in roster:
+            ok, _ = reconcile(stats, roster - {c}, target)
+            if ok:
+                found.add(c)
+    elif delta == 1:
+        for c in stats:
+            if c in roster or c in exclude:
+                continue
+            ok, _ = reconcile(stats, roster | {c}, target)
+            if ok:
+                found.add(c)
+    return found
 
 
 async def run(args: argparse.Namespace) -> None:
@@ -222,6 +382,64 @@ async def run(args: argparse.Namespace) -> None:
             return
         print(f"UNIQUE -- confirmed over {len(history)} ticks ({args.lo}-{args.hi})")
 
+        confirmed = set(picked)
+        if not args.no_check_idle:
+            idle_in_solution = find_idle_members(data, confirmed, args.lo, args.hi)
+            if idle_in_solution:
+                idle_pool = find_idle_candidates(data, args.lo, args.hi)
+                print(
+                    f"\n{len(idle_in_solution)} solved member(s) are fully idle (size=0, xp=0) "
+                    f"for the whole window: {sorted(idle_in_solution)}"
+                )
+                print(
+                    f"{len(idle_pool)} candidate(s) in the pool share that profile -- "
+                    "re-solving with all of them excluded to check the rest is still forced..."
+                )
+                model3, _x3, _, _cands3 = build_model(
+                    data, force_in, not args.no_exclude_claimed, extra_exclude=idle_pool
+                )
+                solver3, status3 = solve(model3, args.time)
+                print(f"status: {solver3.StatusName(status3)} ({solver3.WallTime():.1f}s)")
+                if status3 == cp_model.INFEASIBLE:
+                    confirmed -= idle_in_solution
+                    print(
+                        f"INFEASIBLE -- confirms the other {len(confirmed)} member(s); the idle "
+                        f"slot(s) are left unresolved rather than guessed among {len(idle_pool)} "
+                        "indistinguishable candidates"
+                    )
+                else:
+                    print(
+                        "did not come back INFEASIBLE -- the idle ambiguity does not cleanly "
+                        "isolate to just the idle slot(s); treat this roster as unconfirmed"
+                    )
+                    return
+
+        if args.extend:
+            print("\n--extend: checking the confirmed roster against the whole round...")
+            full = await load_full(conn, data["round_id"], args.alliance)
+            results = extend_check(full, confirmed)
+            failing = [r for r in results if not r["ok"]]
+            print(
+                f"{len(results) - len(failing)} of {len(results)} ticks reconcile; "
+                f"{len(failing)} do not"
+            )
+            for r in failing:
+                note = ""
+                if r["members"] != len(confirmed):
+                    changed = find_single_change(full, confirmed, r["tick"])
+                    if len(changed) == 1:
+                        (ext,) = changed
+                        kind = "joined" if r["members"] > len(confirmed) else "left"
+                        note = f" -- single-planet change identified: {ext} {kind} at this tick"
+                    elif changed:
+                        note = (
+                            f" -- {len(changed)} candidates could explain this: {sorted(changed)}"
+                        )
+                print(
+                    f"   tick {r['tick']:>4}  alliance has {r['members']} members "
+                    f"(roster has {len(confirmed)}){note}"
+                )
+
         if args.insert:
             if args.updated_by is None:
                 raise SystemExit("--insert requires --updated-by <discord_user_id>")
@@ -232,7 +450,7 @@ async def run(args: argparse.Namespace) -> None:
                 f"Found by btk-solve-roster."
             )
             async with conn.transaction():
-                for ext in picked:
+                for ext in sorted(confirmed):
                     await conn.execute(
                         """
                         INSERT INTO planet_intel (planet_id, nick, alliance, comment, updated_by)
@@ -251,7 +469,7 @@ async def run(args: argparse.Namespace) -> None:
                         data["round_id"],
                         ext,
                     )
-            print(f"inserted/updated {len(picked)} planet_intel rows")
+            print(f"inserted/updated {len(confirmed)} planet_intel rows")
         else:
             print("(read-only; pass --insert --updated-by <id> to write planet_intel)")
     finally:
@@ -272,6 +490,17 @@ def main() -> None:
         "--no-exclude-claimed",
         action="store_true",
         help="do NOT drop planets already confirmed to a different alliance (see docstring)",
+    )
+    ap.add_argument(
+        "--no-check-idle",
+        action="store_true",
+        help="skip auto-detecting fully-idle roster members and re-proving without them",
+    )
+    ap.add_argument(
+        "--extend",
+        action="store_true",
+        help="check the confirmed roster against every tick in the whole round, and try to "
+        "identify single-planet joins/leaves at any tick where it stops reconciling",
     )
     ap.add_argument("--insert", action="store_true", help="write results to planet_intel")
     ap.add_argument("--updated-by", type=int, default=None, help="discord user id for insert")
