@@ -1435,13 +1435,19 @@ was still wrong, because pool size was never the problem — the equations
 were.
 
 **Possible follow-ups, not done this pass:**
-- Give `btk-solve-roster` a `--find-break` mode that bisects a
-  `NOT UNIQUE`/`INFEASIBLE` window automatically to the offending tick(s),
-  instead of the manual backward-extension check done here by hand.
+- ~~Give `btk-solve-roster` a `--find-break` mode that bisects a
+  `NOT UNIQUE`/`INFEASIBLE` window automatically to the offending
+  tick(s), instead of the manual backward-extension check done here by
+  hand.~~ **Done, later the same day:** `btk-solve-roster --extend`
+  (commit `00e7069`) checks a confirmed roster against every tick in the
+  whole round via a new unbounded `load_full()` query and reports every
+  failing tick, rather than requiring the manual per-alliance script this
+  pass used. It's a full scan rather than a true bisection, but at ~200
+  ticks per round that distinction doesn't matter in practice.
 - Investigate whether tick 59's off-by-3 xp anomaly recurs elsewhere in
   the round (a single bad ingest, or something structural about that
   tick's dump) — it was not chased further since it didn't block the
-  proof.
+  proof. Still open.
 
 **Running total on the live round-118 database after this pass:** 109
 planets across 19 alliances (adding VGN's 40 to the Fourth pass's 69).
@@ -1493,14 +1499,19 @@ exact-value comparison would. Re-solve with all such planets excluded
 from the pool and confirm the reduced problem is still feasible with the
 same member count minus the idle slot(s) — if `INFEASIBLE`, the remaining
 members are proven and the idle slot(s) should be reported as unresolved.
-`btk-solve-roster` does not yet automate this check (see follow-ups
-below).
+`btk-solve-roster` automates this check as of commit `00e7069` (see
+below) — the manual version described in this paragraph is what that
+automation replaced.
 
-**Possible follow-up:** teach `btk-solve-roster` to detect fully-idle
+~~**Possible follow-up:** teach `btk-solve-roster` to detect fully-idle
 members in its own solution automatically (scan the window for any
 selected candidate with `size=0` and `xp=0` at every tick) and re-run the
 exclusion-and-reprove step itself, rather than requiring it to be done by
-hand as it was here.
+hand as it was here.~~ **Done, later the same day:** `find_idle_members`
+and `find_idle_candidates` (commit `00e7069`) run automatically after
+every successful solve unless `--no-check-idle` is passed, doing exactly
+this — detect, exclude every idle candidate in the pool, re-solve at the
+same N, and report the idle slot(s) as unresolved on `INFEASIBLE`.
 
 **Running total on the live round-118 database after this pass:** 137
 planets across 20 alliances (adding BBQQ's 28 confirmed to the Fifth
@@ -1674,11 +1685,16 @@ goes stale the moment membership counts move for its own alliance at any
 tick after the row was written, including the tick the row was written
 on if data keeps arriving. Watching the just-solved alliance's own
 `members` column at the current tick (not just the window used to solve
-it) is cheap and would have caught this without being asked. Worth
-building into `btk-solve-roster` or a companion script as an automatic
-post-insert check rather than relying on being asked, per the
-follow-ups already logged for automating the idle-member check (Sixth
-pass) and the bisection-to-find-the-break check (Fifth pass).
+it) is cheap and would have caught this without being asked.
+
+**Done, later the same day (commit `00e7069`):** all three of this
+round's `btk-solve-roster` follow-ups — this one, the Fifth pass's
+bisection/extend check, and the Sixth pass's idle-member check — were
+promoted from manual, per-alliance scratchpad scripts into the committed
+script. `--extend` runs `find_single_change` at every tick outside the
+solved window where membership differs by exactly ±1 and reports a
+unique single-planet match by name; this is the same technique used by
+hand here to identify `v1dl47xr`, now available without being asked.
 
 **Roster (39, current):** the previously-listed 40 members minus
 `v1dl47xr`.
