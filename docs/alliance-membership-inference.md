@@ -1590,6 +1590,27 @@ disproof itself predates the fund fix.
 planets across 22 alliances (adding Imperium's full 40 to the Seventh
 pass's 177).
 
+## Ninth pass (2026-08-16, continued): Newdawn ft HR — a routine confirmation, and an old best-guess made exact
+
+Newdawn ft HR (40 members since a tick-25 join, 39 before it) followed the
+now-standard playbook without needing any special handling: the recent
+15-tick window (200-214) solved `OPTIMAL` in 1.1s, the uniqueness probe
+came back `INFEASIBLE` immediately, no member was fully idle, and
+extending the roster backward reconciled with zero mismatches across all
+190 ticks of the 40-member era (25-214) — with the expected, correct
+failures at ticks 14-24, when the alliance genuinely had only 39 members.
+
+Worth noting for the record: the original (2026-08-09, pre-wipe)
+session's results table lists Newdawn ft HR as a **best-guess** 40/40
+match from the GPU-search technique, explicitly flagged unconfirmed in
+its own `planet_intel` comments. This pass converts that into a properly
+proven, CP-SAT-unique result — the first time this specific alliance has
+had a real proof rather than a heuristic fit.
+
+**Running total on the live round-118 database after this pass:** 257
+planets across 23 alliances (adding Newdawn ft HR's full 40 to the Eighth
+pass's 217).
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
