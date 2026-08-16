@@ -28,11 +28,12 @@ order across the whole file.
   planet_id ...)`), not 5 round-trips. `col-secondary` like the other
   decorative columns, so it drops on mobile rather than crowding a
   narrow table.
-- **Growth rate, not just delta.** A raw `+57,821` score delta reads
-  differently on a planet that's been flat for days vs. one that's been
-  climbing every tick. A small "avg/tick over last N ticks" figure next
-  to the raw delta would separate one-off events (combat, a single big
-  build) from sustained momentum.
+- ~~**Growth rate, not just delta.**~~ **Done.** Added `macros.avg_rate()`
+  next to the Score vital on planet/alliance/galaxy detail pages -- mean
+  of the last 10 ticks' score deltas, computed in Python from the
+  history rows already fetched for the sparkline (no extra query).
+  Deliberately unstyled/no color (`.rate`, `--fg-faint`) so it reads as
+  context next to the raw delta, not a second result competing with it.
 - **Galaxy-cluster occupancy map.** A compact monospace grid -- one row
   per galaxy, one glyph per planet slot, colored/weighted by whether it's
   occupied and which alliance holds it -- would make "where is everyone"

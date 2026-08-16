@@ -38,6 +38,15 @@
     {%- endif -%}
 {%- endmacro %}
 
+{% macro avg_rate(value, window) -%}
+    {#- A single tick's delta doesn't say whether it's a one-off spike or
+    sustained growth -- this is the average of the last `window` ticks'
+    deltas, shown alongside the raw delta rather than replacing it. -#}
+    {%- if value is not none -%}
+    <span class="rate">avg {{ "{:+,.0f}".format(value) }}/tick ({{ window }}t)</span>
+    {%- endif -%}
+{%- endmacro %}
+
 {% macro coverage_pct(pct) -%}
     {%- if pct is not none -%}
         {#- Near 100 means the roster is complete and current. Well under means

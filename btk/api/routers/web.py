@@ -86,6 +86,16 @@ def _freshness(tick_row) -> dict:
     return {"live": False, "label": f"LAST SYNC {rel}"}
 
 
+AVG_RATE_WINDOW = 10
+
+
+def _avg_delta(history: list[dict], field: str, window: int = AVG_RATE_WINDOW) -> float | None:
+    """Mean of `<field>_delta` over the most recent `window` rows of a with_deltas() history
+    (newest first) -- None if there's nothing to average (e.g. a fresh round)."""
+    deltas = [h[f"{field}_delta"] for h in history[:window] if h[f"{field}_delta"] is not None]
+    return sum(deltas) / len(deltas) if deltas else None
+
+
 async def _current_round(conn: Connection):
     return await conn.fetchrow("SELECT id, number, name FROM round ORDER BY id DESC LIMIT 1")
 
@@ -374,6 +384,7 @@ async def alliance_detail(
         alliance_id,
     )
     history = with_deltas(history, ["rank", "size", "score", "total_score", "total_value"])
+    avg_score_delta = _avg_delta(history, "score")
     chronological = list(reversed(history))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
@@ -518,6 +529,7 @@ async def alliance_detail(
             "score_trend": score_trend,
             "total_score_trend": total_score_trend,
             "total_value_trend": total_value_trend,
+            "avg_score_delta": avg_score_delta,
             "user": user,
             "intel_planets": intel_planets,
             "intel_coverage": intel_coverage,
@@ -595,6 +607,7 @@ async def galaxy_detail(
         galaxy_id,
     )
     history = with_deltas(history, ["rank", "size", "score", "value", "xp"])
+    avg_score_delta = _avg_delta(history, "score")
     chronological = list(reversed(history))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
@@ -635,6 +648,7 @@ async def galaxy_detail(
             "planets": planets,
             "rank": rank,
             "rank_change": history[0]["rank_delta"] if history else None,
+            "avg_score_delta": avg_score_delta,
             "size_trend": size_trend,
             "score_trend": score_trend,
             "value_trend": value_trend,
@@ -792,6 +806,7 @@ async def planet_detail(
         planet_id,
     )
     history = with_deltas(history, ["rank", "size", "score", "value", "xp"])
+    avg_score_delta = _avg_delta(history, "score")
     chronological = list(reversed(history))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
@@ -814,6 +829,7 @@ async def planet_detail(
             "history": history,
             "rank": rank,
             "rank_change": history[0]["rank_delta"] if history else None,
+            "avg_score_delta": avg_score_delta,
             "size_trend": size_trend,
             "score_trend": score_trend,
             "value_trend": value_trend,

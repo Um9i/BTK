@@ -596,6 +596,16 @@ h2 {
     color: var(--fg-faint);
 }
 
+/* A rolling average rate, next to the raw single-tick delta -- deliberately
+   quieter than .delta (no good/bad color) since it's context, not a result. */
+.rate {
+    display: block;
+    font-family: var(--font-data);
+    font-size: 0.7rem;
+    color: var(--fg-faint);
+    margin-top: 0.2rem;
+}
+
 /* ---------- tables ---------- */
 
 /* Every table on the site is wide -- a roster or a tick log easily runs to

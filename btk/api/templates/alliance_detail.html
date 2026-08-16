@@ -16,6 +16,7 @@
     <div class="vital vital-trend">
         <div class="label">Score</div>
         <div class="value">{{ "{:,}".format(latest.score) }}{{ macros.delta(latest.score_delta) }}</div>
+        {{ macros.avg_rate(avg_score_delta, 10) }}
         {{ score_trend }}
     </div>
     <div class="vital"><div class="label">Points</div><div class="value">{{ latest.points }}</div></div>
