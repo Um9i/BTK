@@ -10,5 +10,7 @@ build/
 .env
 /data/
 .claude
+# regenerable from docs/data/round*-alliance-truth.csv via `uv run btk-nick-history build`
+docs/data/nick_history.sqlite
 CLAUDE.md
 .DS_Store

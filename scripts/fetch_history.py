@@ -40,7 +40,19 @@ import httpx
 HISTORY_URL = "https://history.planetarion.com/history.php"
 DATA_DIR = Path(__file__).resolve().parent.parent / "docs" / "data"
 
-PLANET_HEADER = ["rank", "ruler", "planet", "nick", "alliance", "score", "value", "xp", "size", "race", "coords"]
+PLANET_HEADER = [
+    "rank",
+    "ruler",
+    "planet",
+    "nick",
+    "alliance",
+    "score",
+    "value",
+    "xp",
+    "size",
+    "race",
+    "coords",
+]
 ALLIANCE_HEADER = ["rank", "name", "score", "actual_score", "size", "members"]
 
 ROUND_LINK_RE = re.compile(r"[?&]round=(\d+)")
@@ -125,7 +137,9 @@ def fetch_page(client: httpx.Client, page_id: int, round_number: int) -> History
             "range instead of a 404, so this round almost certainly doesn't exist"
         )
     if not parser.rows:
-        raise SystemExit(f"round {round_number} id={page_id}: header matched but the table was empty")
+        raise SystemExit(
+            f"round {round_number} id={page_id}: header matched but the table was empty"
+        )
     return parser
 
 
@@ -151,14 +165,14 @@ def fetch_round(client: httpx.Client, round_number: int) -> None:
         DATA_DIR / f"round{round_number}-alliance-truth.csv",
         PLANET_HEADER,
         planet_page.rows,
-        int_cols={5, 6, 7, 8},
+        int_cols={0, 5, 6, 7, 8},
     )
     alliance_page = fetch_page(client, 3, round_number)
     write_csv(
         DATA_DIR / f"round{round_number}-alliance-rankings.csv",
         ALLIANCE_HEADER,
         alliance_page.rows,
-        int_cols={2, 3, 4, 5},
+        int_cols={0, 2, 3, 4, 5},
     )
 
 
