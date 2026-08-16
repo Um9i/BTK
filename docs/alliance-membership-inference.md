@@ -21,19 +21,59 @@ anything here.
 
 ## Why this is possible at all
 
-`alliance_stat.size` / `total_score` / `total_value` are literal sums
-over that alliance's member planets' own `planet_stat.size` / `score` /
-`value` at the same tick. So for an alliance with N members at tick T:
+> ## ⚠ CORRECTION (2026-08-16) — READ BEFORE ANYTHING ELSE
+>
+> **The `total_score` / `total_value` equations below are WRONG.** Both
+> alliance totals include the **alliance fund** (`resources / 150`), which
+> belongs to no planet, so neither is a plain sum over members:
+>
+> ```
+> alliance.size[T]        = sum(member.size[T])                    <- EXACT
+> sum(member.xp[T])       = (total_score[T] - total_value[T]) / 60 <- EXACT
+> alliance.total_value[T] = sum(member.value[T]) + fund[T]/150     <- fund term
+> alliance.total_score[T] = sum(member.score[T]) + fund[T]/150     <- fund term
+> ```
+>
+> `fund[T]` is unknown, varies tick to tick, and is capped at 75,000,000
+> resources (500,000 value). Verified against round 117 ground truth: all
+> 22 alliances reconcile exactly on member count, size and xp, with a
+> value-only non-negative residual peaking at 69,417,300 resources — just
+> under the documented cap. Every zero-fund alliance is a 1-member one or
+> PATSA.
+>
+> **Consequence: essentially every `INFEASIBLE` verdict recorded in this
+> doc is untrustworthy.** Any solve that constrained `total_score` or
+> `total_value` as an exact sum was solving a false model, and would
+> correctly report INFEASIBLE for any alliance with a non-empty fund.
+> That is why small/inactive alliances solved cleanly while every large
+> active one failed; why the "scaling wall" appeared to track alliance
+> size (larger alliances use the fund); why TiT round 118 "broke at tick
+> 66" (it started using the fund); and why the delta method failed too
+> (the fund changes over time). The "hidden member" was the fund.
+>
+> **The corrected model — size and xp exact, value bounded — solved TiT
+> round 118 immediately**, `OPTIMAL` in 2.9s across all 75 ticks of its
+> 10-member regime, confirming all five gap-derived joiners plus
+> `sp3qt2r2` as the tenth member.
+>
+> Re-read every INFEASIBLE result below in this light before relying on
+> it. Results that used **only** `size`, or that involved zero-fund
+> alliances (1-2 member ones, PATSA), are unaffected.
+
+`alliance_stat.size` is a literal sum over that alliance's member planets'
+own `planet_stat.size`, and member `xp` is recoverable exactly from
+`total_score - total_value`. So for an alliance with N members at tick T
+there are **two** exact equations per tick, plus one inequality:
 
 ```
-alliance.size[T]        = sum(member.size[T]        for member in members)
-alliance.total_score[T] = sum(member.score[T]        for member in members)
-alliance.total_value[T] = sum(member.value[T]        for member in members)
+alliance.size[T]  = sum(member.size[T] for member in members)
+(total_score[T] - total_value[T]) / 60 = sum(member.xp[T] for member in members)
+sum(member.value[T]) <= alliance.total_value[T]     (shortfall = the fund)
 ```
 
-This holds simultaneously across *every* tick the roster is unchanged.
-With N unknowns (which N of ~300-400 planets are members) and up to
-3 equations per tick across many ticks, the system is wildly
+These hold simultaneously across *every* tick the roster is unchanged.
+With N unknowns (which N of ~300-400 planets are members) and 2 exact
+equations per tick across many ticks, the system is still wildly
 overdetermined — in practice a unique subset satisfies it, provided the
 roster didn't change during the window.
 

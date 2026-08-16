@@ -8,18 +8,31 @@ Usage:
 `alliance_listing.txt` carries only per-alliance aggregates, never a membership
 list (see db/schema.sql and docs/alliance-membership-inference.md). For most
 alliances recovering the roster is a hard subset-sum problem. For the smallest
-ones it is not:
+ones it is not.
 
-- a 1-member alliance's reported totals ARE its member's planet stats, so the
-  member is whichever planet matches the (size, score, value) triple;
-- a 2-member alliance's members are whichever planet PAIR sums to those totals,
-  found in O(n) per tick because one member fully determines the other.
+WHAT IS AND IS NOT A PLAIN SUM. An alliance's `total_score` and `total_value`
+both include the ALLIANCE FUND (`resources / 150`), which belongs to no planet,
+so neither is a sum over members. Only two quantities are exact:
 
-Matching at a single tick is weak evidence -- idle planets share stat triples,
-and that ambiguity has produced real mis-taggings before. So a roster is only
-reported CONFIRMED here if the candidate set is a single planet (or pair) after
-intersecting EVERY tick at which the alliance had that member count. Anything
-else is reported and skipped rather than guessed.
+    alliance.size        == sum(member.size)
+    (total_score - total_value) / 60 == sum(member.xp)      [Score = XP*60 + Value]
+
+and value is merely bounded, the shortfall being the fund:
+
+    0 <= total_value - sum(member.value) <= 75_000_000 / 150
+
+Matching on the (size, score, value) triple -- as this script originally did --
+therefore only works for alliances whose fund happens to be empty, and silently
+reports NO MATCH for every alliance that has ever used its fund. Candidates are
+now indexed by the exact (size, xp) pair instead, with value applied as a bound.
+Pair search stays O(n) per tick because one member still fully determines the
+other: the complement of (size, xp) is (S - size, X - xp).
+
+Matching at a single tick is weak evidence -- idle planets share stats, and that
+ambiguity has produced real mis-taggings before. So a roster is only reported
+CONFIRMED if the candidate set is a single planet (or pair) after intersecting
+EVERY tick at which the alliance had that member count. Anything else is
+reported and skipped rather than guessed.
 
 Both stat tables are read inside one REPEATABLE READ transaction. That matters:
 reading them separately against a live ticking DB can straddle an ingest, and a
@@ -36,7 +49,11 @@ import asyncpg
 
 from btk.config import get_settings
 
-Triple = tuple[int, int, int]
+# the in-game alliance fund holds at most 75,000,000 resources, and
+# Value = Resources / 150, so it can contribute at most this much value
+FUND_MAX_VALUE = 75_000_000 // 150
+
+Key = tuple[int, int]  # (size, xp)
 
 
 async def load_round(conn: asyncpg.Connection, round_number: int | None) -> dict[str, Any]:
@@ -52,8 +69,8 @@ async def load_round(conn: asyncpg.Connection, round_number: int | None) -> dict
 
         alliance_rows = await conn.fetch(
             """
-            SELECT a.name, t.number AS tick, ast.members,
-                   ast.size, ast.total_score, ast.total_value
+            SELECT a.name, t.number AS tick, ast.members, ast.size,
+                   ast.total_score, ast.total_value
             FROM alliance_stat ast
             JOIN alliance a ON a.id = ast.alliance_id
             JOIN tick t ON t.id = ast.tick_id
@@ -63,7 +80,7 @@ async def load_round(conn: asyncpg.Connection, round_number: int | None) -> dict
         )
         planet_rows = await conn.fetch(
             """
-            SELECT p.external_id, t.number AS tick, ps.size, ps.score, ps.value
+            SELECT p.external_id, t.number AS tick, ps.size, ps.xp, ps.value
             FROM planet_stat ps
             JOIN planet p ON p.id = ps.planet_id
             JOIN tick t ON t.id = ps.tick_id
@@ -72,9 +89,10 @@ async def load_round(conn: asyncpg.Connection, round_number: int | None) -> dict
             round_id,
         )
 
-    by_tick: dict[int, dict[Triple, list[str]]] = defaultdict(lambda: defaultdict(list))
+    # tick -> (size, xp) -> [(external_id, value)]
+    by_tick: dict[int, dict[Key, list[tuple[str, int]]]] = defaultdict(lambda: defaultdict(list))
     for r in planet_rows:
-        by_tick[r["tick"]][(r["size"], r["score"], r["value"])].append(r["external_id"])
+        by_tick[r["tick"]][(r["size"], r["xp"])].append((r["external_id"], r["value"]))
 
     history: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for r in alliance_rows:
@@ -82,9 +100,13 @@ async def load_round(conn: asyncpg.Connection, round_number: int | None) -> dict
             {
                 "tick": r["tick"],
                 "members": r["members"],
-                "target": (r["size"], r["total_score"], r["total_value"]),
+                "size": r["size"],
+                "xp": (r["total_score"] - r["total_value"]) // 60,
+                "value_cap": r["total_value"],
             }
         )
+    for rows in history.values():
+        rows.sort(key=lambda r: r["tick"])
 
     return {
         "round_number": round_number,
@@ -94,29 +116,48 @@ async def load_round(conn: asyncpg.Connection, round_number: int | None) -> dict
     }
 
 
-def singles_at_tick(by_triple: dict[Triple, list[str]], target: Triple) -> set[str]:
-    return set(by_triple.get(target, ()))
+def fund_ok(value_cap: int, members_value: int) -> bool:
+    """The unexplained remainder must be a physically possible alliance fund."""
+    fund = value_cap - members_value
+    return 0 <= fund <= FUND_MAX_VALUE
 
 
-def pairs_at_tick(by_triple: dict[Triple, list[str]], target: Triple) -> set[tuple[str, str]]:
-    """Every unordered pair summing exactly to target; one member fixes the other."""
-    ts, tsc, tv = target
+def singles_at_tick(by_key: dict[Key, list[tuple[str, int]]], target: dict[str, Any]) -> set[str]:
+    """Planets matching the alliance's exact (size, xp), with value within fund slack."""
+    return {
+        ext
+        for ext, value in by_key.get((target["size"], target["xp"]), ())
+        if fund_ok(target["value_cap"], value)
+    }
+
+
+def pairs_at_tick(
+    by_key: dict[Key, list[tuple[str, int]]], target: dict[str, Any]
+) -> set[tuple[str, str]]:
+    """Every unordered pair matching the alliance's exact (size, xp) totals.
+
+    O(n) per tick: picking one member fixes the other's key exactly, so this is
+    a dict lookup per candidate rather than a scan over pairs.
+    """
+    ts, tx = target["size"], target["xp"]
     out: set[tuple[str, str]] = set()
-    for (s, sc, v), exts in by_triple.items():
-        need = (ts - s, tsc - sc, tv - v)
-        partners = by_triple.get(need)
+    for (s, x), entries in by_key.items():
+        need = (ts - s, tx - x)
+        partners = by_key.get(need)
         if not partners:
             continue
-        if need == (s, sc, v):
-            # partner is stat-identical: needs two distinct planets sharing the triple
-            for i in range(len(exts)):
-                for j in range(i + 1, len(exts)):
-                    out.add(tuple(sorted((exts[i], exts[j]))))  # type: ignore[arg-type]
+        if need == (s, x):
+            # partner shares the key: needs two distinct planets from this bucket
+            for i in range(len(entries)):
+                for j in range(i + 1, len(entries)):
+                    (ea, va), (eb, vb) = entries[i], entries[j]
+                    if fund_ok(target["value_cap"], va + vb):
+                        out.add(tuple(sorted((ea, eb))))  # type: ignore[arg-type]
         else:
-            for a in exts:
-                for b in partners:
-                    if a != b:
-                        out.add(tuple(sorted((a, b))))  # type: ignore[arg-type]
+            for ea, va in entries:
+                for eb, vb in partners:
+                    if ea != eb and fund_ok(target["value_cap"], va + vb):
+                        out.add(tuple(sorted((ea, eb))))  # type: ignore[arg-type]
     return out
 
 
@@ -150,9 +191,9 @@ def verify(data: dict[str, Any], size: int, historical: bool = False) -> list[di
         widest = 0
         for r in ticks:
             found: set[Any] = (
-                singles_at_tick(by_tick[r["tick"]], r["target"])
+                singles_at_tick(by_tick[r["tick"]], r)
                 if size == 1
-                else pairs_at_tick(by_tick[r["tick"]], r["target"])
+                else pairs_at_tick(by_tick[r["tick"]], r)
             )
             widest = max(widest, len(found))
             surviving = found if surviving is None else surviving & found
@@ -213,11 +254,14 @@ async def insert(
             lo, hi = r["span"]
             if r["members"] == 1:
                 how = (
-                    "sole member of a 1-member alliance, so its (size,score,value) "
-                    "triple equals the alliance totals"
+                    "sole member of a 1-member alliance, matched on the alliance's exact "
+                    "(size, xp) with value within alliance-fund slack"
                 )
             else:
-                how = "2-member alliance resolved by exhaustive pair search over all planets"
+                how = (
+                    "2-member alliance resolved by exhaustive pair search on exact "
+                    "(size, xp) totals with value within alliance-fund slack"
+                )
             comment = (
                 f"{r['alliance']} confirmed exact -- {how}; a unique match survived "
                 f"every one of {r['n_ticks']} ticks ({lo}-{hi}). "
