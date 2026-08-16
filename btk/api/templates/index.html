@@ -96,6 +96,7 @@
             <th class="col-secondary">Race</th>
             <th class="num">Score</th>
             <th class="num">Change</th>
+            <th class="col-secondary">Trend</th>
         </tr>
     </thead>
     <tbody>
@@ -107,6 +108,7 @@
             <td class="col-secondary">{{ p.race }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num">{{ macros.delta(p.score_delta) }}</td>
+            <td class="col-secondary trend-cell">{{ p.trend }}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -8,6 +8,7 @@ pool.
 
 import asyncio
 import re
+from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -276,6 +277,31 @@ async def index(
                 tick_row["id"],
                 prev_tick_id,
             )
+            # A single-tick delta doesn't say whether this is a one-off spike or a
+            # sustained climb -- a small trend line answers that at a glance. One
+            # query for all 5 rows' last 10 ticks, rather than 5 round-trips.
+            if planet_movers:
+                mover_ids = [r["id"] for r in planet_movers]
+                trend_rows = await conn.fetch(
+                    """
+                    WITH ranked AS (
+                        SELECT ps.planet_id, t.number AS tick, ps.score,
+                               ROW_NUMBER() OVER (PARTITION BY ps.planet_id ORDER BY t.number DESC) AS rn
+                        FROM planet_stat ps
+                        JOIN tick t ON t.id = ps.tick_id
+                        WHERE ps.planet_id = ANY($1::int[])
+                    )
+                    SELECT planet_id, tick, score FROM ranked WHERE rn <= 10 ORDER BY planet_id, tick
+                    """,
+                    mover_ids,
+                )
+                by_planet: dict[int, list[int]] = defaultdict(list)
+                for r in trend_rows:
+                    by_planet[r["planet_id"]].append(r["score"])
+                planet_movers = [
+                    {**dict(r), "trend": sparkline(by_planet.get(r["id"], []))}
+                    for r in planet_movers
+                ]
     return templates.TemplateResponse(
         request,
         "index.html",

@@ -565,6 +565,15 @@ h2 {
     color: var(--fg-dim);
 }
 
+/* Same sparkline, shrunk to sit inline in a table cell -- the movers table's
+   "has this been a one-tick spike or a sustained climb" column. */
+.trend-cell .sparkline {
+    display: block;
+    width: 5rem;
+    height: 20px;
+    color: var(--fg-dim);
+}
+
 /* ---------- deltas (tick-over-tick change) ---------- */
 
 .delta {

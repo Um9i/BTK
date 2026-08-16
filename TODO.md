@@ -21,12 +21,13 @@ order across the whole file.
   which has a native `rank` column) -- computed via a `RANK() OVER`
   window scoped to the round, joined into the existing history query
   rather than an extra round-trip.
-- **Inline sparklines on the movers table.** `btk/api/charts.py`'s
-  `sparkline()` already renders a mini trend for detail pages; the
-  homepage's "Planet movers this tick" table only shows a single-tick
-  delta. A tiny inline sparkline per row (last ~10 ticks) turns "gained
-  9,591 this tick" into "gained 9,591 this tick, and has been climbing
-  steadily for a week" at a glance.
+- ~~**Inline sparklines on the movers table.**~~ **Done.** Added a
+  `Trend` column to the homepage's planet movers table using the
+  existing `sparkline()` helper -- one query fetching the last 10 ticks
+  for all 5 rows' planet ids at once (`ROW_NUMBER() OVER (PARTITION BY
+  planet_id ...)`), not 5 round-trips. `col-secondary` like the other
+  decorative columns, so it drops on mobile rather than crowding a
+  narrow table.
 - **Growth rate, not just delta.** A raw `+57,821` score delta reads
   differently on a planet that's been flat for days vs. one that's been
   climbing every tick. A small "avg/tick over last N ticks" figure next
