@@ -149,7 +149,7 @@ async def _you_panel(
     if planet["alliance"]:
         alliance = await conn.fetchrow(
             """
-            SELECT a.id, a.name, s.rank,
+            SELECT a.id, a.name, s.rank, s.members,
                    (s.rank - prev.rank) AS rank_delta
             FROM alliance_stat s
             JOIN alliance a ON a.id = s.alliance_id
@@ -162,6 +162,22 @@ async def _you_panel(
             planet["alliance"],
             prev_tick_id,
         )
+        if alliance is not None:
+            # Same "how much of the roster is actually scouted" question the
+            # alliance page answers with a full breakdown -- here it's just
+            # the headline count, one click away from the full picture.
+            scouted = await conn.fetchval(
+                """
+                SELECT count(*)
+                FROM planet_intel pi
+                JOIN planet p ON p.id = pi.planet_id
+                JOIN planet_stat ps ON ps.planet_id = p.id AND ps.tick_id = $1
+                WHERE pi.alliance ILIKE $2
+                """,
+                tick_id,
+                planet["alliance"],
+            )
+            alliance = {**dict(alliance), "scouted": scouted}
     return {"linked": True, "planet": planet, "alliance": alliance}
 
 

@@ -74,11 +74,10 @@ order across the whole file.
 
 ## Personalization ("You" panel and beyond)
 
-- **Your alliance, expanded inline.** The "You" panel already resolves
-  the linked planet's alliance and rank (`_you_panel` in `web.py`). A
-  compact intel-coverage line right there ("PATSA: 6/9 members scouted")
-  would save the click to the alliance page for the single most common
-  follow-up question.
+- ~~**Your alliance, expanded inline.**~~ **Done.** Added an "Intel"
+  line to the You panel -- `<scouted>/<members> scouted`, one extra
+  `count(*)` on `_you_panel`'s existing alliance lookup, linking straight
+  to the alliance page for the full breakdown.
 - **"Your feed."** `recent_feed` already parses the game's text feed
   round-wide. A personalized slice -- entries mentioning your own ruler
   name, planet name, or galaxy coords -- turns a firehose of 400 planets'

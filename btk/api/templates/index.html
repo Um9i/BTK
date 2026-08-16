@@ -39,6 +39,7 @@
         <span>Score <strong>{{ "{:,}".format(you.planet.score) }}</strong> {{ macros.delta(you.planet.score_delta) }}</span>
         {% if you.alliance %}
         <span>Alliance <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.name }}</a> (#{{ you.alliance.rank }} {{ macros.rank_change(you.alliance.rank_delta) }})</span>
+        <span>Intel <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.scouted }}/{{ you.alliance.members }} scouted</a></span>
         {% endif %}
     </div>
     {% else %}
