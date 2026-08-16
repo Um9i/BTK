@@ -1446,6 +1446,66 @@ were.
 **Running total on the live round-118 database after this pass:** 109
 planets across 19 alliances (adding VGN's 40 to the Fourth pass's 69).
 
+## Sixth pass (2026-08-16, continued): BBQQ, and the idle-planet ambiguity gets worse under the fund model
+
+BBQQ (29 members) had the longest stable window found in any alliance so
+far: a single join at tick 64 (28 → 29 members), then 151 consecutive
+ticks with no visible churn through 214. The fund-aware solve found
+`OPTIMAL` in 4.0s, but the uniqueness probe found a second solution
+differing by exactly one planet: `rf6kw8zr` in the first solve,
+`vnmmq5ga` in the second.
+
+This is the doc's known "generic idle planet" ambiguity (see above) — but
+it turns out to be a *worse* case than the one already documented there,
+not the same one. The earlier write-up describes planets tied because
+their `(size, score, value)` triple happens to be bit-for-bit identical at
+one particular tick. `rf6kw8zr` and `vnmmq5ga` are not that: both are
+`(size=0, xp=0)` for the entire 151-tick window, but their `value` is
+different and diverging (`4,380` vs `2,720` at tick 214, and neither is
+static). They still tie, because **the fund-aware model only bounds
+`value`, it doesn't require it exact** — any planet with `size=0`,
+`xp=0`, and a `value` small enough to fit inside the alliance's fund slack
+is invisible to the equations, however different its actual value is from
+some other idle planet's. Searching the candidate pool found **15** such
+fully-idle candidates for this one alliance, all mutually substitutable
+for the same slot.
+
+(`rf6kw8zr` is a repeat offender: it's the same planet the doc's original
+idle-ambiguity write-up names as a real past mistake, mistakenly inserted
+as a confirmed Tal Shiar member and later deleted once caught. It is
+apparently just a generically idle planet that turns up as a phantom
+candidate for more than one alliance.)
+
+**The fix generalizes the existing "verify uniqueness" guidance rather
+than replacing it.** Excluding all 15 idle candidates from the pool and
+re-solving the 29-member problem came back `INFEASIBLE` — proving the
+other 28 members are forced and unique, and that the ambiguity is
+confined entirely to the one slot. Those 28 were inserted; the 29th slot
+was left unresolved rather than guessed, per the doc's existing recipe
+guidance (step 6) for exactly this situation.
+
+**Practical upshot:** for any alliance solve, before trusting a result,
+check whether any member of the found roster has `size=0` and `xp=0` for
+the *entire* solved window (not just one tick) — if so, don't just check
+that single tick for ties (the existing SQL snippet above), because a
+fund-bounded value comparison won't surface the ambiguity the way an
+exact-value comparison would. Re-solve with all such planets excluded
+from the pool and confirm the reduced problem is still feasible with the
+same member count minus the idle slot(s) — if `INFEASIBLE`, the remaining
+members are proven and the idle slot(s) should be reported as unresolved.
+`btk-solve-roster` does not yet automate this check (see follow-ups
+below).
+
+**Possible follow-up:** teach `btk-solve-roster` to detect fully-idle
+members in its own solution automatically (scan the window for any
+selected candidate with `size=0` and `xp=0` at every tick) and re-run the
+exclusion-and-reprove step itself, rather than requiring it to be done by
+hand as it was here.
+
+**Running total on the live round-118 database after this pass:** 137
+planets across 20 alliances (adding BBQQ's 28 confirmed to the Fifth
+pass's 109; one slot deliberately left unresolved).
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
@@ -1531,7 +1591,14 @@ rather than a manual set, per the Fourth pass.)*
 6. Before inserting a match, check for `size=0`/generic-stub ambiguity
    (see above) and skip inserting that specific planet's name if there's
    a tie — the alliance is more accurately "N-1 confirmed, 1 unresolved
-   slot" than "N confirmed" in that case.
+   slot" than "N confirmed" in that case. For a CP-SAT/fund-aware solve
+   specifically, a single-tick tie check is not enough (per the Sixth
+   pass's BBQQ result): check whether any solved member has `size=0` and
+   `xp=0` for the *entire* window, since a fund-bounded (not exact)
+   `value` lets such a planet be silently substituted by any other
+   equally idle one. Exclude every such candidate from the pool and
+   re-solve at N-1; `INFEASIBLE` confirms the rest of the roster and
+   proves the idle slot itself is the only ambiguous part.
 7. Insert into `planet_intel` with a `comment` describing the method,
    tick range, and confidence tier (confirmed exact vs. best-guess), and
    leave `nick` NULL — the ruler name is not a player nickname and
