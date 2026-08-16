@@ -44,6 +44,7 @@ RANKED_PLANET_STAT_CTE = """
     WITH ranked AS (
         SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
                ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance,
+               pi.nick, pi.comment, pi.amps, pi.dists, pi.defwhore,
                RANK() OVER (ORDER BY ps.score DESC) AS rank
         FROM planet_stat ps
         JOIN planet p ON p.id = ps.planet_id
@@ -645,11 +646,15 @@ async def planets_list(
             total = len(rows)
         elif q:
             pattern = f"%{q}%"
+            # nick is scouted intel (planet_intel), not public dump data --
+            # only logged-in users get to search by it, same gate as showing
+            # it at all (see show_nick below).
+            nick_clause = "OR nick ILIKE $2" if user is not None else ""
             rows = await conn.fetch(
                 RANKED_PLANET_STAT_CTE
-                + """
+                + f"""
                 SELECT * FROM ranked
-                WHERE planet_name ILIKE $2 OR ruler_name ILIKE $2
+                WHERE planet_name ILIKE $2 OR ruler_name ILIKE $2 {nick_clause}
                 ORDER BY score DESC
                 LIMIT 100
                 """,
@@ -669,6 +674,7 @@ async def planets_list(
                 """
                 SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
                        ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance,
+                       pi.nick, pi.comment, pi.amps, pi.dists, pi.defwhore,
                        RANK() OVER (ORDER BY ps.score DESC) AS rank
                 FROM planet_stat ps
                 JOIN planet p ON p.id = ps.planet_id
@@ -682,7 +688,17 @@ async def planets_list(
                 (page - 1) * PLANET_LIST_PAGE_SIZE,
             )
     show_flags = any(p["special"] for p in rows)
+    # Intel fields are scouted data (see planet_intel), same visibility rule
+    # as the alliance-page roster -- logged-out visitors don't see them, and
+    # an empty column is noise, so each only shows up if some row actually
+    # has something in it.
     show_alliance = user is not None and any(p["alliance"] for p in rows)
+    show_nick = user is not None and any(p["nick"] for p in rows)
+    show_amps = user is not None and any(p["amps"] is not None for p in rows)
+    show_dists = user is not None and any(p["dists"] is not None for p in rows)
+    comment_values = {p["comment"] for p in rows if user is not None and p["comment"]}
+    uniform_comment = next(iter(comment_values)) if len(comment_values) == 1 else None
+    show_comment_column = len(comment_values) > 1
     return templates.TemplateResponse(
         request,
         "planets_list.html",
@@ -697,6 +713,11 @@ async def planets_list(
             "user": user,
             "show_flags": show_flags,
             "show_alliance": show_alliance,
+            "show_nick": show_nick,
+            "show_amps": show_amps,
+            "show_dists": show_dists,
+            "show_comment_column": show_comment_column,
+            "uniform_comment": uniform_comment,
         },
     )
 

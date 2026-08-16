@@ -8,9 +8,12 @@
 {% endif %}
 <form class="search-form" method="get" action="/web/planets">
     <span class="prompt">&gt;</span>
-    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler name" autocomplete="off">
+    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler{% if user %}/nick{% endif %} name" autocomplete="off">
     <button type="submit">Query</button>
 </form>
+{% if uniform_comment %}
+<p class="subtitle">{{ uniform_comment }}</p>
+{% endif %}
 {% if planets %}
 <div class="table-scroll">
 <table class="roster">
@@ -23,10 +26,14 @@
             <th class="col-secondary">Race</th>
             {% if show_flags %}<th class="col-secondary">Flags</th>{% endif %}
             {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
+            {% if show_nick %}<th class="col-secondary">Nick</th>{% endif %}
             <th class="num col-secondary">Size</th>
             <th class="num">Score</th>
             <th class="num col-secondary">Value</th>
             <th class="num col-secondary">XP</th>
+            {% if show_amps %}<th class="num col-secondary">Amps</th>{% endif %}
+            {% if show_dists %}<th class="num col-secondary">Dists</th>{% endif %}
+            {% if show_comment_column %}<th class="col-secondary">Comment</th>{% endif %}
         </tr>
     </thead>
     <tbody>
@@ -39,10 +46,14 @@
             <td class="col-secondary">{{ p.race }}</td>
             {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
             {% if show_alliance %}<td class="col-secondary">{{ p.alliance or "" }}</td>{% endif %}
+            {% if show_nick %}<td class="col-secondary">{{ p.nick or "" }}</td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.xp) }}</td>
+            {% if show_amps %}<td class="num col-secondary">{{ "{:,}".format(p.amps) if p.amps is not none else "" }}</td>{% endif %}
+            {% if show_dists %}<td class="num col-secondary">{{ "{:,}".format(p.dists) if p.dists is not none else "" }}</td>{% endif %}
+            {% if show_comment_column %}<td class="col-secondary"><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
         </tr>
         {% endfor %}
     </tbody>
