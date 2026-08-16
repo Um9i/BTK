@@ -99,13 +99,17 @@ order across the whole file.
   as the view (current values pre-filled) -- unlike the bot's key=value
   partial update, the web form always submits every field, so a blank
   field here clears that column rather than leaving it untouched.
-- **Distinguish scouted intel from guessed nicks visually.** Right now a
-  guessed nick's provenance is buried in the free-text Comment column
-  ("Nick guessed 2026-08-16 via scripts/guess_nicks.py: ..."). A small
-  tag next to the Nick value itself -- `scouted` vs. `guessed` -- makes
-  the confidence level visible without reading a paragraph. This also
-  surfaces cases like Appocomaster (see below) where nothing at all is
-  guessed, silently, with no visible reason why.
+- ~~**Distinguish scouted intel from guessed nicks visually.**~~ **Done.**
+  Added `macros.nick_provenance()`: a quiet `guessed` tag (reusing
+  `.tag.quiet`) whenever a nick's comment carries the
+  `guess_nicks.py` marker every guess insert writes by convention.
+  Scouted intel (the default/expected case) stays unmarked. Wired into
+  the planet search table, the alliance roster table, and the planet
+  intel form's Nick label. Caught and fixed a real bug along the way:
+  the new intel-editing form was rendering a literal "None" into text
+  inputs whenever a field was NULL (`{{ x if intel else '' }}` doesn't
+  guard `intel.x` itself being None) -- fixed to `{{ x or '' if intel
+  else '' }}` on all four text fields.
 - **"Needs intel" queue.** A view (or a homepage section) listing
   round-118 planets with no `alliance`/`nick` tagged at all, sorted by
   score, gives logged-in members a ready-made worklist instead of

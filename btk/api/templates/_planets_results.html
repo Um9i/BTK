@@ -34,7 +34,7 @@
             <td class="col-secondary">{{ p.race }}</td>
             {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
             {% if show_alliance %}<td class="col-secondary">{{ p.alliance or "" }}</td>{% endif %}
-            {% if show_nick %}<td class="col-secondary">{{ p.nick or "" }}</td>{% endif %}
+            {% if show_nick %}<td class="col-secondary">{{ p.nick or "" }} {{ macros.nick_provenance(p.comment) }}</td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>

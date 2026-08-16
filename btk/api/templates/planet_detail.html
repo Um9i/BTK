@@ -49,8 +49,8 @@
 <p class="subtitle">Scouted, not guessed -- same <code>planet_intel</code> table as <code>!intel</code> in Discord, either works.</p>
 <form class="intel-form" method="post" action="/web/planets/{{ planet_id }}/intel">
     <div class="intel-form-grid">
-        <label>Nick<input type="text" name="nick" value="{{ intel.nick if intel else '' }}"></label>
-        <label>Alliance<input type="text" name="alliance" value="{{ intel.alliance if intel else '' }}"></label>
+        <label>Nick {{ macros.nick_provenance(intel.comment if intel else none) }}<input type="text" name="nick" value="{{ intel.nick or '' if intel else '' }}"></label>
+        <label>Alliance<input type="text" name="alliance" value="{{ intel.alliance or '' if intel else '' }}"></label>
         <label>Amps<input type="number" name="amps" min="0" value="{{ intel.amps if intel and intel.amps is not none else '' }}"></label>
         <label>Dists<input type="number" name="dists" min="0" value="{{ intel.dists if intel and intel.dists is not none else '' }}"></label>
         <label>Defwhore
@@ -61,7 +61,7 @@
             </select>
         </label>
     </div>
-    <label class="intel-comment-label">Comment<textarea name="comment" rows="2">{{ intel.comment if intel else '' }}</textarea></label>
+    <label class="intel-comment-label">Comment<textarea name="comment" rows="2">{{ intel.comment or '' if intel else '' }}</textarea></label>
     <button type="submit">Save intel</button>
 </form>
 {% endif %}

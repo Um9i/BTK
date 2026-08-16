@@ -90,7 +90,7 @@
             <td class="num">{{ p.size }}</td>
             {% if show_amps %}<td class="num">{{ "{:,}".format(p.amps) if p.amps is not none else "" }}</td>{% endif %}
             {% if show_dists %}<td class="num">{{ "{:,}".format(p.dists) if p.dists is not none else "" }}</td>{% endif %}
-            {% if show_nick %}<td>{{ p.nick or "" }}</td>{% endif %}
+            {% if show_nick %}<td>{{ p.nick or "" }} {{ macros.nick_provenance(p.comment) }}</td>{% endif %}
             {% if show_comment_column %}<td><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
         </tr>
         {% endfor %}

@@ -47,6 +47,18 @@
     {%- endif -%}
 {%- endmacro %}
 
+{% macro nick_provenance(comment) -%}
+    {#- Guessed nicks (scripts/guess_nicks.py) and scouted intel (!intel /
+    the web intel form) share the same nick column with no separate flag --
+    the only signal is the "via scripts/guess_nicks.py" marker every guess
+    insert's comment carries by convention (see docs/alliance-membership-
+    inference.md). Scouted intel is the default/expected case and stays
+    unmarked; only the lower-confidence guessed case gets a tag. -#}
+    {%- if comment and "guess_nicks.py" in comment -%}
+    <span class="tag quiet">guessed</span>
+    {%- endif -%}
+{%- endmacro %}
+
 {% macro coverage_pct(pct) -%}
     {%- if pct is not none -%}
         {#- Near 100 means the roster is complete and current. Well under means
