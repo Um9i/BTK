@@ -47,10 +47,10 @@ order across the whole file.
 
 ## Search & navigation
 
-- **`/` focuses search.** Classic terminal/site convention -- press `/`
-  anywhere on the site and the header search box gets focus and selects
-  its contents. Cheap, and it's the single highest-value keybinding for a
-  site whose primary navigation *is* the search box now.
+- ~~**`/` focuses search.**~~ **Done.** Press `/` anywhere (not already
+  typing in a field, no modifier held) to focus and select the header
+  search box. A faint `/` hint (reusing `.tag`) sits in the box until
+  focused, then hides; hidden outright on mobile where it's meaningless.
 - **Live filtering on `/web/planets`.** Right now every query is a full
   page reload. A small debounced fetch-and-replace-tbody script (no
   framework needed) would make repeated searches ("who's near me,"

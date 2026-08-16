@@ -137,6 +137,12 @@ header.mission-bar {
     color: var(--fg-faint);
 }
 
+.kbd-hint {
+    margin-left: 0;
+    flex-shrink: 0;
+    color: var(--fg-faint);
+}
+
 .nav-controls {
     display: flex;
     align-items: center;
@@ -1057,6 +1063,11 @@ a.map-cell:hover {
         order: 2;
         width: 100%;
         max-width: none;
+    }
+
+    /* A keyboard shortcut hint is meaningless on a touch device. */
+    .kbd-hint {
+        display: none;
     }
 
     /* Cells wrap to their own line under the coord label instead of

@@ -23,7 +23,8 @@
             <a class="wordmark" href="/">BTK</a>
             <form class="header-search" method="get" action="/web/planets">
                 <span class="prompt">&gt;</span>
-                <input type="text" name="q" placeholder="planet, ruler{% if user %}, nick{% endif %}, x:y:z or x:y&hellip;" autocomplete="off">
+                <input id="site-search" type="text" name="q" placeholder="planet, ruler{% if user %}, nick{% endif %}, x:y:z or x:y&hellip;" autocomplete="off">
+                <span class="tag kbd-hint" aria-hidden="true">/</span>
             </form>
             <div class="nav-controls">
                 {% if user %}
@@ -47,6 +48,27 @@
         {% block content %}{% endblock %}
     </main>
     <script>
+        // "/" jumps to the search box from anywhere on the site -- the
+        // header search is the site's primary navigation now, so this is
+        // the single highest-value shortcut. Ignored while already typing
+        // in a field (so it doesn't hijack a literal "/" in a query) or
+        // with a modifier held (so it doesn't fight browser/OS shortcuts).
+        (function () {
+            var input = document.getElementById("site-search");
+            var hint = document.querySelector(".kbd-hint");
+            document.addEventListener("keydown", function (e) {
+                if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+                var tag = document.activeElement ? document.activeElement.tagName : "";
+                if (tag === "INPUT" || tag === "TEXTAREA") return;
+                e.preventDefault();
+                input.focus();
+                input.select();
+            });
+            if (hint) {
+                input.addEventListener("focus", function () { hint.style.display = "none"; });
+                input.addEventListener("blur", function () { hint.style.display = ""; });
+            }
+        })();
         (function () {
             var btn = document.getElementById("theme-toggle");
             var root = document.documentElement;
