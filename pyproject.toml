@@ -27,6 +27,7 @@ dev = [
 btk-api = "btk.api.app:run"
 btk-bot = "btk.bot.client:run"
 btk-initdb = "scripts.init_db:main"
+btk-verify-rosters = "scripts.verify_rosters:main"
 btk-ingest = "btk.dumps.cli:run"
 
 [build-system]
