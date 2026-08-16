@@ -178,7 +178,23 @@ async def _you_panel(
                 planet["alliance"],
             )
             alliance = {**dict(alliance), "scouted": scouted}
-    return {"linked": True, "planet": planet, "alliance": alliance}
+    # The game's text feed has no structured planet/galaxy reference (see
+    # db/schema.sql's note on the feed table's known gap) -- a plain text
+    # match on the viewer's own ruler/planet name is the only way to slice
+    # "things that happened to me" out of everyone else's news.
+    feed = await conn.fetch(
+        """
+        SELECT tick_number, category, text
+        FROM feed
+        WHERE round_id = $1 AND (text ILIKE $2 OR text ILIKE $3)
+        ORDER BY tick_number DESC, id DESC
+        LIMIT 15
+        """,
+        round_id,
+        f"%{planet['ruler_name']}%",
+        f"%{planet['planet_name']}%",
+    )
+    return {"linked": True, "planet": planet, "alliance": alliance, "feed": feed}
 
 
 @router.get("/")

@@ -1004,6 +1004,16 @@ td.rank-top {
     color: var(--fg);
 }
 
+.you-feed-label {
+    margin-top: 1rem;
+}
+
+.you-feed {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    max-width: none;
+}
+
 /* ---------- cluster map (occupancy grid) ---------- */
 
 .map-key {

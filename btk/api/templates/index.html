@@ -42,6 +42,17 @@
         <span>Intel <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.scouted }}/{{ you.alliance.members }} scouted</a></span>
         {% endif %}
     </div>
+    {% if you.feed %}
+    <div class="eyebrow you-feed-label">Your feed</div>
+    <div class="feed-list you-feed">
+        {% for f in you.feed %}
+        <div class="feed-row">
+            <span class="feed-tick">T{{ "%04d"|format(f.tick_number) }}</span>
+            <span class="feed-text">{{ f.text }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% else %}
     <div class="you-row you-nudge">
         <span>Link your planet to see your own rank and score here &mdash; run <code>!link x:y:z</code> in Discord.</span>

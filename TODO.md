@@ -78,11 +78,12 @@ order across the whole file.
   line to the You panel -- `<scouted>/<members> scouted`, one extra
   `count(*)` on `_you_panel`'s existing alliance lookup, linking straight
   to the alliance page for the full breakdown.
-- **"Your feed."** `recent_feed` already parses the game's text feed
-  round-wide. A personalized slice -- entries mentioning your own ruler
-  name, planet name, or galaxy coords -- turns a firehose of 400 planets'
-  worth of news into "things that happened to me," without any new
-  ingest work.
+- ~~**"Your feed."**~~ **Done.** Added a text-matched slice (ruler name
+  or planet name) inside the You panel itself -- the feed table has no
+  structured planet reference (known gap, see db/schema.sql), so an
+  `ILIKE` match on the viewer's own names is the only way to slice it.
+  Only renders when there's at least one match, right under the You
+  panel's stats.
 - **Watchlist.** Let a logged-in member star specific planets or
   alliances (one small table, `discord_user_id, target_type, target_id`)
   and surface a "Watching" section on the homepage alongside "You." Useful
