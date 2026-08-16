@@ -34,13 +34,15 @@
 
 <h2>Planets</h2>
 {% if planets %}
-<table>
+<table class="roster">
     <thead>
         <tr>
             <th>Coords</th>
-            <th>Planet</th>
             <th>Ruler</th>
+            <th>Planet</th>
             <th>Race</th>
+            {% if show_flags %}<th>Flags</th>{% endif %}
+            {% if show_alliance %}<th>Alliance</th>{% endif %}
             <th class="num">Size</th>
             <th class="num">Score</th>
             <th class="num">Value</th>
@@ -51,9 +53,11 @@
         {% for p in planets %}
         <tr>
             <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
-            <td>{{ p.planet_name }}{{ macros.special_tags(p.special) }}</td>
-            <td>{{ p.ruler_name }}</td>
+            <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
+            <td><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
             <td>{{ p.race }}</td>
+            {% if show_flags %}<td class="nowrap">{{ macros.special_tags(p.special) }}</td>{% endif %}
+            {% if show_alliance %}<td>{{ p.alliance or "" }}</td>{% endif %}
             <td class="num">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num">{{ "{:,}".format(p.value) }}</td>

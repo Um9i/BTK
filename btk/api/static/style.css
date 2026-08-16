@@ -355,6 +355,118 @@ h2 {
     opacity: 0.6;
 }
 
+/* ---------- leaders (homepage) ---------- */
+
+.leader-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.leader-card {
+    display: block;
+    max-width: 20rem;
+    text-decoration: none;
+    color: var(--fg);
+}
+
+.leader-name {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-top: 0.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.leader-card:hover .leader-name {
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+}
+
+.leader-meta {
+    font-family: var(--font-data);
+    color: var(--fg-dim);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    margin-top: 0.25rem;
+}
+
+/* ---------- race distribution (homepage) ---------- */
+
+.race-dist {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr auto;
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.5rem;
+    max-width: 30rem;
+    margin-bottom: 2rem;
+}
+
+.race-name {
+    font-family: var(--font-data);
+    font-size: 0.82rem;
+    color: var(--fg);
+}
+
+.bar-track {
+    height: 8px;
+    background: var(--line);
+}
+
+.bar-fill {
+    height: 100%;
+    background: var(--fg-dim);
+}
+
+.race-count {
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.race-pct {
+    color: var(--fg-faint);
+}
+
+/* ---------- recent activity feed (homepage) ---------- */
+
+.feed-list {
+    max-width: 44rem;
+    margin-bottom: 2rem;
+}
+
+.feed-row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.88rem;
+}
+
+.feed-row:last-child {
+    border-bottom: none;
+}
+
+.feed-tick {
+    font-family: var(--font-data);
+    font-size: 0.76rem;
+    color: var(--fg-faint);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 0.1rem;
+}
+
+.feed-text {
+    color: var(--fg-dim);
+}
+
 .links-line {
     color: var(--fg-dim);
     font-size: 0.9rem;
@@ -474,6 +586,17 @@ tbody tr:last-child td {
     border-bottom: 1px solid var(--line);
 }
 
+tfoot td {
+    padding: 0.65rem 1.25rem 0.65rem 0;
+    border-top: 2px solid var(--fg);
+    color: var(--fg-dim);
+    font-weight: 500;
+}
+
+tfoot td.num {
+    color: var(--fg);
+}
+
 tbody a {
     color: var(--fg);
     text-decoration: none;
@@ -504,6 +627,26 @@ tr.unclaimed td a {
 .empty {
     color: var(--fg-dim);
     font-style: italic;
+}
+
+/* Dense rosters break down the moment one cell wraps -- a two-line row next
+   to forty one-line rows is the fastest way to make a table unscannable.
+   Truncate instead and keep the full value in title= for hover/copy. */
+.truncate {
+    display: inline-block;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.truncate-wide {
+    max-width: 20rem;
+}
+
+.nowrap {
+    white-space: nowrap;
 }
 
 /* ---------- flags / tags ---------- */

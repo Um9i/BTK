@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block title %}BTK{% endblock %}
 {% block content %}
 {% if round %}
@@ -39,6 +40,86 @@
         <div class="label">Planets</div>
     </a>
 </div>
+
+{% if leading_alliance or leading_galaxy or biggest_mover %}
+<h2>Leaders</h2>
+<div class="leader-grid">
+    {% if leading_alliance %}
+    <a class="leader-card" href="/web/alliances/{{ leading_alliance.id }}">
+        <div class="eyebrow">Leading alliance</div>
+        <div class="leader-name">{{ leading_alliance.name }}</div>
+        <div class="leader-meta">{{ "{:,}".format(leading_alliance.total_value) }} value &middot; {{ leading_alliance.members }} members</div>
+    </a>
+    {% endif %}
+    {% if leading_galaxy %}
+    <a class="leader-card" href="/web/galaxies/{{ leading_galaxy.id }}">
+        <div class="eyebrow">Leading galaxy</div>
+        <div class="leader-name">{{ leading_galaxy.x }}:{{ leading_galaxy.y }} &mdash; {{ leading_galaxy.name }}</div>
+        <div class="leader-meta">{{ "{:,}".format(leading_galaxy.score) }} score</div>
+    </a>
+    {% endif %}
+    {% if biggest_mover %}
+    <a class="leader-card" href="/web/planets/{{ biggest_mover.id }}">
+        <div class="eyebrow">Biggest mover this tick</div>
+        <div class="leader-name">{{ biggest_mover.ruler_name }} of {{ biggest_mover.planet_name }}</div>
+        <div class="leader-meta">{{ biggest_mover.x }}:{{ biggest_mover.y }}:{{ biggest_mover.z }} &middot; {{ macros.delta(biggest_mover.score_delta) }} score</div>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if top_planets %}
+<h2>Top planets</h2>
+<table>
+    <thead>
+        <tr>
+            <th class="num">Rank</th>
+            <th>Coords</th>
+            <th>Ruler</th>
+            <th>Planet</th>
+            <th>Race</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in top_planets %}
+        <tr>
+            <td class="num rank-top">{{ loop.index }}</td>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
+            <td><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
+            <td>{{ p.race }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num">{{ "{:,}".format(p.value) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if race_distribution %}
+<h2>Race distribution</h2>
+<div class="race-dist">
+    {% for r in race_distribution %}
+    <div class="race-name">{{ r.race }}</div>
+    <div class="bar-track"><div class="bar-fill" style="width: {{ r.pct }}%"></div></div>
+    <div class="race-count">{{ r.planets }} <span class="race-pct">({{ "%.0f"|format(r.pct) }}%)</span></div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if recent_feed %}
+<h2>Recent activity</h2>
+<div class="feed-list">
+    {% for f in recent_feed %}
+    <div class="feed-row">
+        <span class="feed-tick">T{{ "%04d"|format(f.tick_number) }}</span>
+        <span class="feed-text">{{ f.text }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 <p class="links-line"><a href="/status/game">Live game status</a> &middot; <a href="/docs">JSON API docs</a></p>
 

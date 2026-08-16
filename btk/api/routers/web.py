@@ -43,10 +43,11 @@ PLANET_LIST_PAGE_SIZE = 50
 RANKED_PLANET_STAT_CTE = """
     WITH ranked AS (
         SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-               ps.size, ps.score, ps.value, ps.xp, ps.special,
+               ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance,
                RANK() OVER (ORDER BY ps.score DESC) AS rank
         FROM planet_stat ps
         JOIN planet p ON p.id = ps.planet_id
+        LEFT JOIN planet_intel pi ON pi.planet_id = p.id
         WHERE ps.tick_id = $1
     )
 """
@@ -103,6 +104,12 @@ async def index(
     round_row = await _current_round(conn)
     tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
     counts = {"alliances": 0, "galaxies": 0, "planets": 0}
+    leading_alliance = None
+    leading_galaxy = None
+    top_planets = []
+    race_distribution = []
+    biggest_mover = None
+    recent_feed = []
     if tick_row:
         counts["alliances"] = await conn.fetchval(
             "SELECT count(*) FROM alliance_stat WHERE tick_id = $1", tick_row["id"]
@@ -122,6 +129,87 @@ async def index(
         counts["planets"] = await conn.fetchval(
             "SELECT count(*) FROM planet_stat WHERE tick_id = $1 AND x != 200", tick_row["id"]
         )
+        leading_alliance = await conn.fetchrow(
+            """
+            SELECT a.id, a.name, s.score, s.total_score, s.total_value, s.members
+            FROM alliance_stat s
+            JOIN alliance a ON a.id = s.alliance_id
+            WHERE s.tick_id = $1
+            ORDER BY s.rank ASC
+            LIMIT 1
+            """,
+            tick_row["id"],
+        )
+        leading_galaxy = await conn.fetchrow(
+            """
+            SELECT g.id, g.x, g.y, s.name, s.score, s.value
+            FROM galaxy_stat s
+            JOIN galaxy g ON g.id = s.galaxy_id
+            WHERE s.tick_id = $1 AND g.x != 200
+            ORDER BY s.score DESC
+            LIMIT 1
+            """,
+            tick_row["id"],
+        )
+        top_planets = await conn.fetch(
+            """
+            SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race, ps.score, ps.value
+            FROM planet_stat ps
+            JOIN planet p ON p.id = ps.planet_id
+            WHERE ps.tick_id = $1 AND ps.x != 200
+            ORDER BY ps.score DESC
+            LIMIT 3
+            """,
+            tick_row["id"],
+        )
+        race_rows = await conn.fetch(
+            """
+            SELECT race, count(*) AS planets
+            FROM planet_stat
+            WHERE tick_id = $1 AND x != 200
+            GROUP BY race
+            ORDER BY planets DESC
+            """,
+            tick_row["id"],
+        )
+        race_total = sum(r["planets"] for r in race_rows) or 1
+        race_distribution = [
+            {"race": r["race"], "planets": r["planets"], "pct": r["planets"] / race_total * 100}
+            for r in race_rows
+        ]
+        recent_feed = await conn.fetch(
+            """
+            SELECT tick_number, category, text
+            FROM feed
+            WHERE round_id = $1
+            ORDER BY tick_number DESC, id DESC
+            LIMIT 15
+            """,
+            round_row["id"],
+        )
+        # "Biggest mover" needs a previous tick to diff against -- the very
+        # first tick of a round has none, so this stays None rather than
+        # comparing against nothing.
+        prev_tick_id = await conn.fetchval(
+            "SELECT id FROM tick WHERE round_id = $1 AND number < $2 ORDER BY number DESC LIMIT 1",
+            round_row["id"],
+            tick_row["number"],
+        )
+        if prev_tick_id:
+            biggest_mover = await conn.fetchrow(
+                """
+                SELECT p.id, cur.x, cur.y, cur.z, cur.planet_name, cur.ruler_name,
+                       (cur.score - prev.score) AS score_delta
+                FROM planet_stat cur
+                JOIN planet_stat prev ON prev.planet_id = cur.planet_id AND prev.tick_id = $2
+                JOIN planet p ON p.id = cur.planet_id
+                WHERE cur.tick_id = $1 AND cur.x != 200
+                ORDER BY score_delta DESC
+                LIMIT 1
+                """,
+                tick_row["id"],
+                prev_tick_id,
+            )
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -132,6 +220,12 @@ async def index(
             "freshness": _freshness(tick_row),
             "countdown": _next_tick_countdown(),
             "user": user,
+            "leading_alliance": leading_alliance,
+            "leading_galaxy": leading_galaxy,
+            "top_planets": top_planets,
+            "race_distribution": race_distribution,
+            "biggest_mover": biggest_mover,
+            "recent_feed": recent_feed,
         },
     )
 
@@ -205,13 +299,14 @@ async def alliance_detail(
         if tick_row:
             intel_planets = await conn.fetch(
                 """
-                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.score, ps.value, ps.size,
+                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race, ps.special,
+                       ps.score, ps.value, ps.size,
                        pi.nick, pi.comment, pi.amps, pi.dists, pi.defwhore
                 FROM planet_intel pi
                 JOIN planet p ON p.id = pi.planet_id
                 JOIN planet_stat ps ON ps.planet_id = p.id AND ps.tick_id = $1
                 WHERE pi.alliance ILIKE $2
-                ORDER BY ps.score DESC
+                ORDER BY ps.x, ps.y, ps.z
                 """,
                 tick_row["id"],
                 name,
@@ -251,10 +346,21 @@ async def alliance_detail(
                 # e.g. a one-member alliance's founder planet should match its
                 # reported size *and* score *and* value almost exactly, which
                 # score alone can't tell apart from a same-scoring planet of a
-                # very different size. Never a detection, just a fit: it can't
-                # know a planet is actually this alliance's, only that its
-                # stats fit the size of the gap -- most useful for small
-                # alliances where that gap is small and distinctive.
+                # very different size. Never a detection, just a fit.
+                #
+                # Only shown for alliances with exactly one member. Averaging
+                # the gap across N missing members and matching against that
+                # single average profile only makes sense when there's
+                # actually one real planet at that average -- for larger
+                # alliances every member has its own size/score/value, often
+                # wildly different from the alliance-wide average, so
+                # "closest to the average" carries no real signal. Confirmed
+                # empirically: validated this ranking against an alliance
+                # whose true roster was independently solved by exact
+                # multi-tick subset-sum matching, and true members' rank
+                # positions were scattered across the entire candidate list
+                # (as bad as 264th out of ~300) rather than clustered near
+                # the top -- see docs/alliance-membership-inference.md.
                 #
                 # Candidates already tagged to THIS alliance are excluded (they're
                 # already in the roster above) but candidates tagged to a
@@ -266,7 +372,7 @@ async def alliance_detail(
                 remaining_score = latest["total_score"] - roster_score
                 remaining_value = latest["total_value"] - roster_value
                 remaining_size = latest["size"] - roster_size
-                if remaining_members > 0 and remaining_score > 0:
+                if latest["members"] == 1 and remaining_members > 0 and remaining_score > 0:
                     avg_missing_score = remaining_score / remaining_members
                     avg_missing_value = remaining_value / remaining_members
                     avg_missing_size = remaining_size / remaining_members
@@ -296,6 +402,20 @@ async def alliance_detail(
                     intel_coverage["avg_missing_score"] = avg_missing_score
                     intel_coverage["avg_missing_value"] = avg_missing_value
                     intel_coverage["avg_missing_size"] = avg_missing_size
+    # Empty columns are noise in a dense table -- only render Flags/Amps/
+    # Dists/Nick if at least one row actually has something in them. And a
+    # Comment repeated identically on every row (e.g. every inferred member
+    # of an algorithmically-solved alliance) says nothing per-row -- surface
+    # it once as a note instead of 40 duplicate cells.
+    show_flags = any(p["special"] or p["defwhore"] for p in intel_planets)
+    show_amps = any(p["amps"] is not None for p in intel_planets)
+    show_dists = any(p["dists"] is not None for p in intel_planets)
+    show_nick = any(p["nick"] for p in intel_planets)
+    comment_values = {p["comment"] for p in intel_planets if p["comment"]}
+    uniform_comment = next(iter(comment_values)) if len(comment_values) == 1 else None
+    show_comment_column = len(comment_values) > 1
+    leading_cols = 4 + (1 if show_flags else 0)  # Coords, Planet, Ruler, Race[, Flags]
+    trailing_cols = sum([show_amps, show_dists, show_nick, show_comment_column])
     return templates.TemplateResponse(
         request,
         "alliance_detail.html",
@@ -310,6 +430,14 @@ async def alliance_detail(
             "intel_planets": intel_planets,
             "intel_coverage": intel_coverage,
             "suggested_planets": suggested_planets,
+            "show_flags": show_flags,
+            "show_amps": show_amps,
+            "show_dists": show_dists,
+            "show_nick": show_nick,
+            "show_comment_column": show_comment_column,
+            "uniform_comment": uniform_comment,
+            "roster_leading_cols": leading_cols,
+            "roster_trailing_cols": trailing_cols,
         },
     )
 
@@ -379,9 +507,10 @@ async def galaxy_detail(
         planets = await conn.fetch(
             """
             SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-                   ps.size, ps.score, ps.value, ps.xp, ps.special
+                   ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance
             FROM planet_stat ps
             JOIN planet p ON p.id = ps.planet_id
+            LEFT JOIN planet_intel pi ON pi.planet_id = p.id
             WHERE ps.tick_id = $1 AND ps.galaxy_id = $2
             ORDER BY ps.z
             """,
@@ -400,6 +529,12 @@ async def galaxy_detail(
             latest_tick_id,
             galaxy_id,
         )
+    # Alliance tagging is scouted intel, same visibility rule as the roster
+    # on an alliance page -- logged-out visitors don't see it. And an empty
+    # column is noise, so only show Flags/Alliance if this galaxy actually
+    # has something in them.
+    show_flags = any(p["special"] for p in planets)
+    show_alliance = user is not None and any(p["alliance"] for p in planets)
     return templates.TemplateResponse(
         request,
         "galaxy_detail.html",
@@ -413,6 +548,8 @@ async def galaxy_detail(
             "value_trend": value_trend,
             "xp_trend": xp_trend,
             "user": user,
+            "show_flags": show_flags,
+            "show_alliance": show_alliance,
         },
     )
 
@@ -480,10 +617,11 @@ async def planets_list(
             rows = await conn.fetch(
                 """
                 SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-                       ps.size, ps.score, ps.value, ps.xp, ps.special,
+                       ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance,
                        RANK() OVER (ORDER BY ps.score DESC) AS rank
                 FROM planet_stat ps
                 JOIN planet p ON p.id = ps.planet_id
+                LEFT JOIN planet_intel pi ON pi.planet_id = p.id
                 WHERE ps.tick_id = $1 AND ps.x != 200
                 ORDER BY ps.score DESC
                 LIMIT $2 OFFSET $3
@@ -492,6 +630,8 @@ async def planets_list(
                 PLANET_LIST_PAGE_SIZE,
                 (page - 1) * PLANET_LIST_PAGE_SIZE,
             )
+    show_flags = any(p["special"] for p in rows)
+    show_alliance = user is not None and any(p["alliance"] for p in rows)
     return templates.TemplateResponse(
         request,
         "planets_list.html",
@@ -504,6 +644,8 @@ async def planets_list(
             "page_size": PLANET_LIST_PAGE_SIZE,
             "paginated": not q,
             "user": user,
+            "show_flags": show_flags,
+            "show_alliance": show_alliance,
         },
     )
 
