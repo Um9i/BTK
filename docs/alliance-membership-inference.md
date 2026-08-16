@@ -1718,6 +1718,146 @@ correcting every prior pass's count retroactively, but worth flagging so
 a future reader trusts the live `count(distinct alliance)` query over
 this doc's running commentary.
 
+## Twelfth pass (2026-08-16, continued): guessing round-118 nicknames from cross-round history
+
+Everything above solves *alliance* membership. It never touches
+`planet_intel.nick` — the game's own `ruler_name` is a display name
+repicked fresh every round, often themed to that round's planet name, and
+is not itself a nickname. All 336 planets confirmed by this doc's
+techniques had `nick` still NULL going into this pass.
+
+### The data: backfilling every round history.planetarion.com has
+
+`history.planetarion.com/history.php?id=1&round=N` (planet rankings) and
+`?id=3&round=N` (alliance rankings) publish, per round, exactly the
+`(rank, ruler, planet, nick, alliance, score, value, xp, size, race,
+coords)` tuples this doc has been hand-transcribing from pasted data all
+session. `scripts/fetch_history.py` (`btk-fetch-history`) automates that —
+pulls both pages for any round(s) into
+`docs/data/round<N>-alliance-truth.csv` / `-alliance-rankings.csv`. Run
+with `--all --keep-going`, it backfilled **all 104 rounds the site has
+(14-117)** — 108,108 planet-rows — into `docs/data/`.
+
+Two real bugs surfaced building it, both fixed before the backfill ran
+for real:
+- **The site does not 404 on an invalid round.** It silently serves round
+  14's data for anything out of range. A naive fetch of round 1 wrote
+  round 14's rows under the filename `round1-...`, undetectable from row
+  counts alone. Fixed by checking the page's own `<h2 class="header">
+  Round N ...</h2>` banner against the round actually requested, and
+  refusing to write on a mismatch.
+- **`rank` needed comma-stripping too.** Rounds with 1000+ planets format
+  rank with a thousands separator (`"1,654"`); the original `int_cols` set
+  didn't include it, so 33 of the 104 rounds silently kept a comma in
+  that column until caught.
+
+A pre-existing `.gitignore` bug was also caught and fixed here: a bare
+`data/` pattern (meant only for the local Postgres dump cache at the repo
+root) has no leading slash, so it also matched `docs/data/` at any depth
+— every fixture placed there all session, including the round 115-117
+ones transcribed by hand earlier, was silently untracked despite `git
+add` never complaining. Anchored to `/data/`.
+
+### The join: `nick_history.sqlite`
+
+`scripts/nick_history.py` (`btk-nick-history build`) loads all 104
+`round<N>-alliance-truth.csv` files into a single SQLite table indexed on
+`nick` and `ruler` (both `COLLATE NOCASE`). The reason this works at all:
+`nick` is the stable per-player identifier, `ruler` isn't. Round 117's
+rank-1 planet is ruler `Cashy`, nick `elviz`, alliance Imperium; round
+116's nick `elviz` is ruler `John Rambo`, alliance Newdawn ft HR — same
+player, unrecognizable by ruler name alone. `ruler-collisions` (one of
+the tool's report commands) demonstrates the failure mode directly:
+generic ruler names like `King`, `Master`, `One` are reused by 70-144
+*different* players across the dataset.
+
+### The inference: `scripts/guess_nicks.py` (`btk-guess-nicks`)
+
+Given a round-118 planet's `(ruler, alliance)` — alliance from this doc's
+already-confirmed rosters where known — the tool tries to resolve a
+`nick`, via four independent, increasingly indirect mechanisms:
+
+1. **Recency.** The round-118 alliance equals the ruler-matched nick's
+   *most recent* historical alliance. The common case: round 117's roster
+   mostly carried straight into round 118.
+2. **Clustering.** An alliance-name match to an *old*, non-recent round is
+   weak alone — names get recycled by unrelated groups over dozens of
+   rounds. It becomes strong evidence when **2 or more independent**
+   round-118 members of that same alliance all match nicks clustered in
+   the same old round window. This is exactly what round-118 KittenZ and
+   Tal Shiar show: 4 and 3 independent members respectively, all matching
+   an alliance of that literal name 25-45 rounds ago (KittenZ at rounds
+   71-73, Tal Shiar at 92-93) — not their most recent alliance, which was
+   something else entirely for every one of them. Four unrelated
+   coincidences landing in the same 3-round window isn't something random
+   name reuse produces; it's what a dormant alliance reforming with much
+   of its old membership looks like.
+3. **Disambiguation.** A ruler name that collides with several historical
+   nicks is still resolvable if the round-118 alliance is already known
+   and **exactly one** of the colliding candidates was ever a member of
+   it. This is what catches PATSA's `Fiery`/`mPulse`/`Pit`: all three
+   ruler names collide with unrelated nicks from other rounds (`Fiery`
+   alone was also used by 5 other, unconnected players), but only the
+   real PATSA member's nick has ever been in PATSA. Ruler-uniqueness
+   alone silently drops every one of these; it isn't circular to use the
+   independently-proven alliance as the tie-breaker.
+4. **Galaxy buddies.** Players who know each other tend to colonize the
+   same galaxy round after round — a real, observed pattern, not
+   hypothetical. Once a round-118 galaxy contains an already-confident
+   nick (an "anchor"), that anchor's own historical galaxy-mates become a
+   lookup for that galaxy's other, still-unresolved planets: if a
+   remaining ruler candidate shared a galaxy with the anchor in
+   `GALAXY_BUDDY_MIN` (2) or more past rounds, that's corroboration. This
+   runs as a second pass, after 1-3 have produced a set of trusted
+   anchors — it cannot bootstrap off other guesses, only confirmed ones.
+
+**Every high-confidence result is then run through automatic conflict
+resolution**, because the same nick can end up matched to two different
+round-118 planets — a real player can only hold one. When that happens,
+galaxy-buddy support (recomputed independently for both sides) breaks the
+tie if exactly one side has it; if neither or both do, **both are
+demoted to unresolved** rather than either being presented as confirmed.
+This is not a hypothetical safeguard — it fired for real, twice, in this
+pass:
+- `Demort` and `Paisley` were each matched (via mechanism 3) to two
+  different round-118 planets in two different alliances. Neither side
+  had galaxy-buddy support. Both left unresolved.
+- `Hris` (mechanism 3, Tal Shiar vs. Pink Fluffy Unicorns) and `zazael`
+  (mechanism 3, VGN vs. Pink Fluffy Unicorns) each resolved cleanly once
+  galaxy-buddy support was checked — `Hris` shared a galaxy with confirmed
+  member `Snagge` in **22** separate historical rounds, about as strong as
+  this kind of evidence gets.
+- A second, later round of conflict-checking (once galaxy-buddy itself
+  started producing new anchors) caught two more collisions the first
+  pass had missed and already **inserted**: `Virt` and `Qerr`, both
+  originally written as confirmed. `Virt` resolved to a different planet
+  once galaxy-buddy evidence came in (2 shared rounds, KittenZ, beating
+  the original PFU guess); `Qerr` turned out genuinely tied between two
+  claims and was retracted on both sides. Both already-live rows were
+  corrected in place (`nick` set back to `NULL`, with a comment
+  explaining why) rather than left standing on discredited evidence.
+
+Nothing here writes to `planet_intel` automatically. Results are reviewed
+and inserted by hand, same as every other inference tool in this doc —
+these are statistical guesses from name/social-pattern reuse, not
+scouted `!intel`, and are commented as such on every row so a future
+reader doesn't mistake them for the same confidence tier as the CP-SAT
+alliance proofs sharing that row.
+
+**A known limitation, not yet fixed:** alliance names aren't normalized
+across rounds (`Newdawn ft HR` vs. `NewDawn`, `SWAT TEAM` vs. `SWAT
+THEORY` are treated as unrelated strings), which under-counts recency and
+clustering matches and was visible in the Eleventh pass's `top-alliances`
+report too. Worth a rename-alias table if this technique gets reused on
+a future round.
+
+**Running total on the live round-118 database after this pass:** 80 of
+336 confirmed planets now have a guessed `nick` (up from 0 going in),
+across three rounds of insert/retract as the conflict-resolution
+mechanism matured. Alliance confirmations themselves are unchanged by
+this pass — this only adds `nick` to already-confirmed rows, plus 3 fresh
+`nick`-only rows for planets with no confirmed alliance.
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
