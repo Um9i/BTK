@@ -1278,12 +1278,113 @@ it is not yet.
 As with the previous sessions, the scripts for this pass lived in a
 scratch directory and were not committed.
 
+## Fourth pass (2026-08-16, continued): the fund correction lands, and three large alliances fall
+
+Following directly from the Third pass's fund discovery (see the ⚠
+correction block above `Why this is possible at all`), `verify_rosters.py`
+was rewritten to the corrected model and re-run against the live round 118
+database. All 12 alliances it had previously proven (11 singles + Fairies)
+re-confirmed exactly, over the same planets and the same spans, extended by
+the three new ticks ingested since. Checking each one's implied fund
+(`total_value - sum(member.value)`) at every tick showed it was **exactly
+zero throughout for all 12** — the old broken model had been accidentally
+correct on every alliance it ever solved, which is precisely why nothing
+caught the bug earlier. No 1- or 2-member alliance was rescued by the fix,
+because none had ever been failing; the fund's real victims were always the
+larger, CP-SAT-solved alliances.
+
+### `btk-solve-roster`: the ad hoc fund solver, generalized and committed
+
+The Third pass's `fund_solve.py` (a one-off script, alliance name and tick
+range hardcoded per run) was generalized into `scripts/solve_roster.py`
+(`btk-solve-roster`), which:
+
+- builds the same three-constraint-per-tick CP-SAT model (`size` exact,
+  `xp` exact, `value` bounded by `[0, 500_000]` fund slack) over any
+  `(alliance, lo, hi)` window with constant `members`,
+- **excludes planets already confirmed to a different alliance by
+  default** (see below for why this is not optional),
+- **always runs a uniqueness probe** — re-solving with the found set
+  forbidden — and refuses to report a result as confirmed unless that
+  probe comes back `INFEASIBLE`,
+- accepts `--force-in` to pin known members (e.g. a joiner already named
+  by `btk-find-joiners`) into the solution, and
+- inserts into `planet_intel` behind `--insert --updated-by`, same
+  convention as the other two scripts.
+
+Three alliances were solved and inserted with it this pass:
+
+**TiT (10 members).** The Third pass's already-proven roster (`5ht2iixt,
+95hvg1i4, 99svzsph, c6l863jh, dn6nfrbp, ges5dnee, mlppd05s, mz6jsab8,
+q1wtiafi, sp3qt2r2`) was re-checked against three new ticks (211-213) added
+since — size, xp, and fund-bounded value all still reconcile exactly. Since
+the original CP-SAT solve had already proven this was the *unique*
+10-subset over 75 ticks, adding three more constraint ticks can only shrink
+a solution set, never grow it, so uniqueness carried forward without
+re-running the solver. Inserted unchanged.
+
+**PussycatZ (20 members) — the "scaling wall" alliance that wasn't.** The
+doc's own guidance (`### The scaling wall`, above) puts 19+ members with
+churn as the point exact solving stops working. PussycatZ has 20 members,
+but has had **zero visible churn since tick 95** — the counted-score gap
+sat at a constant `381,199` for **119 consecutive ticks** through 213, the
+longest stable window found for any alliance this round. CP-SAT solved it
+to `OPTIMAL` in 5.1 seconds, and the uniqueness probe came back
+`INFEASIBLE`. The lesson: the scaling wall is about *churn*, not member
+count in isolation — a large, perfectly stable alliance can be easier to
+solve exactly than a small, churning one, because every stable tick adds a
+constraint almost for free.
+
+### The closure-exclusion bug, caught by its own symptom
+
+**Chocolate Starfish (22 members)** is where excluding already-claimed
+planets stopped being a nice-to-have and became load-bearing. Its current
+22-member window (ticks 198-213) is only 16 ticks — CP-SAT returned
+`OPTIMAL`, but the uniqueness probe found a second solution, and worse: the
+*first* "solution" included `iyw6qa27`, a planet **already proven to belong
+to PussycatZ** minutes earlier in the same session. A plausible-looking
+`OPTIMAL` status does not protect against this — the model has no notion
+that a planet can only be in one alliance unless that constraint is put in
+by hand.
+
+The fix generalizes beyond this one bug: **use the alliance's own join
+history to find a longer, older, fixed-membership window, not the current
+one.** `btk-find-joiners` had already dated Chocolate Starfish's three join
+events precisely (ticks 15, 69, 198 — three separate single-planet joins,
+never a leave). That means the interval between two consecutive joins is
+the longest available window at a fixed count, and — because membership
+only grew — its solution is a **strict subset** of every later roster. The
+interval between the tick-69 and tick-198 joins is 129 ticks at exactly 21
+members, versus 16 ticks at 22. Solving the 21-member window (with
+already-claimed planets excluded, and the known tick-69 joiner `z9jbog80`
+forced in with `--force-in`) returned `OPTIMAL` in 4.8s and the uniqueness
+probe came back `INFEASIBLE` — genuinely unique, and it correctly recovered
+both already-known joiners (`g1rd963f` from tick 15, `z9jbog80` from tick
+69) as members. Union that 21 with the known tick-198 joiner `mxw5y0nc` to
+reach the current 22, and the three exact identities (size, xp,
+fund-bounded value) reconcile at all 16 ticks of the current window — the
+same closure check that caught the bug now confirms the fix.
+
+**Practical upshot for `### The scaling wall` and step 1 of the recipe
+below:** for a *growing* alliance (no leaves), don't anchor the solve on
+the most recent stable window by default — check `btk-find-joiners` for the
+join history first, and solve the longest inter-join interval instead. The
+Second-pass guidance to anchor on the most recent ticks was itself
+motivated by a case (TiT) with no known join history to exploit; where join
+history *is* known, the longest interval usually beats the most recent one,
+as it did here (129 ticks vs. 16).
+
+**Running total on the live round-118 database after this pass:** 72
+planets across 18 alliances — the 12 from `btk-verify-rosters` (11 singles
++ Fairies), 4 PATSA, 22 PussycatZ, 22 Chocolate Starfish, 10 TiT.
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
 recent stable window rather than the longest available one, and step 4
 carries a warning about small-window tractability. Step 0 is new in the
-Third pass.)*
+Third pass. Step 1 is revised, and step 3 is now enforced by `btk-solve-roster`
+rather than a manual set, per the Fourth pass.)*
 
 0a. **Run `uv run btk-find-joiners` first — it is free and needs no solver.**
    The counted-score gap names every joiner who carried non-zero score, by
@@ -1305,30 +1406,49 @@ Third pass.)*
    size/score/value) to get the exact unaffiliated bucket before
    starting.
 
-1. Pull `alliance_stat` history for the target alliance; identify the
-   tick range ending at the **most recent** available tick with a
-   constant `members` count (not necessarily the longest range overall
-   — anchoring recent, per "Anchor on the most recent ticks" and the
-   Second-pass TiT result, resolves ties that a founding-window solve
-   leaves ambiguous).
+1. Pull `alliance_stat` history for the target alliance. **Run
+   `uv run btk-find-joiners --alliance <name>` first (step 0a already told
+   you to run it for everything, but re-read its output for this specific
+   alliance) and check whether it names any join events with no matching
+   leave** — i.e. the alliance only ever grew. If so, per the Fourth pass's
+   Chocolate Starfish result, solve the **longest interval between two
+   consecutive join events**, not the most recent window — its solution is
+   a strict subset of every later roster, and it is very often both longer
+   and more tractable than the current window (129 ticks vs. 16 in that
+   case). Force the interval's boundary joiner in with `--force-in`. Only
+   fall back to anchoring on the **most recent** stable window (the
+   Second-pass TiT guidance) when there's no usable join history — e.g. the
+   alliance has had leaves, swaps, or founding-only zero-carry joins that
+   `btk-find-joiners` can't see.
 2. Pull `planet_stat` for every planet across that same tick range
    (`(external_id, ruler_name, planet_name, tick, size, score, value)`).
 3. Exclude planets already confirmed to other alliances (a running
    set — grows as you solve more alliances, shrinking the candidate
    pool for every subsequent one) and any planet confirmed to have no
-   alliance at all. Before relying on this exclusion set (or any
-   existing `planet_intel` data at all), run the `members`-vs-`count(*)`
-   cross-check from the Second-pass section — don't assume prior data is
-   trustworthy just because it exists.
+   alliance at all. **This is not optional** — the Fourth pass's first
+   Chocolate Starfish attempt returned a plausible `OPTIMAL` roster that
+   silently included a planet already proven to belong to PussycatZ, with
+   nothing about the solver status hinting at the error.
+   `scripts/solve_roster.py` (`btk-solve-roster`) does this exclusion
+   automatically from live `planet_intel`, and only skips it if you
+   explicitly pass `--no-exclude-claimed`. Before relying on this exclusion
+   set (or any existing `planet_intel` data at all), run the
+   `members`-vs-`count(*)` cross-check from the Second-pass section — don't
+   assume prior data is trustworthy just because it exists.
 4. Try the full window first with CP-SAT (`ortools.sat.python.cp_model`,
-   `num_search_workers = <cpu count>`). **Don't substitute a small
-   window for the full one to save time** — small windows have a larger
-   feasible region to search/refute and were empirically *slower* to
-   resolve than large ones in the Second pass, the opposite of the
-   original intuition. If `INFEASIBLE`, bisect forward
+   `num_search_workers = <cpu count>`) — or just run `btk-solve-roster
+   <alliance> <lo> <hi>`, which builds this model directly. **Don't
+   substitute a small window for the full one to save time** — small
+   windows have a larger feasible region to search/refute and were
+   empirically *slower* to resolve than large ones in the Second pass, the
+   opposite of the original intuition. If `INFEASIBLE`, bisect forward
    from the first tick; if `UNKNOWN` even at generous time budgets
    (10+ minutes), the roster is probably too large/churn-heavy for exact
-   CP-SAT alone — move to step 4a rather than stopping.
+   CP-SAT alone — move to step 4a rather than stopping. **Whatever finds a
+   solution, always run the uniqueness probe next** (re-solve with the
+   found set's members forbidden; treat anything but `INFEASIBLE` as
+   unconfirmed) — `btk-solve-roster` runs this automatically and refuses to
+   report a result as confirmed otherwise.
 4a. For alliances CP-SAT can't crack directly: run the GPU search (see
    above) anchored on the **most recent** available ticks, not the
    historical founding window. Take the per-candidate frequency ranking,
