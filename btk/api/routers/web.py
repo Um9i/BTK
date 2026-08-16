@@ -154,11 +154,10 @@ async def index(
     round_row = await _current_round(conn)
     tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
     counts = {"alliances": 0, "galaxies": 0, "planets": 0}
-    leading_alliance = None
-    leading_galaxy = None
-    top_planets = []
+    alliance_movers = []
+    galaxy_movers = []
+    planet_movers = []
     race_distribution = []
-    biggest_mover = None
     recent_feed = []
     you = None
     if tick_row:
@@ -179,39 +178,6 @@ async def index(
         )
         counts["planets"] = await conn.fetchval(
             "SELECT count(*) FROM planet_stat WHERE tick_id = $1 AND x != 200", tick_row["id"]
-        )
-        leading_alliance = await conn.fetchrow(
-            """
-            SELECT a.id, a.name, s.score, s.total_score, s.total_value, s.members
-            FROM alliance_stat s
-            JOIN alliance a ON a.id = s.alliance_id
-            WHERE s.tick_id = $1
-            ORDER BY s.rank ASC
-            LIMIT 1
-            """,
-            tick_row["id"],
-        )
-        leading_galaxy = await conn.fetchrow(
-            """
-            SELECT g.id, g.x, g.y, s.name, s.score, s.value
-            FROM galaxy_stat s
-            JOIN galaxy g ON g.id = s.galaxy_id
-            WHERE s.tick_id = $1 AND g.x != 200
-            ORDER BY s.score DESC
-            LIMIT 1
-            """,
-            tick_row["id"],
-        )
-        top_planets = await conn.fetch(
-            """
-            SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race, ps.score, ps.value
-            FROM planet_stat ps
-            JOIN planet p ON p.id = ps.planet_id
-            WHERE ps.tick_id = $1 AND ps.x != 200
-            ORDER BY ps.score DESC
-            LIMIT 3
-            """,
-            tick_row["id"],
         )
         race_rows = await conn.fetch(
             """
@@ -238,9 +204,13 @@ async def index(
             """,
             round_row["id"],
         )
-        # "Biggest mover" (and the "you" panel's delta) need a previous tick
-        # to diff against -- the very first tick of a round has none, so
-        # both stay None rather than comparing against nothing.
+        # Standings (who's #1 right now) are already one click away in-game --
+        # BTK's own value is history, so the homepage leads with *movers*
+        # (score delta since last tick) instead of duplicating a current-
+        # state leaderboard the game already shows. That needs a previous
+        # tick to diff against, which the very first tick of a round has
+        # none of -- movers (and the "you" panel's delta) just stay empty
+        # rather than comparing against nothing.
         prev_tick_id = await conn.fetchval(
             "SELECT id FROM tick WHERE round_id = $1 AND number < $2 ORDER BY number DESC LIMIT 1",
             round_row["id"],
@@ -249,16 +219,44 @@ async def index(
         if user is not None:
             you = await _you_panel(conn, user, round_row["id"], tick_row["id"], prev_tick_id)
         if prev_tick_id:
-            biggest_mover = await conn.fetchrow(
+            alliance_movers = await conn.fetch(
                 """
-                SELECT p.id, cur.x, cur.y, cur.z, cur.planet_name, cur.ruler_name,
+                SELECT a.id, a.name, cur.rank, cur.total_score,
+                       (cur.total_score - prev.total_score) AS score_delta
+                FROM alliance_stat cur
+                JOIN alliance_stat prev ON prev.alliance_id = cur.alliance_id AND prev.tick_id = $2
+                JOIN alliance a ON a.id = cur.alliance_id
+                WHERE cur.tick_id = $1
+                ORDER BY score_delta DESC
+                LIMIT 3
+                """,
+                tick_row["id"],
+                prev_tick_id,
+            )
+            galaxy_movers = await conn.fetch(
+                """
+                SELECT g.id, g.x, g.y, cur.name, cur.score,
+                       (cur.score - prev.score) AS score_delta
+                FROM galaxy_stat cur
+                JOIN galaxy_stat prev ON prev.galaxy_id = cur.galaxy_id AND prev.tick_id = $2
+                JOIN galaxy g ON g.id = cur.galaxy_id
+                WHERE cur.tick_id = $1 AND g.x != 200
+                ORDER BY score_delta DESC
+                LIMIT 3
+                """,
+                tick_row["id"],
+                prev_tick_id,
+            )
+            planet_movers = await conn.fetch(
+                """
+                SELECT p.id, cur.x, cur.y, cur.z, cur.planet_name, cur.ruler_name, cur.race, cur.score,
                        (cur.score - prev.score) AS score_delta
                 FROM planet_stat cur
                 JOIN planet_stat prev ON prev.planet_id = cur.planet_id AND prev.tick_id = $2
                 JOIN planet p ON p.id = cur.planet_id
                 WHERE cur.tick_id = $1 AND cur.x != 200
                 ORDER BY score_delta DESC
-                LIMIT 1
+                LIMIT 5
                 """,
                 tick_row["id"],
                 prev_tick_id,
@@ -273,11 +271,10 @@ async def index(
             "freshness": _freshness(tick_row),
             "countdown": _next_tick_countdown(),
             "user": user,
-            "leading_alliance": leading_alliance,
-            "leading_galaxy": leading_galaxy,
-            "top_planets": top_planets,
+            "alliance_movers": alliance_movers,
+            "galaxy_movers": galaxy_movers,
+            "planet_movers": planet_movers,
             "race_distribution": race_distribution,
-            "biggest_mover": biggest_mover,
             "recent_feed": recent_feed,
             "you": you,
         },
