@@ -51,11 +51,13 @@ order across the whole file.
   typing in a field, no modifier held) to focus and select the header
   search box. A faint `/` hint (reusing `.tag`) sits in the box until
   focused, then hides; hidden outright on mobile where it's meaningless.
-- **Live filtering on `/web/planets`.** Right now every query is a full
-  page reload. A small debounced fetch-and-replace-tbody script (no
-  framework needed) would make repeated searches ("who's near me,"
-  "check three names in a row") feel instant. Keep the current
-  server-rendered form as the no-JS fallback.
+- ~~**Live filtering on `/web/planets`.**~~ **Done.** Split the results
+  table/pagination out into `_planets_results.html`; the route serves
+  that fragment alone when the request carries an `X-BTK-Partial: 1`
+  header (only the page's own fetch call sends it), full page otherwise.
+  Debounced (300ms) input listener re-fetches and swaps `#planets-results`
+  via `history.replaceState` instead of a real navigation. The plain
+  `<form>` still works untouched with JS off -- same GET, same URL.
 - **Command-style search shortcuts.** The header search already
   disambiguates `x:y:z` / `x:y` / free text. Extend the grammar: `@name`
   jumps straight to an alliance page, `#123` jumps to a rank position.

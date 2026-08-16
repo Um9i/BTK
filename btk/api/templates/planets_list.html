@@ -1,72 +1,48 @@
 {% extends "base.html" %}
-{% import "_macros.html" as macros %}
 {% block title %}Planets - BTK{% endblock %}
 {% block content %}
 <h1>Planets</h1>
 {% if round %}
     <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
 {% endif %}
-<form class="search-form" method="get" action="/web/planets">
+<form class="search-form" method="get" action="/web/planets" id="planets-form">
     <span class="prompt">&gt;</span>
-    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler{% if user %}/nick{% endif %} name" autocomplete="off">
+    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler{% if user %}/nick{% endif %} name" autocomplete="off" id="planets-query">
     <button type="submit">Query</button>
 </form>
-{% if uniform_comment %}
-<p class="subtitle">{{ uniform_comment }}</p>
-{% endif %}
-{% if planets %}
-<div class="table-scroll">
-<table class="roster">
-    <thead>
-        <tr>
-            <th class="num">Rank</th>
-            <th>Coords</th>
-            <th>Ruler</th>
-            <th class="col-secondary">Planet</th>
-            <th class="col-secondary">Race</th>
-            {% if show_flags %}<th class="col-secondary">Flags</th>{% endif %}
-            {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
-            {% if show_nick %}<th class="col-secondary">Nick</th>{% endif %}
-            <th class="num col-secondary">Size</th>
-            <th class="num">Score</th>
-            <th class="num col-secondary">Value</th>
-            <th class="num col-secondary">XP</th>
-            {% if show_amps %}<th class="num col-secondary">Amps</th>{% endif %}
-            {% if show_dists %}<th class="num col-secondary">Dists</th>{% endif %}
-            {% if show_comment_column %}<th class="col-secondary">Comment</th>{% endif %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for p in planets %}
-        <tr>
-            <td class="num{% if p.rank <= 3 %} rank-top{% endif %}">{{ p.rank }}</td>
-            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
-            <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
-            <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
-            <td class="col-secondary">{{ p.race }}</td>
-            {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
-            {% if show_alliance %}<td class="col-secondary">{{ p.alliance or "" }}</td>{% endif %}
-            {% if show_nick %}<td class="col-secondary">{{ p.nick or "" }}</td>{% endif %}
-            <td class="num col-secondary">{{ p.size }}</td>
-            <td class="num">{{ "{:,}".format(p.score) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(p.xp) }}</td>
-            {% if show_amps %}<td class="num col-secondary">{{ "{:,}".format(p.amps) if p.amps is not none else "" }}</td>{% endif %}
-            {% if show_dists %}<td class="num col-secondary">{{ "{:,}".format(p.dists) if p.dists is not none else "" }}</td>{% endif %}
-            {% if show_comment_column %}<td class="col-secondary"><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div id="planets-results">
+{% include "_planets_results.html" %}
 </div>
-{% if paginated %}
-<div class="pagination">
-    {% if page > 1 %}<a href="/web/planets?page={{ page - 1 }}">&larr; prev</a>{% endif %}
-    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} planets</span>
-    {% if page * page_size < total %}<a href="/web/planets?page={{ page + 1 }}">next &rarr;</a>{% endif %}
-</div>
-{% endif %}
-{% else %}
-<p class="empty">{% if q %}No planets matching '{{ q }}'.{% else %}No planet data yet.{% endif %}</p>
-{% endif %}
+<script>
+    // Live filtering: re-fetch just the results fragment as you type instead
+    // of a full page reload per keystroke -- the plain <form> above still
+    // works untouched (same GET, same URL) if JS is unavailable.
+    (function () {
+        var input = document.getElementById("planets-query");
+        var form = document.getElementById("planets-form");
+        var results = document.getElementById("planets-results");
+        var timer = null;
+
+        function load(q) {
+            var url = "/web/planets?q=" + encodeURIComponent(q);
+            fetch(url, {headers: {"X-BTK-Partial": "1"}})
+                .then(function (r) { return r.text(); })
+                .then(function (html) {
+                    results.innerHTML = html;
+                    history.replaceState(null, "", url);
+                });
+        }
+
+        input.addEventListener("input", function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { load(input.value); }, 300);
+        });
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            clearTimeout(timer);
+            load(input.value);
+        });
+    })();
+</script>
 {% endblock %}

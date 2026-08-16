@@ -829,27 +829,29 @@ async def planets_list(
     comment_values = {p["comment"] for p in rows if user is not None and p["comment"]}
     uniform_comment = next(iter(comment_values)) if len(comment_values) == 1 else None
     show_comment_column = len(comment_values) > 1
-    return templates.TemplateResponse(
-        request,
-        "planets_list.html",
-        {
-            "round": round_row,
-            "planets": rows,
-            "q": q,
-            "page": page,
-            "total": total,
-            "page_size": PLANET_LIST_PAGE_SIZE,
-            "paginated": not q,
-            "user": user,
-            "show_flags": show_flags,
-            "show_alliance": show_alliance,
-            "show_nick": show_nick,
-            "show_amps": show_amps,
-            "show_dists": show_dists,
-            "show_comment_column": show_comment_column,
-            "uniform_comment": uniform_comment,
-        },
-    )
+    context = {
+        "round": round_row,
+        "planets": rows,
+        "q": q,
+        "page": page,
+        "total": total,
+        "page_size": PLANET_LIST_PAGE_SIZE,
+        "paginated": not q,
+        "user": user,
+        "show_flags": show_flags,
+        "show_alliance": show_alliance,
+        "show_nick": show_nick,
+        "show_amps": show_amps,
+        "show_dists": show_dists,
+        "show_comment_column": show_comment_column,
+        "uniform_comment": uniform_comment,
+    }
+    # The page's own live-filter JS re-fetches just the results fragment on
+    # every keystroke instead of a full page reload -- this header (set only
+    # by that fetch call, see planets_list.html) is what tells the difference
+    # from a real navigation, which still needs the full page.
+    template = "_planets_results.html" if request.headers.get("x-btk-partial") == "1" else "planets_list.html"
+    return templates.TemplateResponse(request, template, context)
 
 
 @router.get("/web/planets/{planet_id}")
