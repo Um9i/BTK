@@ -110,10 +110,14 @@ order across the whole file.
   inputs whenever a field was NULL (`{{ x if intel else '' }}` doesn't
   guard `intel.x` itself being None) -- fixed to `{{ x or '' if intel
   else '' }}` on all four text fields.
-- **"Needs intel" queue.** A view (or a homepage section) listing
-  round-118 planets with no `alliance`/`nick` tagged at all, sorted by
-  score, gives logged-in members a ready-made worklist instead of
-  guessing who's worth scouting next.
+- ~~**"Needs intel" queue.**~~ **Done.** New `/web/needs-intel` page,
+  linked from `/web/planets` for logged-in users -- every planet with
+  nothing at all tagged in `planet_intel` (no row, or a row that's
+  present but every field blank, same completeness check
+  `planet_detail.html` already uses), biggest first, paginated like the
+  main planet list. Rank is computed against the *full* tick
+  (`RANKED_PLANET_STAT_CTE`) then filtered, so it means the same thing
+  here as everywhere else on the site, not "rank among the unscouted."
 
 ## Feel / responsiveness
 

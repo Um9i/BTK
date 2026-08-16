@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Needs intel - BTK{% endblock %}
+{% block content %}
+<h1>Needs intel</h1>
+{% if round %}
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %} &middot; <a href="/web/planets">all planets</a></p>
+{% endif %}
+<p class="subtitle">Every planet with nothing tagged in <code>planet_intel</code> yet, biggest first -- a scouting worklist, not a ranking. Click through to add a nick, alliance, or note.</p>
+{% if planets %}
+<div class="table-scroll">
+<table class="roster">
+    <thead>
+        <tr>
+            <th class="num">Rank</th>
+            <th>Coords</th>
+            <th>Ruler</th>
+            <th class="col-secondary">Planet</th>
+            <th class="col-secondary">Race</th>
+            <th class="num">Score</th>
+            <th class="num col-secondary">Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in planets %}
+        <tr>
+            <td class="num{% if p.rank <= 3 %} rank-top{% endif %}">{{ p.rank }}</td>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
+            <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
+            <td class="col-secondary">{{ p.race }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<div class="pagination">
+    {% if page > 1 %}<a href="/web/needs-intel?page={{ page - 1 }}">&larr; prev</a>{% endif %}
+    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} unscouted</span>
+    {% if page * page_size < total %}<a href="/web/needs-intel?page={{ page + 1 }}">next &rarr;</a>{% endif %}
+</div>
+{% else %}
+<p class="empty">Nothing unscouted -- every planet has at least some intel tagged.</p>
+{% endif %}
+{% endblock %}

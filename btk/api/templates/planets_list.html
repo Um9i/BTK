@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Planets</h1>
 {% if round %}
-    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}{% if user %} &middot; <a href="/web/needs-intel">needs intel</a>{% endif %}</p>
 {% endif %}
 <form class="search-form" method="get" action="/web/planets" id="planets-form">
     <span class="prompt">&gt;</span>
