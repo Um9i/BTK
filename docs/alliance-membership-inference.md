@@ -1374,9 +1374,77 @@ motivated by a case (TiT) with no known join history to exploit; where join
 history *is* known, the longest interval usually beats the most recent one,
 as it did here (129 ticks vs. 16).
 
-**Running total on the live round-118 database after this pass:** 72
+**Running total on the live round-118 database after this pass:** 69
 planets across 18 alliances — the 12 from `btk-verify-rosters` (11 singles
-+ Fairies), 4 PATSA, 22 PussycatZ, 22 Chocolate Starfish, 10 TiT.
++ Fairies, 13 planets), 4 PATSA, 20 PussycatZ, 22 Chocolate Starfish, 10 TiT.
+
+## Fifth pass (2026-08-16, continued): VGN — the "still unsolved" alliance, reversed
+
+VGN (40 members, constant the entire round 14-214) was the Third pass's
+flagship failure: retested with 6x more data than the first pass, every
+window from the full 195 ticks down to 7 ticks came back `INFEASIBLE` or
+`UNKNOWN`, and the doc flagged those `INFEASIBLE`s as unusually trustworthy
+because they survived opening the candidate pool. All of that predates the
+fund correction. Given the ⚠ block's warning that every recorded
+`INFEASIBLE` needs re-reading, VGN was the obvious candidate to re-test —
+and the Third pass's own diagnostic (the counted-score gap) initially
+looked like it explained away the failure for a different reason: VGN's
+gap moves at **literally every one of the 200 tick-to-tick transitions in
+the round**, which reads exactly like continuous swap churn.
+
+It isn't, or at least not diagnosably so. The `xp` identity used by
+`btk-solve-roster` — `(total_score - total_value) / 60 == sum(member.xp)`
+— is unaffected by however much the fund itself fluctuates tick to tick,
+since the fund term appears in both `total_score` and `total_value` and
+cancels exactly (see the derivation in the Third pass's "structural
+finding" section). A gap that moves every tick is therefore just as
+consistent with "the fund is very active" as with "the roster is
+churning" — the old `find_joiners.py`-style gap analysis can't tell those
+apart, because it wasn't built with the fund in mind either. The only way
+to actually distinguish them is to run the fund-aware multi-tick solve and
+see whether a *single fixed roster* still satisfies every tick.
+
+**The full 201-tick window (14-214) came back `INFEASIBLE` in 6.7
+seconds** — fast enough to trust, and a real result: some tick in that
+range is inconsistent with any single 40-planet set, fund or no fund. But
+bisecting to a recent 15-tick window (200-214) came back `OPTIMAL` in 3.4s,
+and — critically, since a short window is exactly the case that produced
+Chocolate Starfish's false positive — the uniqueness probe came back
+`INFEASIBLE`: genuinely unique.
+
+Extending that exact 40-planet set backward tick by tick (a manual check
+outside `btk-solve-roster`, since the script doesn't yet have a
+"which tick breaks it" mode — see Possible follow-ups) found it reconciles
+exactly at **200 of the round's 201 ticks**. The single exception, tick 59,
+has all 40 planets present with ordinary size/xp growth from ticks 58 to
+60 and no missing or duplicated planet — but that tick's own
+`alliance_stat` row implies an xp sum 3 higher than the roster's actual
+sum (11,171 vs 11,168 members' actual XP). That is a data anomaly in one
+tick's aggregate snapshot, not a membership change: re-solving the full
+201-tick window with tick 59 excluded returned `OPTIMAL`, and the
+uniqueness probe came back `INFEASIBLE` — unique across every other tick
+in the entire round.
+
+**VGN therefore appears to have had zero real roster churn all round.**
+The Third pass's "still unsolved" verdict, and the moving gap that looked
+like continuous swaps, were both downstream of the same fund omission that
+broke `verify_rosters.py`. This is the strongest possible illustration of
+the ⚠ correction's warning: an `INFEASIBLE` result that "survived opening
+the pool" (the Third pass's own stated reason for trusting VGN's failure)
+was still wrong, because pool size was never the problem — the equations
+were.
+
+**Possible follow-ups, not done this pass:**
+- Give `btk-solve-roster` a `--find-break` mode that bisects a
+  `NOT UNIQUE`/`INFEASIBLE` window automatically to the offending tick(s),
+  instead of the manual backward-extension check done here by hand.
+- Investigate whether tick 59's off-by-3 xp anomaly recurs elsewhere in
+  the round (a single bad ingest, or something structural about that
+  tick's dump) — it was not chased further since it didn't block the
+  proof.
+
+**Running total on the live round-118 database after this pass:** 109
+planets across 19 alliances (adding VGN's 40 to the Fourth pass's 69).
 
 ## Practical recipe
 
