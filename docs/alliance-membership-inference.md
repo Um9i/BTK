@@ -1630,6 +1630,78 @@ GPU-search best-guess (40/40). This is its first real proof.
 planets across 24 alliances (adding Pink Fluffy Unicorns' full 40 to the
 Ninth pass's 257). Only Tal Shiar remains unsolved.
 
+## Eleventh pass (2026-08-16, continued): Tal Shiar — a genuinely churny alliance, solved on its most recent stable span, and a same-tick leave caught and corrected
+
+Tal Shiar is the one alliance this round with real, well-documented
+churn rather than fund noise: 12 founding members, a merge to 35 around
+tick 24-29 (member-count jump alone would undercount it — the
+counted-score gap jumped from 40,180 to 262,859, consistent with a
+multi-planet merge rather than one joiner), further growth through
+37/39/40, drops back to 38-39 through the mid-round, and a further merge
+to 40 sometime between ticks 185 and 186 (gap jump +436,429). None of the
+zero-churn shortcuts used for the last four alliances applied here.
+
+The right window turned out to be the **most recent stable span**: 40
+members held constant from tick 186 through 213 (28 ticks), the longest
+run since the last merge. That solved `OPTIMAL` and, on the probe,
+uniquely `INFEASIBLE` in under half a second — churn doesn't make a
+window harder to solve once you've found where the roster actually held
+still, it just shrinks how much of the round you get to use. No member is
+fully idle. Extending the found roster outside the window landed exactly
+where the alliance's own history says it should: ticks 183-185 fail the
+check (the alliance genuinely had only 39 members then, pre-merge), and —
+more interesting — **tick 214 also failed**, immediately after the
+window this alliance was solved on.
+
+**That failure was a live departure, not noise, and it was caught in the
+same session it was created.** The user asked directly: someone had left
+Tal Shiar at the round's current tick, could the leaver be identified and
+removed from `planet_intel`. Rather than a fresh CP-SAT solve, this is
+just the mirror image of the pair-search technique in
+`verify_rosters.py`: with 39 of the 40 confirmed members and one
+unknown removed, check each of the 40 members in turn to see whether
+*removing that one* makes the remaining 39 reconcile exactly (size, xp,
+fund-bounded value) against tick 214's actual totals. Exactly one
+candidate worked: `v1dl47xr` (`size=195, xp=578, value=238,919` at tick
+214). Its `planet_intel` row — inserted earlier in this same pass — was
+deleted; the other 39 rows' existing "confirmed over ticks 186-213"
+comments remain accurate as written and were left alone, since the
+36-tick window they describe didn't change.
+
+**Practical upshot:** a member's `planet_intel` row does not become stale
+only when a *different* alliance's roster changes underneath it — it
+goes stale the moment membership counts move for its own alliance at any
+tick after the row was written, including the tick the row was written
+on if data keeps arriving. Watching the just-solved alliance's own
+`members` column at the current tick (not just the window used to solve
+it) is cheap and would have caught this without being asked. Worth
+building into `btk-solve-roster` or a companion script as an automatic
+post-insert check rather than relying on being asked, per the
+follow-ups already logged for automating the idle-member check (Sixth
+pass) and the bisection-to-find-the-break check (Fifth pass).
+
+**Roster (39, current):** the previously-listed 40 members minus
+`v1dl47xr`.
+
+**Running total on the live round-118 database after this pass:** 336
+planets confirmed in `planet_intel` for round 118 (adding Tal Shiar's
+confirmed 39 to the Tenth pass's 297 — 40 inserted, then 1 removed on
+discovering the tick-214 departure), verified directly against the live
+database. This closes out every alliance identified as a target at the
+start of this arc.
+
+The alliance *count* quoted in each pass's running total above has
+drifted from reality — this pass's actual `count(distinct alliance)` is
+**23**, not the 25 that chaining the prior passes' arithmetic would
+predict (planet counts, independently re-verified here, were correct
+throughout; only the alliance tally silently drifted). The 23 are: the
+11 singles + Fairies (12 alliance rows) from `btk-verify-rosters`, PATSA,
+TiT, PussycatZ, Chocolate Starfish, VGN, BBQQ, KittenZ, Imperium, Newdawn
+ft HR, Pink Fluffy Unicorns, Tal Shiar. Not worth re-deriving and
+correcting every prior pass's count retroactively, but worth flagging so
+a future reader trusts the live `count(distinct alliance)` query over
+this doc's running commentary.
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
