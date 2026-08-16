@@ -88,6 +88,7 @@ import csv
 import sqlite3
 import sys
 from collections import defaultdict
+from itertools import pairwise
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parent.parent / "docs" / "data" / "nick_history.sqlite"
@@ -101,6 +102,12 @@ CLUSTER_MIN = 2
 # that's treated as a real "buddy pack" pattern rather than one-off chance.
 # See "GALAXY BUDDIES" above.
 GALAXY_BUDDY_MIN = 2
+
+# Largest gap (in rounds) allowed between two candidate nicks' non-overlapping
+# usage windows of the same exact ruler string before they're still treated
+# as unrelated coincidental reuse rather than one player's own mid-career
+# renick. See _renick_merge().
+MAX_RENICK_GAP = 3
 
 
 def load_planets(path: str) -> list[dict]:
@@ -128,6 +135,61 @@ def alliance_history(conn: sqlite3.Connection, nick: str) -> list[tuple[int, str
         """,
         (nick,),
     ).fetchall()
+
+
+def _merged_alliance_history(conn: sqlite3.Connection, nicks: set[str]) -> list[tuple[int, str]]:
+    """alliance_history(), unioned across every nick in a renick-merged identity."""
+    rows: list[tuple[int, str]] = []
+    for nick in nicks:
+        rows.extend(alliance_history(conn, nick))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    return rows
+
+
+def _renick_merge(
+    conn: sqlite3.Connection, candidates: set[str], ruler_key: str
+) -> tuple[str, set[str]] | None:
+    """A ruler name can collide across nicks for two very different reasons: unrelated
+    players coincidentally picking the same string, or one real player changing their own
+    nick label mid-career while reusing the same ruler name. The two are distinguishable:
+    if every candidate's use of this exact ruler string forms one continuous, NON-
+    OVERLAPPING timeline (no round used by two of them at once, and no gap between
+    consecutive nicks' windows wider than MAX_RENICK_GAP rounds), that's not coincidence --
+    two unrelated players picking an identical ruler name and then taking turns using it
+    without ever overlapping is itself vanishingly unlikely, and the tight round-gap rules
+    out two different people who happened to reuse a generic name decades apart. When it
+    holds, treat every candidate as one identity, canonicalized to whichever nick's window
+    is most recent (e.g. round 118's "Appocomaster" ruler resolves to nick "Appocomaster"
+    even though the same player briefly went by "Appoco" in rounds 27-29). Returns
+    (canonical_nick, all_nicks), or None if candidates can't be safely merged this way."""
+    if len(candidates) < 2:
+        return None
+    placeholders = ",".join("?" * len(candidates))
+    rows = conn.execute(
+        f"SELECT round, nick FROM planet_round WHERE ruler = ?1 COLLATE NOCASE "
+        f"AND nick IN ({placeholders}) COLLATE NOCASE",
+        (ruler_key, *candidates),
+    ).fetchall()
+    by_round: dict[int, set[str]] = defaultdict(set)
+    for rnd, nick in rows:
+        by_round[rnd].add(nick)
+    if any(len(nicks) > 1 for nicks in by_round.values()):
+        return None  # co-occurred in the same round -- genuinely different people
+
+    windows: dict[str, tuple[int, int]] = {}
+    for nick in candidates:
+        rounds = [r for r, nicks in by_round.items() if nick in nicks]
+        if not rounds:
+            return None
+        windows[nick] = (min(rounds), max(rounds))
+
+    ordered = sorted(windows.items(), key=lambda kv: kv[1][0])
+    for (_, (_, end)), (_, (start, _)) in pairwise(ordered):
+        if start - end > MAX_RENICK_GAP:
+            return None
+
+    canonical = max(windows, key=lambda n: windows[n][1])
+    return canonical, set(windows)
 
 
 def _resolve(
@@ -158,10 +220,28 @@ def guess(planets: list[dict], conn: sqlite3.Connection) -> list[dict]:
     # every old match for an alliance before any single one can be judged.
     prelim = []
     old_match_nicks: dict[str, set[str]] = defaultdict(set)  # alliance -> nicks with an old match
+    renick_cache: dict[str, tuple[str, set[str]] | None] = {}
     for p in planets:
         ruler_key = p["ruler"].strip().lower()
         candidates = ruler_index.get(ruler_key, set())
         alliance = (p.get("alliance") or "").strip()
+
+        renick_prefix = ""
+        history_nicks = candidates
+        if len(candidates) > 1:
+            if ruler_key not in renick_cache:
+                renick_cache[ruler_key] = _renick_merge(conn, candidates, ruler_key)
+            merged = renick_cache[ruler_key]
+            if merged is not None:
+                canonical, all_nicks = merged
+                candidates = {canonical}
+                history_nicks = all_nicks
+                others = sorted(all_nicks - {canonical})
+                others_str = ", ".join(repr(o) for o in others)
+                renick_prefix = (
+                    f"same player's own renick ({canonical!r} was also {others_str} "
+                    f"in other rounds under this exact ruler name) -- "
+                )
 
         nick, disambiguated = _resolve(candidates, alliance, conn)
         if nick is None:
@@ -191,7 +271,7 @@ def guess(planets: list[dict], conn: sqlite3.Connection) -> list[dict]:
             )
             continue
 
-        history = alliance_history(conn, nick)
+        history = _merged_alliance_history(conn, history_nicks)
         match = (
             next((h for h in history if h[1].strip().lower() == alliance.lower()), None)
             if alliance
@@ -204,7 +284,7 @@ def guess(planets: list[dict], conn: sqlite3.Connection) -> list[dict]:
                     "nick": nick,
                     "candidates": candidates,
                     "match_kind": "recent",
-                    "detail": f"round {match[0]}",
+                    "detail": f"{renick_prefix}round {match[0]}",
                 }
             )
         elif match:
@@ -216,7 +296,8 @@ def guess(planets: list[dict], conn: sqlite3.Connection) -> list[dict]:
                     "candidates": candidates,
                     "match_kind": "old",
                     "detail": (
-                        f"round {match[0]} (most recent is {history[0][1]!r}, round {history[0][0]})"
+                        f"{renick_prefix}round {match[0]} "
+                        f"(most recent is {history[0][1]!r}, round {history[0][0]})"
                     ),
                 }
             )
@@ -228,7 +309,7 @@ def guess(planets: list[dict], conn: sqlite3.Connection) -> list[dict]:
                     "candidates": candidates,
                     "match_kind": "unrelated_history",
                     "detail": (
-                        f"last seen in {history[0][1]!r}, round {history[0][0]}, "
+                        f"{renick_prefix}last seen in {history[0][1]!r}, round {history[0][0]}, "
                         f"{len(history)} round{'s' if len(history) != 1 else ''} total"
                     ),
                 }
