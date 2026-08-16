@@ -84,11 +84,12 @@ order across the whole file.
   `ILIKE` match on the viewer's own names is the only way to slice it.
   Only renders when there's at least one match, right under the You
   panel's stats.
-- **Watchlist.** Let a logged-in member star specific planets or
-  alliances (one small table, `discord_user_id, target_type, target_id`)
-  and surface a "Watching" section on the homepage alongside "You." Useful
-  for tracking a rival or a recruit before they're worth a full intel
-  entry.
+- ~~**Watchlist.**~~ **Done.** New `watchlist` table (polymorphic
+  `target_type`/`target_id`, no FK -- same tradeoff schema.sql already
+  makes elsewhere), a single `POST /web/watch` toggle route, a ★/☆
+  button on planet/alliance detail pages, and a homepage "Watching"
+  table (rank/score/change, ranked against the *full* tick like every
+  other rank on the site, plus an inline unwatch) for logged-in members.
 
 ## Intel tooling
 

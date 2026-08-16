@@ -61,6 +61,57 @@
 </div>
 {% endif %}
 
+{% if watched_planets or watched_alliances %}
+<h2>Watching</h2>
+<div class="table-scroll">
+<table>
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th class="num">Rank</th>
+            <th class="num">Score</th>
+            <th class="num">Change</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in watched_planets %}
+        <tr>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }} &mdash; {{ p.ruler_name }}</a></td>
+            <td class="num">#{{ p.rank }}</td>
+            <td class="num">{{ "{:,}".format(p.score) }}</td>
+            <td class="num">{{ macros.delta(p.score_delta) }}</td>
+            <td class="nowrap">
+                <form action="/web/watch" method="post">
+                    <input type="hidden" name="target_type" value="planet">
+                    <input type="hidden" name="target_id" value="{{ p.id }}">
+                    <input type="hidden" name="next" value="/">
+                    <button type="submit" class="link-button">unwatch</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        {% for a in watched_alliances %}
+        <tr>
+            <td><a href="/web/alliances/{{ a.id }}">{{ a.name }}</a></td>
+            <td class="num">#{{ a.rank }} {{ macros.rank_change(a.rank_delta) }}</td>
+            <td class="num">{{ "{:,}".format(a.total_score) }}</td>
+            <td class="num">{{ macros.delta(a.score_delta) }}</td>
+            <td class="nowrap">
+                <form action="/web/watch" method="post">
+                    <input type="hidden" name="target_type" value="alliance">
+                    <input type="hidden" name="target_id" value="{{ a.id }}">
+                    <input type="hidden" name="next" value="/">
+                    <button type="submit" class="link-button">unwatch</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+
 <div class="stat-grid">
     <a class="stat-card" href="/web/alliances">
         <div class="value">{{ counts.alliances }}</div>

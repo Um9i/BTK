@@ -2,7 +2,17 @@
 {% import "_macros.html" as macros %}
 {% block title %}{{ name }} - BTK{% endblock %}
 {% block content %}
-<h1>{{ name }}</h1>
+<div class="page-title-row">
+    <h1>{{ name }}</h1>
+    {% if user %}
+    <form action="/web/watch" method="post">
+        <input type="hidden" name="target_type" value="alliance">
+        <input type="hidden" name="target_id" value="{{ alliance_id }}">
+        <input type="hidden" name="next" value="{{ request.url.path }}">
+        <button type="submit" class="watch-btn{% if watching %} active{% endif %}">{% if watching %}&#9733; Watching{% else %}&#9734; Watch{% endif %}</button>
+    </form>
+    {% endif %}
+</div>
 {% if history %}
 {% set latest = history[0] %}
 <div class="vitals">

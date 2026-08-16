@@ -212,6 +212,8 @@ async def index(
     race_distribution = []
     recent_feed = []
     you = None
+    watched_planets = []
+    watched_alliances = []
     if tick_row:
         counts["alliances"] = await conn.fetchval(
             "SELECT count(*) FROM alliance_stat WHERE tick_id = $1", tick_row["id"]
@@ -266,6 +268,45 @@ async def index(
         )
         if user is not None:
             you = await _you_panel(conn, user, round_row["id"], tick_row["id"], prev_tick_id)
+            # Ranked the same way as everywhere else -- over the FULL tick, not
+            # just the watched subset, so a watched planet's rank means the same
+            # thing here as it does on its own detail page.
+            watched_planets = await conn.fetch(
+                """
+                WITH ranked AS (
+                    SELECT planet_id, RANK() OVER (ORDER BY score DESC) AS rank
+                    FROM planet_stat WHERE tick_id = $2
+                )
+                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.score,
+                       ranked.rank, (ps.score - prev.score) AS score_delta
+                FROM watchlist w
+                JOIN planet p ON p.id = w.target_id AND w.target_type = 'planet'
+                JOIN planet_stat ps ON ps.planet_id = p.id AND ps.tick_id = $2
+                JOIN ranked ON ranked.planet_id = p.id
+                LEFT JOIN planet_stat prev ON prev.planet_id = p.id AND prev.tick_id = $3
+                WHERE w.discord_user_id = $1
+                ORDER BY w.created_at
+                """,
+                user["discord_user_id"],
+                tick_row["id"],
+                prev_tick_id,
+            )
+            watched_alliances = await conn.fetch(
+                """
+                SELECT a.id, a.name, s.rank, s.total_score,
+                       (s.total_score - prev.total_score) AS score_delta,
+                       (s.rank - prev.rank) AS rank_delta
+                FROM watchlist w
+                JOIN alliance a ON a.id = w.target_id AND w.target_type = 'alliance'
+                JOIN alliance_stat s ON s.alliance_id = a.id AND s.tick_id = $2
+                LEFT JOIN alliance_stat prev ON prev.alliance_id = a.id AND prev.tick_id = $3
+                WHERE w.discord_user_id = $1
+                ORDER BY w.created_at
+                """,
+                user["discord_user_id"],
+                tick_row["id"],
+                prev_tick_id,
+            )
         if prev_tick_id:
             alliance_movers = await conn.fetch(
                 """
@@ -360,6 +401,8 @@ async def index(
             "race_distribution": race_distribution,
             "recent_feed": recent_feed,
             "you": you,
+            "watched_planets": watched_planets,
+            "watched_alliances": watched_alliances,
         },
     )
 
@@ -551,10 +594,18 @@ async def alliance_detail(
     show_comment_column = len(comment_values) > 1
     leading_cols = 4 + (1 if show_flags else 0)  # Coords, Planet, Ruler, Race[, Flags]
     trailing_cols = sum([show_amps, show_dists, show_nick, show_comment_column])
+    watching = False
+    if user is not None:
+        watching = await conn.fetchval(
+            "SELECT 1 FROM watchlist WHERE discord_user_id = $1 AND target_type = 'alliance' AND target_id = $2",
+            user["discord_user_id"],
+            alliance_id,
+        )
     return templates.TemplateResponse(
         request,
         "alliance_detail.html",
         {
+            "alliance_id": alliance_id,
             "name": name,
             "history": history,
             "size_trend": size_trend,
@@ -562,6 +613,7 @@ async def alliance_detail(
             "total_score_trend": total_score_trend,
             "total_value_trend": total_value_trend,
             "avg_score_delta": avg_score_delta,
+            "watching": bool(watching),
             "user": user,
             "intel_planets": intel_planets,
             "intel_coverage": intel_coverage,
@@ -1005,15 +1057,22 @@ async def planet_detail(
     # Scouting notes are player-submitted intel on other alliances, not
     # public data -- only shown to logged-in (Discord-verified) members.
     intel = None
+    watching = False
     if user is not None:
         intel = await conn.fetchrow(
             "SELECT nick, alliance, comment, amps, dists, defwhore FROM planet_intel WHERE planet_id = $1",
+            planet_id,
+        )
+        watching = await conn.fetchval(
+            "SELECT 1 FROM watchlist WHERE discord_user_id = $1 AND target_type = 'planet' AND target_id = $2",
+            user["discord_user_id"],
             planet_id,
         )
     return templates.TemplateResponse(
         request,
         "planet_detail.html",
         {
+            "planet_id": planet_id,
             "external_id": external_id,
             "history": history,
             "rank": rank,
@@ -1025,8 +1084,42 @@ async def planet_detail(
             "xp_trend": xp_trend,
             "user": user,
             "intel": intel,
+            "watching": bool(watching),
         },
     )
+
+
+@router.post("/web/watch")
+async def toggle_watch(
+    target_type: str = Form(...),
+    target_id: int = Form(...),
+    next: str = Form("/"),
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
+    """Star/unstar a planet or alliance for the homepage's Watching section. A logged-out
+    POST here (the button is only ever rendered for logged-in users, but a raw request
+    could still hit this) just bounces to login rather than erroring."""
+    if user is None:
+        return RedirectResponse(f"/login?next={next}", status_code=303)
+    if target_type not in ("planet", "alliance"):
+        raise HTTPException(status_code=400, detail="Invalid target_type")
+    existing = await conn.fetchval(
+        "SELECT id FROM watchlist WHERE discord_user_id = $1 AND target_type = $2 AND target_id = $3",
+        user["discord_user_id"],
+        target_type,
+        target_id,
+    )
+    if existing:
+        await conn.execute("DELETE FROM watchlist WHERE id = $1", existing)
+    else:
+        await conn.execute(
+            "INSERT INTO watchlist (discord_user_id, target_type, target_id) VALUES ($1, $2, $3)",
+            user["discord_user_id"],
+            target_type,
+            target_id,
+        )
+    return RedirectResponse(next or "/", status_code=303)
 
 
 @router.get("/login")

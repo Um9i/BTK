@@ -834,6 +834,40 @@ td.rank-top {
     color: var(--bg);
 }
 
+/* ---------- watch button (planet/alliance detail) ---------- */
+
+.page-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.watch-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--fg-dim);
+    padding: 0.35rem 0.8rem;
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.watch-btn:hover {
+    border-color: var(--fg);
+    color: var(--fg);
+}
+
+.watch-btn.active {
+    border-color: var(--fg);
+    color: var(--fg);
+    font-weight: 500;
+}
+
 /* ---------- forms (login) ---------- */
 
 .stack-form {

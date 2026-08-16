@@ -4,7 +4,17 @@
 {% block content %}
 {% set latest = history[0] if history else None %}
 {% if latest %}
-<h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
+<div class="page-title-row">
+    <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
+    {% if user %}
+    <form action="/web/watch" method="post">
+        <input type="hidden" name="target_type" value="planet">
+        <input type="hidden" name="target_id" value="{{ planet_id }}">
+        <input type="hidden" name="next" value="{{ request.url.path }}">
+        <button type="submit" class="watch-btn{% if watching %} active{% endif %}">{% if watching %}&#9733; Watching{% else %}&#9734; Watch{% endif %}</button>
+    </form>
+    {% endif %}
+</div>
 <p class="subtitle">{{ latest.race }}{{ macros.special_tags(latest.special) }}</p>
 <div class="vitals">
     <div class="vital"><div class="label">Rank</div><div class="value">{{ rank }}{{ macros.rank_change(rank_change) }}</div></div>

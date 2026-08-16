@@ -233,6 +233,22 @@ CREATE TABLE IF NOT EXISTS web_session (
     expires_at      TIMESTAMPTZ NOT NULL
 );
 
+-- Starred planets/alliances for a logged-in member, surfaced as a
+-- "Watching" section on the homepage. target_type is polymorphic
+-- (references planet.id or alliance.id depending on its value) rather
+-- than two separate tables -- deliberately no FK on target_id, same
+-- tradeoff the rest of this schema avoids elsewhere only when a single
+-- foreign table would otherwise force one watchlist table per target
+-- kind for no real benefit.
+CREATE TABLE IF NOT EXISTS watchlist (
+    id              SERIAL PRIMARY KEY,
+    discord_user_id BIGINT NOT NULL,
+    target_type     TEXT NOT NULL CHECK (target_type IN ('planet', 'alliance')),
+    target_id       INTEGER NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (discord_user_id, target_type, target_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_web_session_expires ON web_session(expires_at);
 CREATE INDEX IF NOT EXISTS idx_scan_request_active ON scan_request(round_id, active);
 CREATE INDEX IF NOT EXISTS idx_planet_stat_tick ON planet_stat(tick_id);
