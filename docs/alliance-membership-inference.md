@@ -1611,6 +1611,25 @@ had a real proof rather than a heuristic fit.
 planets across 23 alliances (adding Newdawn ft HR's full 40 to the Eighth
 pass's 217).
 
+## Tenth pass (2026-08-16, continued): Pink Fluffy Unicorns — another zero-churn 40, and another old best-guess closed out
+
+Pink Fluffy Unicorns (40 members, constant the entire round) was the
+fastest solve of the session: the recent 15-tick window (200-214) came
+back `OPTIMAL` and, on the probe, uniquely `INFEASIBLE` in 0.2 seconds
+each. No selected member is fully idle. Extending the roster across the
+full round found **zero mismatches at any of the 201 ticks** — the same
+clean result as Imperium (Eighth pass), and the fourth 40-member alliance
+this round (after VGN, KittenZ, and Imperium) that turns out to have had
+no real roster churn at all, once the fund is properly accounted for.
+
+As with Newdawn ft HR, this closes out an old debt: the original
+(2026-08-09, pre-wipe) session had Pink Fluffy Unicorns as an unconfirmed
+GPU-search best-guess (40/40). This is its first real proof.
+
+**Running total on the live round-118 database after this pass:** 297
+planets across 24 alliances (adding Pink Fluffy Unicorns' full 40 to the
+Ninth pass's 257). Only Tal Shiar remains unsolved.
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
