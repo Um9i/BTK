@@ -7,7 +7,7 @@
 <div class="page-title-row">
     <div>
         <div class="eyebrow">Planet</div>
-        <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
+        <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &middot; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
     </div>
     {% if user %}
     <form action="/web/watch" method="post">
@@ -64,7 +64,7 @@
         <label>Dists<input type="number" name="dists" min="0" value="{{ intel.dists if intel and intel.dists is not none else '' }}"></label>
         <label>Defwhore
             <select name="defwhore">
-                <option value="" {% if not intel or intel.defwhore is none %}selected{% endif %}>&mdash;</option>
+                <option value="" {% if not intel or intel.defwhore is none %}selected{% endif %}>unknown</option>
                 <option value="yes" {% if intel and intel.defwhore == true %}selected{% endif %}>yes</option>
                 <option value="no" {% if intel and intel.defwhore == false %}selected{% endif %}>no</option>
             </select>

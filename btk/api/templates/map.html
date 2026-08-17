@@ -2,9 +2,7 @@
 {% block title %}Map - BTK{% endblock %}
 {% block content %}
 <h1>Cluster map</h1>
-{% if round %}
-    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %} &middot; <a href="/web/galaxies">galaxy list</a></p>
-{% endif %}
+<p class="subtitle"><a href="/web/galaxies">galaxy list</a></p>
 
 {% if clusters %}
 <p class="subtitle">
@@ -29,9 +27,9 @@
                 {% if cell.planet %}
                 <a class="map-cell {% if cell.mine %}slot-mine{% elif cell.planet.alliance %}slot-known{% else %}slot-occupied{% endif %}"
                    href="/web/planets/{{ cell.planet.id }}"
-                   title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &mdash; {{ cell.planet.ruler_name }} of {{ cell.planet.planet_name }}{% if cell.planet.alliance %} ({{ cell.planet.alliance }}){% endif %}">&#9632;</a>
+                   title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &middot; {{ cell.planet.ruler_name }} of {{ cell.planet.planet_name }}{% if cell.planet.alliance %} ({{ cell.planet.alliance }}){% endif %}">&#9632;</a>
                 {% else %}
-                <span class="map-cell slot-empty" title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &mdash; unclaimed">&middot;</span>
+                <span class="map-cell slot-empty" title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &middot; unclaimed">&middot;</span>
                 {% endif %}
             {% endfor %}
         </span>

@@ -3,9 +3,6 @@
 {% block description %}{% if round %}Browse and search every planet in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %} — coordinates, ruler, score, and more.{% else %}Browse and search planets tracked by BTK.{% endif %}{% endblock %}
 {% block content %}
 <h1>Planets</h1>
-{% if round %}
-    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
-{% endif %}
 <div id="planets-results">
 {% include "_planets_results.html" %}
 </div>

@@ -7,7 +7,7 @@
 <div class="console">
     <div class="console-head">
         <div>
-            <h1>Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</h1>
+            <h1>Round {{ round.number }}{% if round.name %}: {{ round.name }}{% endif %}</h1>
             <div class="subtitle">Tick-by-tick tracker</div>
         </div>
         <div class="counts-line">
@@ -22,7 +22,7 @@
     <div class="tick-spine">
         <div class="eyebrow spine-label-a">Last ingested</div>
         <div class="eyebrow spine-label-b">Next tick</div>
-        <div class="spine-tick spine-value-a">{% if tick %}{{ "%04d"|format(tick.number) }}{% else %}&mdash;{% endif %}</div>
+        <div class="spine-tick spine-value-a">{% if tick %}{{ "%04d"|format(tick.number) }}{% else %}n/a{% endif %}</div>
         <div class="spine-track" id="tick-track" style="--tick-progress: {{ "%.2f"|format(tick_progress) }}%" aria-hidden="true">
             <div class="spine-fill"></div>
         </div>
@@ -31,7 +31,7 @@
             <span class="status-pill{% if freshness.live %} live{% endif %}" id="status-pill" data-round="{{ round.number if round else '' }}" data-tick="{{ tick.number if tick else '' }}">
                 <span class="dot"></span>{{ freshness.label }}
             </span>
-            <a href="/" id="new-tick-hint" class="new-tick-hint" hidden>new tick &mdash; reload</a>
+            <a href="/" id="new-tick-hint" class="new-tick-hint" hidden>new tick: reload</a>
         </div>
         <div class="spine-note-b">{% if tick %}tick {{ "%04d"|format(tick.number + 1) }}{% endif %}</div>
     </div>
@@ -88,7 +88,7 @@
         {% endif %}
     </div>
     {% else %}
-    <div class="you-nudge">Link your planet to see your own rank and score here &mdash; run <code>!link x:y:z</code> in Discord.</div>
+    <div class="you-nudge">Link your planet to see your own rank and score here: run <code>!link x:y:z</code> in Discord.</div>
     {% endif %}
 </div>
 {% endif %}
@@ -112,7 +112,7 @@
     <tbody>
         {% for p in watched_planets %}
         <tr>
-            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }} &mdash; {{ p.ruler_name }}</a> <span class="tag quiet">planet</span></td>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }} &middot; {{ p.ruler_name }}</a> <span class="tag quiet">planet</span></td>
             <td class="num">#{{ p.rank }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num">{{ macros.delta(p.score_delta) }}</td>
@@ -163,7 +163,7 @@
     {% endif %}
     {% if galaxy_movers %}
     <div class="readout-label">Galaxy</div>
-    <div class="readout-value"><a href="/web/galaxies/{{ galaxy_movers[0].id }}">{{ galaxy_movers[0].x }}:{{ galaxy_movers[0].y }} &mdash; {{ galaxy_movers[0].name }}</a></div>
+    <div class="readout-value"><a href="/web/galaxies/{{ galaxy_movers[0].id }}">{{ galaxy_movers[0].x }}:{{ galaxy_movers[0].y }} &middot; {{ galaxy_movers[0].name }}</a></div>
     <div class="readout-meta">#{{ galaxy_movers[0].rank }} {{ macros.rank_change(galaxy_movers[0].rank_delta) }}</div>
     <div class="readout-num">{{ macros.delta(galaxy_movers[0].score_delta) }}</div>
     {% endif %}

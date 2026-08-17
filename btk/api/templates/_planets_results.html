@@ -55,7 +55,7 @@
 {% if paginated %}
 <div class="pagination">
     {% if page > 1 %}<a href="/web/planets?page={{ page - 1 }}&sort={{ sort }}&dir={{ dir }}{% if q %}&q={{ q_param }}{% endif %}">&larr; prev</a>{% endif %}
-    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} planets</span>
+    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &middot; {{ total }} planets</span>
     {% if page * page_size < total %}<a href="/web/planets?page={{ page + 1 }}&sort={{ sort }}&dir={{ dir }}{% if q %}&q={{ q_param }}{% endif %}">next &rarr;</a>{% endif %}
 </div>
 {% endif %}

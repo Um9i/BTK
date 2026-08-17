@@ -4,9 +4,6 @@
 {% block description %}{% if round %}Every galaxy in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}, ranked by score.{% else %}Galaxy rankings tracked by BTK.{% endif %}{% endblock %}
 {% block content %}
 <h1>Galaxies</h1>
-{% if round %}
-    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
-{% endif %}
 {% if galaxies %}
 <div class="table-scroll">
 <table>
@@ -38,7 +35,7 @@
 </div>
 <div class="pagination">
     {% if page > 1 %}<a href="?page={{ page - 1 }}&sort={{ sort }}&dir={{ dir }}">&larr; prev</a>{% endif %}
-    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} galaxies</span>
+    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &middot; {{ total }} galaxies</span>
     {% if page * page_size < total %}<a href="?page={{ page + 1 }}&sort={{ sort }}&dir={{ dir }}">next &rarr;</a>{% endif %}
 </div>
 {% else %}
