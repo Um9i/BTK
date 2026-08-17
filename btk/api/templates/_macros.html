@@ -67,6 +67,18 @@
 <th class="{{ extra_class }}"><a href="{{ sort_url(field) }}">{{ label }}{% if current_sort == field %} {{ '▲' if current_dir == 'asc' else '▼' }}{% endif %}</a></th>
 {%- endmacro %}
 
+{% macro alliance_intel(p, show_nick, show_comment_column) -%}
+    {#- Nick and comment used to be their own columns next to Alliance, but on
+    a roster where most rows carry both, that's 3 extra wide columns just to
+    show scouted-intel metadata that's secondary to the roster itself. Folding
+    them into a hover tooltip on the alliance name keeps that data one hover
+    away without permanently spending table width on it. -#}
+    {%- set nick_line = (("Nick: " ~ p.nick ~ (" (guessed)" if p.comment and "guess_nicks.py" in p.comment else "")) if show_nick and p.nick else "") -%}
+    {%- set comment_line = (p.comment if show_comment_column and p.comment else "") -%}
+    {%- set tip = nick_line ~ ("\n" if nick_line and comment_line else "") ~ comment_line -%}
+    <span class="truncate{% if tip %} has-tooltip{% endif %}"{% if tip %} title="{{ tip }}"{% endif %}>{{ p.alliance or "" }}</span>
+{%- endmacro %}
+
 {% macro coverage_pct(pct) -%}
     {%- if pct is not none -%}
         {#- Near 100 means the roster is complete and current. Well under means

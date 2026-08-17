@@ -59,7 +59,7 @@
             <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
             <td class="col-secondary">{{ p.race }}</td>
             {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
-            {% if show_alliance %}<td class="col-secondary">{{ p.alliance or "" }}</td>{% endif %}
+            {% if show_alliance %}<td class="col-secondary"><span class="truncate" title="{{ p.alliance or '' }}">{{ p.alliance or "" }}</span></td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>

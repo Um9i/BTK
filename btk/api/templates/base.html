@@ -135,6 +135,42 @@
                 if (e.key === "Escape") list.hidden = true;
             });
         })();
+        // Every wide table on the site sits in a .table-scroll box that
+        // scrolls horizontally rather than blowing out the page (see
+        // style.css) -- but a box that overflows has no built-in hint that
+        // it does, and on a long table (50+ rows) the browser's own
+        // horizontal scrollbar sits at the *bottom* of that box, off-screen
+        // until you've already scrolled past every row. This adds a fade
+        // plus a small "scroll for more" label right at the top of each
+        // table, but only when that table's content is actually wider than
+        // its box -- never on a table that already fits.
+        (function () {
+            var boxes = document.querySelectorAll(".table-scroll");
+            var pairs = [];
+            boxes.forEach(function (box) {
+                var hint = document.createElement("div");
+                hint.className = "table-scroll-hint";
+                hint.textContent = "scroll for more →";
+                box.parentNode.insertBefore(hint, box);
+                pairs.push([box, hint]);
+            });
+            function syncOne(box, hint) {
+                // Once scrolled all the way to the trailing edge there's
+                // nothing left to hint at -- drop the fade/label there
+                // rather than leaving it glued to the edge permanently.
+                var moreToRight = box.scrollWidth - box.clientWidth - box.scrollLeft > 1;
+                box.classList.toggle("has-overflow-x", moreToRight);
+                hint.classList.toggle("visible", moreToRight);
+            }
+            function sync() {
+                pairs.forEach(function (pair) { syncOne(pair[0], pair[1]); });
+            }
+            pairs.forEach(function (pair) {
+                pair[0].addEventListener("scroll", function () { syncOne(pair[0], pair[1]); }, { passive: true });
+            });
+            sync();
+            window.addEventListener("resize", sync);
+        })();
         (function () {
             var btn = document.getElementById("theme-toggle");
             var root = document.documentElement;

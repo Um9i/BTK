@@ -18,8 +18,6 @@
             <th class="col-secondary">Race</th>
             {% if show_flags %}<th class="col-secondary">Flags</th>{% endif %}
             {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
-            {% if show_nick %}<th class="col-secondary">Nick</th>{% endif %}
-            {% if show_comment_column %}<th class="col-secondary">Comment</th>{% endif %}
             {% if paginated %}
             {{ macros.sort_th(sort_url, 'size', 'Size', sort, dir, 'num col-secondary') }}
             {{ macros.sort_th(sort_url, 'score', 'Score', sort, dir, 'num') }}
@@ -44,9 +42,7 @@
             <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
             <td class="col-secondary">{{ p.race }}</td>
             {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
-            {% if show_alliance %}<td class="col-secondary">{{ p.alliance or "" }}</td>{% endif %}
-            {% if show_nick %}<td class="col-secondary">{{ p.nick or "" }} {{ macros.nick_provenance(p.comment) }}</td>{% endif %}
-            {% if show_comment_column %}<td class="col-secondary"><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
+            {% if show_alliance %}<td class="col-secondary">{{ macros.alliance_intel(p, show_nick, show_comment_column) }}</td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>

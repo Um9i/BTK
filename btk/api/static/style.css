@@ -17,6 +17,14 @@
 
     --font-ui: "Inter", -apple-system, "Segoe UI", sans-serif;
     --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+    /* Every page here is either a short vitals strip or a wide data table
+       (7-12 columns of tabular-nums) -- 72rem was sized for prose and left
+       those tables clipped under the .table-scroll fade on anything but a
+       narrow window, with dead margin on both sides on a normal desktop.
+       92rem comfortably fits the widest roster/log tables (alliances,
+       galaxy roster) without scrolling on a standard 1440px+ display. */
+    --content-max: 92rem;
 }
 
 /* Dark mode is driven purely by the `dark` class the inline script in
@@ -73,7 +81,7 @@ header.mission-bar {
 }
 
 .mission-bar-inner {
-    max-width: 72rem;
+    max-width: var(--content-max);
     margin: 0 auto;
     padding: 1.5rem 1.25rem;
     display: flex;
@@ -279,7 +287,7 @@ html.dark .theme-toggle .icon-moon {
 }
 
 main {
-    max-width: 72rem;
+    max-width: var(--content-max);
     margin: 0 auto;
     padding: 2.5rem 1.25rem 4rem;
 }
@@ -691,21 +699,71 @@ h2 {
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Firefox: a thin, theme-matched scrollbar instead of the chunky OS
+       default, so once someone does find it, it reads as a deliberate
+       control rather than a rendering glitch. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--fg-faint) transparent;
+}
+
+/* Chrome/Safari equivalent of scrollbar-width/scrollbar-color above --
+   without this the trailing-edge hint below is the only cue at all, since
+   WebKit's default overlay scrollbar stays invisible until hovered. */
+.table-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+    background: var(--fg-faint);
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--fg-dim);
 }
 
 /* A table that overflows its box has no other hint it does -- the last
-   column just gets clipped with nothing to suggest swiping for more.
-   A quiet fade on the trailing edge is the standard affordance for that;
-   harmless to render even when a table happens to fit with no overflow. */
-.table-scroll::after {
+   column just gets clipped with nothing to suggest swiping for more. A fade
+   on the trailing edge is the standard affordance for that, but fading to
+   var(--bg) is invisible in dark mode where the table's own background
+   already *is* --bg -- there's no contrast for the eye to catch. Fading to
+   a translucent --fg tint instead reads as "something recedes here" against
+   either theme. Only rendered once JS below confirms the table actually
+   overflows -- see the "table-scroll horizontal-overflow hint" script in
+   base.html -- so it never appears on a table that already fits. */
+.table-scroll.has-overflow-x::after {
     content: "";
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 1.5rem;
-    background: linear-gradient(to right, transparent, var(--bg));
+    width: 2.5rem;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--fg) 14%, transparent) 90%);
     pointer-events: none;
+}
+
+/* Paired with the fade -- a small, quiet label so the affordance doesn't
+   rely on a subtle gradient alone. JS below inserts one of these directly
+   before every .table-scroll and toggles .visible on it; reserving the
+   line unconditionally (rather than adding/removing the element) keeps the
+   table from jumping once JS confirms overflow after load. */
+.table-scroll-hint {
+    height: 1.1rem;
+    margin-bottom: 0.35rem;
+    font-family: var(--font-data);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--fg-faint);
+    text-align: right;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.table-scroll-hint.visible {
+    opacity: 1;
 }
 
 table {
@@ -802,7 +860,17 @@ td.rank-top {
 }
 
 .truncate-wide {
-    max-width: 20rem;
+    max-width: 14rem;
+}
+
+/* Marks a cell whose title= carries more than the visible text (see
+   macros.alliance_intel) -- a dotted underline is the standard signal that
+   there's something to hover for, so it doesn't just look like plain text
+   that happens to truncate. */
+.has-tooltip {
+    text-decoration: underline dotted var(--fg-faint);
+    text-underline-offset: 3px;
+    cursor: help;
 }
 
 .nowrap {

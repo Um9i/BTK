@@ -25,7 +25,7 @@
         <tr>
             <td class="num{% if g.rank <= 3 %} rank-top{% endif %}">{{ g.rank }}</td>
             <td><a href="/web/galaxies/{{ g.id }}">{{ g.x }}:{{ g.y }}</a></td>
-            <td>{{ g.name }}</td>
+            <td><span class="truncate" title="{{ g.name }}">{{ g.name }}</span></td>
             <td class="num col-secondary">{{ g.size }}</td>
             <td class="num">{{ "{:,}".format(g.score) }}</td>
             <td class="num col-secondary">{{ "{:,}".format(g.value) }}</td>
