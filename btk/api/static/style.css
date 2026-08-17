@@ -923,6 +923,62 @@ h2 {
     color: var(--fg-dim);
 }
 
+/* ---------- section tabs (detail pages) ---------- */
+
+/* A detail page's Log table can run to hundreds of rows, and used to sit
+   permanently between the vitals and the page's other content (Roster,
+   Planets, Intel) -- reading past it, or getting back to it, meant
+   scrolling a wall of numbers either way. Real tabs instead of an anchor
+   list: same visual language as .nav-link (mono, uppercase, underline-on-
+   active), scaled up slightly since this is the page's primary in-page
+   navigation, not a secondary one. Panels are real stacked <section>s in
+   the HTML, not fetched -- app.js hides every panel but the active one;
+   with JS off (or before it runs) every panel just shows, stacked, still
+   reachable by scrolling or by an anchor link straight to one. */
+.tabs {
+    display: flex;
+    gap: 2rem;
+    margin: 0 0 2rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.tab {
+    display: inline-block;
+    padding: 0 0 0.85rem;
+    margin-bottom: -1px;
+    font-family: var(--font-data);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover {
+    color: var(--fg);
+}
+
+.tab[aria-selected="true"] {
+    color: var(--fg);
+    border-bottom-color: var(--fg);
+}
+
+.tab-panel[hidden] {
+    display: none;
+}
+
+/* Every panel but the first ships server-side with `hidden` already set --
+   avoids painting the full Log table before the deferred script gets a
+   chance to hide it. Still works with JS off: a tab is a real anchor link,
+   and :target's specificity beats the UA's bare-attribute [hidden] rule
+   without needing !important, so following one to e.g. #tab-log reveals it
+   natively. */
+.tab-panel:target {
+    display: block;
+}
+
 /* ---------- deltas (tick-over-tick change) ---------- */
 
 .delta {

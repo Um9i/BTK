@@ -5,7 +5,10 @@
 {% block content %}
 {% if latest %}
 <div class="page-title-row">
-    <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
+    <div>
+        <div class="eyebrow">Planet</div>
+        <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
+    </div>
     {% if user %}
     <form action="/web/watch" method="post">
         <input type="hidden" name="target_type" value="planet">
@@ -45,6 +48,12 @@
 {% endif %}
 
 {% if user %}
+<div class="tabs" role="tablist">
+    <a href="#tab-intel" id="tabbtn-intel" class="tab" role="tab" aria-selected="true" aria-controls="tab-intel">Intel</a>
+    <a href="#tab-log" id="tabbtn-log" class="tab" role="tab" aria-selected="false" aria-controls="tab-log">Log{% if log_total %} ({{ log_total }}){% endif %}</a>
+</div>
+
+<section id="tab-intel" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-intel">
 <h2>Intel</h2>
 <p class="subtitle">Scouted, not guessed -- same <code>planet_intel</code> table as <code>!intel</code> in Discord, either works.</p>
 <form class="intel-form" method="post" action="/web/planets/{{ planet_id }}/intel">
@@ -64,44 +73,12 @@
     <label class="intel-comment-label">Comment<textarea name="comment" rows="2">{{ intel.comment or '' if intel else '' }}</textarea></label>
     <button type="submit" class="btn">Save intel</button>
 </form>
-{% endif %}
+</section>
 
-<h2>Log</h2>
-{% if history %}
-<div class="table-scroll">
-<table>
-    <thead>
-        <tr>
-            <th class="num">Tick</th>
-            <th class="num">Rank</th>
-            <th>Coords</th>
-            <th class="num">Size</th>
-            <th class="num">Score</th>
-            <th class="num">Value</th>
-            <th class="num">XP</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for h in history %}
-        <tr>
-            <td class="num">{{ h.tick }}</td>
-            <td class="num">{{ h.rank }}{{ macros.rank_change(h.rank_delta) }}</td>
-            <td>{{ h.x }}:{{ h.y }}:{{ h.z }}</td>
-            <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
-            <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>
-            <td class="num">{{ "{:,}".format(h.value) }}{{ macros.delta(h.value_delta) }}</td>
-            <td class="num">{{ "{:,}".format(h.xp) }}{{ macros.delta(h.xp_delta) }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-</div>
-<div class="pagination">
-    {% if log_page > 1 %}<a href="?page={{ log_page - 1 }}">&larr; prev</a>{% endif %}
-    <span>page {{ log_page }} / {{ ((log_total - 1) // log_page_size) + 1 if log_total else 1 }} &mdash; {{ log_total }} ticks</span>
-    {% if log_page * log_page_size < log_total %}<a href="?page={{ log_page + 1 }}">next &rarr;</a>{% endif %}
-</div>
+<section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
+{{ macros.planet_log(history, log_page, log_total, log_page_size) }}
+</section>
 {% else %}
-<p class="empty">No stats recorded.</p>
+{{ macros.planet_log(history, log_page, log_total, log_page_size) }}
 {% endif %}
 {% endblock %}

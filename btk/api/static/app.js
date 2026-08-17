@@ -187,6 +187,49 @@
 })();
 
 (function () {
+    // Detail-page section tabs (Roster/Planets/Intel + Log) -- every page's
+    // panels are real stacked <section>s server-side (so JS-off, print, and
+    // Ctrl+F still see everything, same fallback shape as the live-search
+    // form elsewhere on the site), progressively enhanced here into a proper
+    // tablist: only the active panel stays visible, arrow keys move focus
+    // between tabs, and the choice is deep-linkable via location.hash so a
+    // link can point straight at e.g. #tab-log.
+    document.querySelectorAll('[role="tablist"]').forEach(function (tablist) {
+        var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
+        if (!tabs.length) return;
+        var panels = tabs.map(function (tab) {
+            return document.getElementById(tab.getAttribute("aria-controls"));
+        });
+        function activate(tab, focus) {
+            tabs.forEach(function (t, i) {
+                var selected = t === tab;
+                t.setAttribute("aria-selected", selected ? "true" : "false");
+                t.tabIndex = selected ? 0 : -1;
+                if (panels[i]) panels[i].hidden = !selected;
+            });
+            if (focus) tab.focus();
+        }
+        var initial = tabs.filter(function (t) {
+            return "#" + t.getAttribute("aria-controls") === location.hash;
+        })[0] || tabs[0];
+        activate(initial, false);
+        tabs.forEach(function (tab, i) {
+            tab.addEventListener("click", function (e) {
+                e.preventDefault();
+                activate(tab, false);
+                history.replaceState(null, "", "#" + tab.getAttribute("aria-controls"));
+            });
+            tab.addEventListener("keydown", function (e) {
+                if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+                e.preventDefault();
+                var next = e.key === "ArrowRight" ? (i + 1) % tabs.length : (i - 1 + tabs.length) % tabs.length;
+                activate(tabs[next], true);
+            });
+        });
+    });
+})();
+
+(function () {
     var btn = document.getElementById("theme-toggle");
     if (!btn) return;
     var root = document.documentElement;

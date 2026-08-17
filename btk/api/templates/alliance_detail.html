@@ -4,7 +4,10 @@
 {% block description %}{% if latest %}{{ name }} — rank {{ latest.rank }}, {{ latest.members }} members, {{ "{:,}".format(latest.total_score) }} total score.{% else %}{{ name }} on BTK.{% endif %}{% endblock %}
 {% block content %}
 <div class="page-title-row">
-    <h1>{{ name }}</h1>
+    <div>
+        <div class="eyebrow">Alliance</div>
+        <h1>{{ name }}</h1>
+    </div>
     {% if user %}
     <form action="/web/watch" method="post">
         <input type="hidden" name="target_type" value="alliance">
@@ -44,6 +47,12 @@
 {% endif %}
 
 {% if user %}
+<div class="tabs" role="tablist">
+    <a href="#tab-roster" id="tabbtn-roster" class="tab" role="tab" aria-selected="true" aria-controls="tab-roster">Roster{% if intel_planets %} ({{ intel_planets|length }}){% endif %}</a>
+    <a href="#tab-log" id="tabbtn-log" class="tab" role="tab" aria-selected="false" aria-controls="tab-log">Log{% if log_total %} ({{ log_total }}){% endif %}</a>
+</div>
+
+<section id="tab-roster" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-roster">
 <h2>Intel roster</h2>
 {% if intel_planets %}
 <p class="subtitle">Planets tagged <code>alliance={{ name }}</code> via <code>!intel</code> -- there's no membership list in the game data itself, only what's been scouted.</p>
@@ -150,54 +159,12 @@
 </table>
 </div>
 {% endif %}
-{% endif %}
+</section>
 
-<h2>Log</h2>
-{% if history %}
-{% if constant_rank is not none or constant_members is not none %}
-<p class="subtitle">
-    {% if constant_rank is not none %}Rank: {{ constant_rank }}{% endif %}
-    {% if constant_rank is not none and constant_members is not none %} &middot; {% endif %}
-    {% if constant_members is not none %}Members: {{ constant_members }}{% endif %}
-    (unchanged across this history)
-</p>
-{% endif %}
-<div class="table-scroll">
-<table>
-    <thead>
-        <tr>
-            <th class="num">Tick</th>
-            {% if constant_rank is none %}<th class="num">Rank</th>{% endif %}
-            {% if constant_members is none %}<th class="num">Members</th>{% endif %}
-            <th class="num">Size</th>
-            <th class="num">Score</th>
-            <th class="num">Points</th>
-            <th class="num">Total Score</th>
-            <th class="num">Total Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for h in history %}
-        <tr>
-            <td class="num">{{ h.tick }}</td>
-            {% if constant_rank is none %}<td class="num">{{ h.rank }}{{ macros.rank_change(h.rank_delta) }}</td>{% endif %}
-            {% if constant_members is none %}<td class="num">{{ h.members }}</td>{% endif %}
-            <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
-            <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>
-            <td class="num">{{ h.points }}</td>
-            <td class="num">{{ "{:,}".format(h.total_score) }}{{ macros.delta(h.total_score_delta) }}</td>
-            <td class="num">{{ "{:,}".format(h.total_value) }}{{ macros.delta(h.total_value_delta) }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-</div>
-<div class="pagination">
-    {% if log_page > 1 %}<a href="?page={{ log_page - 1 }}">&larr; prev</a>{% endif %}
-    <span>page {{ log_page }} / {{ ((log_total - 1) // log_page_size) + 1 if log_total else 1 }} &mdash; {{ log_total }} ticks</span>
-    {% if log_page * log_page_size < log_total %}<a href="?page={{ log_page + 1 }}">next &rarr;</a>{% endif %}
-</div>
+<section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
+{{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
+</section>
 {% else %}
-<p class="empty">No stats recorded.</p>
+{{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
 {% endif %}
 {% endblock %}

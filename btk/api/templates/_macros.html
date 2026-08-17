@@ -101,6 +101,106 @@
     {{- intel_tooltip(p.alliance or "", p, show_nick, show_comment_column) -}}
 {%- endmacro %}
 
+{% macro alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) %}
+{#- Factored out so alliance_detail.html can call it once from inside the
+   logged-in Log tab panel and once, unwrapped, for anonymous visitors (who
+   get no tabs at all -- there's nothing to switch to without a Roster
+   panel) without duplicating this whole table. -#}
+<h2>Log</h2>
+{% if history %}
+{% if constant_rank is not none or constant_members is not none %}
+<p class="subtitle">
+    {% if constant_rank is not none %}Rank: {{ constant_rank }}{% endif %}
+    {% if constant_rank is not none and constant_members is not none %} &middot; {% endif %}
+    {% if constant_members is not none %}Members: {{ constant_members }}{% endif %}
+    (unchanged across this history)
+</p>
+{% endif %}
+<div class="table-scroll">
+<table>
+    <thead>
+        <tr>
+            <th class="num">Tick</th>
+            {% if constant_rank is none %}<th class="num">Rank</th>{% endif %}
+            {% if constant_members is none %}<th class="num">Members</th>{% endif %}
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Points</th>
+            <th class="num">Total Score</th>
+            <th class="num">Total Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in history %}
+        <tr>
+            <td class="num">{{ h.tick }}</td>
+            {% if constant_rank is none %}<td class="num">{{ h.rank }}{{ rank_change(h.rank_delta) }}</td>{% endif %}
+            {% if constant_members is none %}<td class="num">{{ h.members }}</td>{% endif %}
+            <td class="num">{{ h.size }}{{ delta(h.size_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.score) }}{{ delta(h.score_delta) }}</td>
+            <td class="num">{{ h.points }}</td>
+            <td class="num">{{ "{:,}".format(h.total_score) }}{{ delta(h.total_score_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.total_value) }}{{ delta(h.total_value_delta) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<div class="pagination">
+    {% if log_page > 1 %}<a href="?page={{ log_page - 1 }}">&larr; prev</a>{% endif %}
+    <span>page {{ log_page }} / {{ ((log_total - 1) // log_page_size) + 1 if log_total else 1 }} &mdash; {{ log_total }} ticks</span>
+    {% if log_page * log_page_size < log_total %}<a href="?page={{ log_page + 1 }}">next &rarr;</a>{% endif %}
+</div>
+{% else %}
+<p class="empty">No stats recorded.</p>
+{% endif %}
+{% endmacro %}
+
+{% macro planet_log(history, log_page, log_total, log_page_size) %}
+{#- Factored out for the same reason as alliance_log() above: planet_detail.html
+   calls this once from inside the Log tab panel for logged-in visitors, and
+   once, unwrapped, for anonymous ones (who get no Intel tab to switch away
+   from, so no tabs at all). -#}
+<h2>Log</h2>
+{% if history %}
+<div class="table-scroll">
+<table>
+    <thead>
+        <tr>
+            <th class="num">Tick</th>
+            <th class="num">Rank</th>
+            <th>Coords</th>
+            <th class="num">Size</th>
+            <th class="num">Score</th>
+            <th class="num">Value</th>
+            <th class="num">XP</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in history %}
+        <tr>
+            <td class="num">{{ h.tick }}</td>
+            <td class="num">{{ h.rank }}{{ rank_change(h.rank_delta) }}</td>
+            <td>{{ h.x }}:{{ h.y }}:{{ h.z }}</td>
+            <td class="num">{{ h.size }}{{ delta(h.size_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.score) }}{{ delta(h.score_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.value) }}{{ delta(h.value_delta) }}</td>
+            <td class="num">{{ "{:,}".format(h.xp) }}{{ delta(h.xp_delta) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<div class="pagination">
+    {% if log_page > 1 %}<a href="?page={{ log_page - 1 }}">&larr; prev</a>{% endif %}
+    <span>page {{ log_page }} / {{ ((log_total - 1) // log_page_size) + 1 if log_total else 1 }} &mdash; {{ log_total }} ticks</span>
+    {% if log_page * log_page_size < log_total %}<a href="?page={{ log_page + 1 }}">next &rarr;</a>{% endif %}
+</div>
+{% else %}
+<p class="empty">No stats recorded.</p>
+{% endif %}
+{% endmacro %}
+
 {% macro coverage_pct(pct) -%}
     {%- if pct is not none -%}
         {#- Near 100 means the roster is complete and current. Well under means

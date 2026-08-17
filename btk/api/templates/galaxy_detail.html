@@ -3,6 +3,7 @@
 {% block title %}{{ galaxy.x }}:{{ galaxy.y }} - BTK{% endblock %}
 {% block description %}{% if latest %}Galaxy {{ galaxy.x }}:{{ galaxy.y }} — {{ latest.name }}, rank {{ rank }}, {{ "{:,}".format(latest.score) }} score.{% else %}Galaxy {{ galaxy.x }}:{{ galaxy.y }} on BTK.{% endif %}{% endblock %}
 {% block content %}
+<div class="eyebrow">Galaxy</div>
 <h1>Galaxy {{ galaxy.x }}:{{ galaxy.y }}</h1>
 
 {% if latest %}
@@ -33,6 +34,12 @@
 </div>
 {% endif %}
 
+<div class="tabs" role="tablist">
+    <a href="#tab-planets" id="tabbtn-planets" class="tab" role="tab" aria-selected="true" aria-controls="tab-planets">Planets{% if planets %} ({{ planets|length }}){% endif %}</a>
+    <a href="#tab-log" id="tabbtn-log" class="tab" role="tab" aria-selected="false" aria-controls="tab-log">Log{% if log_total %} ({{ log_total }}){% endif %}</a>
+</div>
+
+<section id="tab-planets" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-planets">
 <h2>Planets</h2>
 {% if planets %}
 <div class="table-scroll">
@@ -72,7 +79,9 @@
 {% else %}
 <p class="empty">No planets recorded.</p>
 {% endif %}
+</section>
 
+<section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
 <h2>Log</h2>
 {% if history %}
 {% if constant_name %}
@@ -114,4 +123,5 @@
 {% else %}
 <p class="empty">No stats recorded.</p>
 {% endif %}
+</section>
 {% endblock %}
