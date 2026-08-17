@@ -164,5 +164,7 @@
 <section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
 {{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
 </section>
+{% else %}
+{{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
 {% endif %}
 {% endblock %}
