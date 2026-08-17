@@ -1866,6 +1866,58 @@ caught two more genuine, non-contradictory matches (`Masterwizard`,
 upgraded from medium confidence via a 2-round galaxy overlap, and
 `shaz`, a fresh nick-only insert) with no new conflicts.
 
+## Thirteenth pass (2026-08-17): a reconciliation check at tick 233, nineteen ticks later
+
+A live reconciliation query run against the round 118 database at tick 233
+(19 ticks after the Twelfth pass) shows every alliance still holding, with
+one caveat carried over unchanged:
+
+| Alliance | Members | Tagged | Size gap | Score gap | Value gap | XP match | Coverage |
+|---|---|---|---|---|---|---|---|
+| Imperium | 40 | 40 | 0 | 28,735 | 28,735 | ✓ | 100% |
+| KittenZ | 40 | 40 | 0 | 88,431 | 88,431 | ✓ | 100% |
+| Newdawn ft HR | 40 | 40 | 0 | 99,461 | 99,461 | ✓ | 100% |
+| Pink Fluffy Unicorns | 40 | 40 | 0 | 73,486 | 73,486 | ✓ | 100% |
+| Tal Shiar | 40 | 40 | 0 | 59,036 | 59,036 | ✓ | 100% |
+| VGN | 40 | 40 | 0 | 170,691 | 170,691 | ✓ | 100% |
+| BBQQ | 29 | 29 | 0 | 13,981 | 13,981 | ✓ | 100%† |
+| Chocolate Starfish | 22 | 22 | 0 | 13,980 | 13,980 | ✓ | 100% |
+| PussycatZ | 20 | 20 | 0 | 67,954 | 67,954 | ✓ | 100% |
+| TiT | 11 | 11 | 0 | 24,890 | 24,890 | ✓ | 100% |
+| PATSA, Fairies, and the 10 singles | 1-4 each | matches | 0 | 0 | 0 | ✓ | 100% |
+
+† BBQQ's 29th slot is still the Sixth pass's best-guess (galaxy-buddy) match,
+not a proven exact one — every other row here is exact.
+
+Every non-zero `Score gap` equals its row's `Value gap` exactly, which is
+precisely what the fund model predicts (`total_score − Σscore = total_value
+− Σvalue = fund/150`, since both totals carry the identical fund term) — this
+table is itself a live re-derivation of that model holding, not just a
+"nothing changed" headcount. `XP match` (`(total_score − total_value)/60 ==
+Σxp`) held for every alliance, including the four 40-member ones (Imperium,
+KittenZ, Newdawn ft HR, Pink Fluffy Unicorns) and VGN that the Third pass had
+called permanently unsolved.
+
+TiT gained an 11th member since the Fourth pass's 10 (an ordinary, expected
+join, not a data problem) and still reconciles exactly. No other alliance's
+member count moved.
+
+This corrects the open caveat left in project memory after the round-118
+tick-223 spot check: that check confirmed only `size`/`members` matched,
+which — per the Third pass's Imperium episode (exact `size`, silently wrong
+`score`/`value` by 35,058) — would not have caught a fund-model regression by
+itself. This tick-233 table checks `score`, `value`, and `xp` explicitly, and
+all still reconcile. **Every alliance this doc's later passes fought to
+solve is still holding, 19+ ticks after being proven**, the first
+multi-week-scale confirmation that a fund-aware "confirmed exact" result
+stays exact rather than silently drifting the way the pre-fund model's
+results did.
+
+**Running total on the live round-118 database after this pass:** unchanged
+in composition from the Twelfth pass (still 336 planets/23 alliances, plus
+TiT's expected 337th), all independently reconfirmed live rather than
+re-derived from a prior pass's numbers.
+
 ## Practical recipe
 
 *(Updated per the "Second pass" findings: step 1 anchors on the most
