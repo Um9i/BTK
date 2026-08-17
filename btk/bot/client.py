@@ -18,6 +18,7 @@ INITIAL_COGS = (
     "btk.bot.cogs.intel",
     "btk.bot.cogs.ships",
     "btk.bot.cogs.calcs",
+    "btk.bot.cogs.stats",
     "btk.bot.cogs.members",
     "btk.bot.cogs.scans",
     "btk.bot.cogs.preferences",
