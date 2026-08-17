@@ -750,7 +750,7 @@ async def alliance_detail(
     # one holds, state it once instead of repeating it down every row.
     constant_rank = None
     constant_members = None
-    if log_total:
+    if log_total and log_total > 1:
         distinct_ranks = await conn.fetch(
             "SELECT DISTINCT rank FROM alliance_stat WHERE alliance_id = $1 LIMIT 2", alliance_id
         )
@@ -1049,7 +1049,7 @@ async def galaxy_detail(
     # When it does hold, state it once above the table instead of repeating
     # it down every row.
     constant_name = None
-    if log_total:
+    if log_total and log_total > 1:
         distinct_names = await conn.fetch(
             "SELECT DISTINCT name FROM galaxy_stat WHERE galaxy_id = $1 LIMIT 2", galaxy_id
         )
