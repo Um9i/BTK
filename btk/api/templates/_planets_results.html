@@ -16,7 +16,6 @@
             <th>Ruler</th>
             <th class="col-secondary">Planet</th>
             <th class="col-secondary">Race</th>
-            {% if show_flags %}<th class="col-secondary">Flags</th>{% endif %}
             {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
             {% if paginated %}
             {{ macros.sort_th(sort_url, 'size', 'Size', sort, dir, 'num col-secondary') }}
@@ -41,7 +40,6 @@
             <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
             <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
             <td class="col-secondary">{{ p.race }}</td>
-            {% if show_flags %}<td class="nowrap col-secondary">{{ macros.special_tags(p.special) }}</td>{% endif %}
             {% if show_alliance %}<td class="col-secondary">{{ macros.alliance_intel(p, show_nick, show_comment_column) }}</td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>

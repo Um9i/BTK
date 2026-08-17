@@ -209,6 +209,11 @@
     // entirely client-side.
     var el = document.getElementById("countdown");
     if (!el) return;
+    // The tick spine's fill is the same clock drawn to scale (see .spine-fill
+    // in style.css) -- advanced here rather than by its own timer so the
+    // number and the bar can never disagree. Rendered server-side too, so it
+    // starts in the right place before this runs.
+    var track = document.getElementById("tick-track");
     function render() {
         var now = new Date();
         var next = new Date(Date.UTC(
@@ -223,6 +228,9 @@
         var m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
         var sec = String(s % 60).padStart(2, "0");
         el.textContent = "T−" + h + ":" + m + ":" + sec;
+        if (track) {
+            track.style.setProperty("--tick-progress", ((3600 - s) / 36).toFixed(2) + "%");
+        }
     }
     render();
     setInterval(render, 1000);
@@ -264,62 +272,5 @@
     var timer = setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) poll();
-    });
-})();
-
-(function () {
-    // /web/planets-only: live filtering -- re-fetch just the results
-    // fragment as you type instead of a full page reload per keystroke. The
-    // plain <form> still works untouched (same GET, same URL) if JS is
-    // unavailable.
-    //
-    // @name / #123 are exempt: the server resolves those to a redirect (see
-    // planets_list() in web.py), which a live per-keystroke fetch would
-    // either follow silently mid-typing or dump a whole other page's HTML
-    // into this results div. Both are wrong, so those two prefixes always
-    // go through a real navigation instead -- on submit only, never while
-    // still typing.
-    var input = document.getElementById("planets-query");
-    var form = document.getElementById("planets-form");
-    var results = document.getElementById("planets-results");
-    if (!input || !form || !results) return;
-    var timer = null;
-    var controller = null;
-
-    function isCommand(q) {
-        return q.charAt(0) === "@" || q.charAt(0) === "#";
-    }
-
-    function load(q) {
-        // Abort any still-in-flight fetch from an earlier keystroke first --
-        // without this, a slow early response can land after a fast later
-        // one and overwrite the results with a stale query's HTML. Aborting
-        // (rather than just ignoring the old response when it arrives) also
-        // means the browser stops doing the pointless network work.
-        if (controller) controller.abort();
-        controller = new AbortController();
-        var url = "/web/planets?q=" + encodeURIComponent(q);
-        fetch(url, {headers: {"X-BTK-Partial": "1"}, signal: controller.signal})
-            .then(function (r) { return r.text(); })
-            .then(function (html) {
-                results.innerHTML = html;
-                history.replaceState(null, "", url);
-            })
-            .catch(function (err) {
-                if (err.name !== "AbortError") throw err;
-            });
-    }
-
-    input.addEventListener("input", function () {
-        clearTimeout(timer);
-        if (isCommand(input.value)) return;
-        timer = setTimeout(function () { load(input.value); }, 300);
-    });
-
-    form.addEventListener("submit", function (e) {
-        clearTimeout(timer);
-        if (isCommand(input.value)) return; // let the plain GET navigate for real
-        e.preventDefault();
-        load(input.value);
     });
 })();

@@ -102,16 +102,27 @@ RANKED_PLANET_STAT_CTE = """
 LIVE_THRESHOLD_SECONDS = 70 * 60
 
 
-def _next_tick_countdown() -> str:
-    """Server-rendered T-minus fallback for when JS is unavailable; PA ticks hourly at :01:00 UTC."""
+def _seconds_to_next_tick() -> int:
+    """Seconds until the next tick lands; PA ticks hourly at :01:00 UTC."""
     now = datetime.now(UTC)
     next_tick = now.replace(minute=1, second=0, microsecond=0)
     if next_tick <= now:
         next_tick += timedelta(hours=1)
-    remaining = int((next_tick - now).total_seconds())
-    h, rem = divmod(remaining, 3600)
+    return int((next_tick - now).total_seconds())
+
+
+def _next_tick_countdown() -> str:
+    """Server-rendered T-minus fallback for when JS is unavailable."""
+    h, rem = divmod(_seconds_to_next_tick(), 3600)
     m, s = divmod(rem, 60)
     return f"{h:02d}:{m:02d}:{s:02d}"
+
+
+def _tick_progress() -> float:
+    """How far through the current tick hour we are, 0-100 -- drives the homepage tick
+    spine's fill. Server-rendered so the bar is already in the right place on first paint;
+    app.js then advances it every second alongside the countdown."""
+    return (3600 - _seconds_to_next_tick()) / 3600 * 100
 
 
 def _freshness(tick_row) -> dict:
@@ -468,6 +479,7 @@ async def index(
             "counts": counts,
             "freshness": _freshness(tick_row),
             "countdown": _next_tick_countdown(),
+            "tick_progress": _tick_progress(),
             "user": user,
             "alliance_movers": alliance_movers,
             "galaxy_movers": galaxy_movers,
@@ -917,7 +929,9 @@ async def galaxy_detail(
     if galaxy is None:
         raise HTTPException(status_code=404, detail="No such galaxy")
     page = max(page, 1)
-    log_total = await conn.fetchval("SELECT count(*) FROM galaxy_stat WHERE galaxy_id = $1", galaxy_id)
+    log_total = await conn.fetchval(
+        "SELECT count(*) FROM galaxy_stat WHERE galaxy_id = $1", galaxy_id
+    )
     log_fields = ["rank", "size", "score", "value", "xp"]
     # galaxy_stat has no stored rank column (unlike alliance_stat) -- computed here
     # per tick via a window function scoped to this galaxy's round, so both the
@@ -1249,7 +1263,9 @@ async def planets_list(
         show_nick = user is not None and any(p["nick"] for p in rows)
         show_amps = user is not None and any(p["amps"] is not None for p in rows)
         show_dists = user is not None and any(p["dists"] is not None for p in rows)
-    uniform_comment, show_comment_column = _comment_display(rows) if user is not None else (None, False)
+    uniform_comment, show_comment_column = (
+        _comment_display(rows) if user is not None else (None, False)
+    )
     context = {
         "round": round_row,
         "planets": rows,
@@ -1271,12 +1287,7 @@ async def planets_list(
         "dir": dir,
         "sort_url": _sort_url_factory(sort, dir, q),
     }
-    # The page's own live-filter JS re-fetches just the results fragment on
-    # every keystroke instead of a full page reload -- this header (set only
-    # by that fetch call, see planets_list.html) is what tells the difference
-    # from a real navigation, which still needs the full page.
-    template = "_planets_results.html" if request.headers.get("x-btk-partial") == "1" else "planets_list.html"
-    return templates.TemplateResponse(request, template, context)
+    return templates.TemplateResponse(request, "planets_list.html", context)
 
 
 @router.get("/web/needs-intel")
@@ -1351,7 +1362,9 @@ async def planet_detail(
     if external_id is None:
         raise HTTPException(status_code=404, detail="No such planet")
     page = max(page, 1)
-    log_total = await conn.fetchval("SELECT count(*) FROM planet_stat WHERE planet_id = $1", planet_id)
+    log_total = await conn.fetchval(
+        "SELECT count(*) FROM planet_stat WHERE planet_id = $1", planet_id
+    )
     log_fields = ["rank", "size", "score", "value", "xp"]
     # planet_stat has no stored rank column -- computed here per tick via a window
     # function scoped to this planet's round, so both the current rank and

@@ -5,32 +5,35 @@
 {% block content %}
 {% if round %}
 <div class="console">
-    <div class="console-top">
+    <div class="console-head">
         <div>
             <h1>Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</h1>
             <div class="subtitle">Tick-by-tick tracker</div>
         </div>
-        <div class="status-wrap">
+        <div class="counts-line">
+            <a href="/web/planets">{{ counts.planets }} planets</a><span class="sep">&middot;</span><a href="/web/galaxies">{{ counts.galaxies }} galaxies</a><span class="sep">&middot;</span><a href="/web/alliances">{{ counts.alliances }} alliances</a>
+        </div>
+    </div>
+
+    {# The tick spine: last ingested tick on the left, next tick on the right,
+       and the hour between them drawn to scale. The fill is how far through
+       that hour we are -- i.e. how stale the numbers below it are -- which is
+       the one thing every figure on this page is qualified by. #}
+    <div class="tick-spine">
+        <div class="eyebrow spine-label-a">Last ingested</div>
+        <div class="eyebrow spine-label-b">Next tick</div>
+        <div class="spine-tick spine-value-a">{% if tick %}{{ "%04d"|format(tick.number) }}{% else %}&mdash;{% endif %}</div>
+        <div class="spine-track" id="tick-track" style="--tick-progress: {{ "%.2f"|format(tick_progress) }}%" aria-hidden="true">
+            <div class="spine-fill"></div>
+        </div>
+        <div class="spine-tick spine-value-b" id="countdown">T&minus;{{ countdown }}</div>
+        <div class="spine-note-a">
             <span class="status-pill{% if freshness.live %} live{% endif %}" id="status-pill" data-round="{{ round.number if round else '' }}" data-tick="{{ tick.number if tick else '' }}">
                 <span class="dot"></span>{{ freshness.label }}
             </span>
             <a href="/" id="new-tick-hint" class="new-tick-hint" hidden>new tick &mdash; reload</a>
         </div>
-    </div>
-
-    <div class="clock-row">
-        <div class="clock-block">
-            <div class="eyebrow">Next tick</div>
-            <div class="clock-value" id="countdown">T&minus;{{ countdown }}</div>
-        </div>
-        <div class="clock-block">
-            <div class="eyebrow">Last ingested tick</div>
-            <div class="clock-value dim">{% if tick %}{{ "%04d"|format(tick.number) }}{% else %}&mdash;{% endif %}</div>
-        </div>
-    </div>
-
-    <div class="counts-line">
-        <a href="/web/planets">{{ counts.planets }} planets</a><span class="sep">&middot;</span><a href="/web/galaxies">{{ counts.galaxies }} galaxies</a><span class="sep">&middot;</span><a href="/web/alliances">{{ counts.alliances }} alliances</a>
+        <div class="spine-note-b">{% if tick %}tick {{ "%04d"|format(tick.number + 1) }}{% endif %}</div>
     </div>
 
     <div class="search-wrap">
@@ -50,43 +53,48 @@
     </div>
 </div>
 
-<div class="dashboard-grid">
-<div class="dashboard-main">
-
+{# Full-width strip rather than a card inside the left column: who you are is
+   context for the whole page, at the same level as which round/tick it is, so
+   it belongs in the header zone above the split. Your feed moves into the rail
+   with the other feed. #}
 {% if user %}
-<div class="you-box">
+<div class="you-strip">
     {% if you.linked %}
-    <div class="eyebrow">Your planet</div>
-    <div class="you-row">
-        <a class="you-name" href="/web/planets/{{ you.planet.id }}">{{ you.planet.ruler_name }} of {{ you.planet.planet_name }}</a>
-        <span class="you-coords">{{ you.planet.x }}:{{ you.planet.y }}:{{ you.planet.z }}</span>
+    <div class="you-id">
+        <div class="eyebrow">Your planet</div>
+        <div class="you-row">
+            <a class="you-name" href="/web/planets/{{ you.planet.id }}">{{ you.planet.ruler_name }} of {{ you.planet.planet_name }}</a>
+            <span class="you-coords">{{ you.planet.x }}:{{ you.planet.y }}:{{ you.planet.z }}</span>
+        </div>
     </div>
     <div class="you-stats">
-        <span>Rank <strong>#{{ you.planet.rank }}</strong> {{ macros.rank_change(you.planet.rank_delta) }}</span>
-        <span>Score <strong>{{ "{:,}".format(you.planet.score) }}</strong> {{ macros.delta(you.planet.score_delta) }}</span>
+        <div class="you-stat">
+            <div class="eyebrow">Rank</div>
+            <div class="you-stat-value">#{{ you.planet.rank }} {{ macros.rank_change(you.planet.rank_delta) }}</div>
+        </div>
+        <div class="you-stat">
+            <div class="eyebrow">Score</div>
+            <div class="you-stat-value">{{ "{:,}".format(you.planet.score) }} {{ macros.delta(you.planet.score_delta) }}</div>
+        </div>
         {% if you.alliance %}
-        <span>Alliance <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.name }}</a> (#{{ you.alliance.rank }} {{ macros.rank_change(you.alliance.rank_delta) }})</span>
-        <span>Intel <a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.scouted }}/{{ you.alliance.members }} scouted</a></span>
+        <div class="you-stat">
+            <div class="eyebrow">Alliance</div>
+            <div class="you-stat-value"><a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.name }}</a> #{{ you.alliance.rank }} {{ macros.rank_change(you.alliance.rank_delta) }}</div>
+        </div>
+        <div class="you-stat">
+            <div class="eyebrow">Intel</div>
+            <div class="you-stat-value"><a href="/web/alliances/{{ you.alliance.id }}">{{ you.alliance.scouted }}/{{ you.alliance.members }} scouted</a></div>
+        </div>
         {% endif %}
     </div>
-    {% if you.feed %}
-    <div class="eyebrow you-feed-label">Your feed</div>
-    <div class="feed-list you-feed">
-        {% for f in you.feed %}
-        <div class="feed-row">
-            <span class="feed-tick">T{{ "%04d"|format(f.tick_number) }}</span>
-            <span class="feed-text">{{ f.text }}</span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
     {% else %}
-    <div class="you-row you-nudge">
-        <span>Link your planet to see your own rank and score here &mdash; run <code>!link x:y:z</code> in Discord.</span>
-    </div>
+    <div class="you-nudge">Link your planet to see your own rank and score here &mdash; run <code>!link x:y:z</code> in Discord.</div>
     {% endif %}
 </div>
 {% endif %}
+
+<div class="dashboard-grid">
+<div class="dashboard-main">
 
 {% if watched_planets or watched_alliances %}
 <h2>Watching</h2>
@@ -139,28 +147,31 @@
 </div>
 {% endif %}
 
+{# One section, not three: "biggest alliance", "biggest galaxy" and "top
+   planets" are the same question asked at three scales, so they share a
+   heading and a single set of column rules instead of each carrying its own
+   eyebrow at the same weight as the heading above it. #}
+{% if alliance_movers or galaxy_movers or planet_movers %}
+<h2>Gained most this tick</h2>
 {% if alliance_movers or galaxy_movers %}
-<h2>Movers this tick</h2>
-<div class="leader-grid">
+<div class="readout">
     {% if alliance_movers %}
-    <a class="leader-card" href="/web/alliances/{{ alliance_movers[0].id }}">
-        <div class="eyebrow">Alliance gaining most</div>
-        <div class="leader-name">{{ alliance_movers[0].name }}</div>
-        <div class="leader-meta">#{{ alliance_movers[0].rank }} {{ macros.rank_change(alliance_movers[0].rank_delta) }} &middot; {{ macros.delta(alliance_movers[0].score_delta) }} total score</div>
-    </a>
+    <div class="readout-label">Alliance</div>
+    <div class="readout-value"><a href="/web/alliances/{{ alliance_movers[0].id }}">{{ alliance_movers[0].name }}</a></div>
+    <div class="readout-meta">#{{ alliance_movers[0].rank }} {{ macros.rank_change(alliance_movers[0].rank_delta) }}</div>
+    <div class="readout-num">{{ macros.delta(alliance_movers[0].score_delta) }}</div>
     {% endif %}
     {% if galaxy_movers %}
-    <a class="leader-card" href="/web/galaxies/{{ galaxy_movers[0].id }}">
-        <div class="eyebrow">Galaxy gaining most</div>
-        <div class="leader-name">{{ galaxy_movers[0].x }}:{{ galaxy_movers[0].y }} &mdash; {{ galaxy_movers[0].name }}</div>
-        <div class="leader-meta">#{{ galaxy_movers[0].rank }} {{ macros.rank_change(galaxy_movers[0].rank_delta) }} &middot; {{ macros.delta(galaxy_movers[0].score_delta) }} score</div>
-    </a>
+    <div class="readout-label">Galaxy</div>
+    <div class="readout-value"><a href="/web/galaxies/{{ galaxy_movers[0].id }}">{{ galaxy_movers[0].x }}:{{ galaxy_movers[0].y }} &mdash; {{ galaxy_movers[0].name }}</a></div>
+    <div class="readout-meta">#{{ galaxy_movers[0].rank }} {{ macros.rank_change(galaxy_movers[0].rank_delta) }}</div>
+    <div class="readout-num">{{ macros.delta(galaxy_movers[0].score_delta) }}</div>
     {% endif %}
 </div>
 {% endif %}
 
 {% if planet_movers %}
-<h2>Planet movers this tick</h2>
+<div class="eyebrow table-label">Top {{ planet_movers|length }} planets</div>
 <div class="table-scroll">
 <table>
     <thead>
@@ -190,9 +201,22 @@
 </table>
 </div>
 {% endif %}
+{% endif %}
 
 </div>
 <div class="dashboard-rail">
+
+{% if user and you.linked and you.feed %}
+<h2>Your feed</h2>
+<div class="feed-list">
+    {% for f in you.feed %}
+    <div class="feed-row">
+        <span class="feed-tick">T{{ "%04d"|format(f.tick_number) }}</span>
+        <span class="feed-text">{{ f.text }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 {% if race_distribution %}
 <h2>Race distribution</h2>

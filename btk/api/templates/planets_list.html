@@ -4,20 +4,8 @@
 {% block content %}
 <h1>Planets</h1>
 {% if round %}
-    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}{% if user %} &middot; <a href="/web/needs-intel">needs intel</a>{% endif %}</p>
+    <p class="subtitle">Round {{ round.number }}{% if round.name %} &mdash; {{ round.name }}{% endif %}</p>
 {% endif %}
-<form class="search-form" method="get" action="/web/planets" id="planets-form">
-    <span class="prompt">&gt;</span>
-    <input type="text" name="q" value="{{ q }}" placeholder="planet, ruler{% if user %}, nick{% endif %}, or coords&hellip;" autocomplete="off" id="planets-query">
-    <button type="submit" class="btn">Query</button>
-</form>
-<div class="search-examples">
-    <span class="eyebrow">Try</span>
-    <a class="example-chip" href="/web/planets?q=1%3A2%3A3">1:2:3</a>
-    <a class="example-chip" href="/web/planets?q=5%3A9">5:9</a>
-    <a class="example-chip" href="/web/planets?q=%40Imperium">@Imperium</a>
-    <a class="example-chip" href="/web/planets?q=%231">#1</a>
-</div>
 <div id="planets-results">
 {% include "_planets_results.html" %}
 </div>
