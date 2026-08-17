@@ -722,17 +722,21 @@ async def alliance_detail(
                     intel_coverage["avg_missing_value"] = avg_missing_value
                     intel_coverage["avg_missing_size"] = avg_missing_size
     # Empty columns are noise in a dense table -- only render Flags/Amps/
-    # Dists/Nick if at least one row actually has something in them. And a
-    # Comment repeated identically on every row (e.g. every inferred member
-    # of an algorithmically-solved alliance) says nothing per-row -- surface
-    # it once as a note instead of 40 duplicate cells.
+    # Dists if at least one row actually has something in them. Nick and
+    # Comment never get their own columns here -- they fold into the Ruler
+    # tooltip (macros.intel_tooltip) the same way the planets list folds
+    # them into its Alliance tooltip, since this roster has no Alliance
+    # column of its own to hang them off of. uniform_comment still covers
+    # the case where every row shares the exact same note (e.g. a whole
+    # alliance inferred in one CP-SAT pass) -- that's worth a single
+    # subtitle line instead of an identical tooltip on every row.
     show_flags = any(p["special"] or p["defwhore"] for p in intel_planets)
     show_amps = any(p["amps"] is not None for p in intel_planets)
     show_dists = any(p["dists"] is not None for p in intel_planets)
     show_nick = any(p["nick"] for p in intel_planets)
     uniform_comment, show_comment_column = _comment_display(intel_planets)
     leading_cols = 4 + (1 if show_flags else 0)  # Coords, Planet, Ruler, Race[, Flags]
-    trailing_cols = sum([show_amps, show_dists, show_nick, show_comment_column])
+    trailing_cols = sum([show_amps, show_dists])
     watching = False
     if user is not None:
         watching = await conn.fetchval(
@@ -740,6 +744,24 @@ async def alliance_detail(
             user["discord_user_id"],
             alliance_id,
         )
+    # Rank and Members both often sit unchanged for a long stretch of a log page
+    # (a stable top alliance, a roster that hasn't grown) -- checked over the
+    # FULL history, not just this page, same rule galaxy Name uses above. When
+    # one holds, state it once instead of repeating it down every row.
+    constant_rank = None
+    constant_members = None
+    if log_total:
+        distinct_ranks = await conn.fetch(
+            "SELECT DISTINCT rank FROM alliance_stat WHERE alliance_id = $1 LIMIT 2", alliance_id
+        )
+        if len(distinct_ranks) == 1:
+            constant_rank = distinct_ranks[0]["rank"]
+        distinct_members = await conn.fetch(
+            "SELECT DISTINCT members FROM alliance_stat WHERE alliance_id = $1 LIMIT 2",
+            alliance_id,
+        )
+        if len(distinct_members) == 1:
+            constant_members = distinct_members[0]["members"]
     return templates.TemplateResponse(
         request,
         "alliance_detail.html",
@@ -756,6 +778,8 @@ async def alliance_detail(
             "total_score_trend": total_score_trend,
             "total_value_trend": total_value_trend,
             "avg_score_delta": avg_score_delta,
+            "constant_rank": constant_rank,
+            "constant_members": constant_members,
             "watching": bool(watching),
             "user": user,
             "intel_planets": intel_planets,
@@ -1018,6 +1042,19 @@ async def galaxy_detail(
     # has something in them.
     show_flags = any(p["special"] for p in planets)
     show_alliance = user is not None and any(p["alliance"] for p in planets)
+    # A galaxy's Name repeats identically down the whole log the vast majority
+    # of the time (galaxies are rarely renamed) -- checked over the FULL
+    # history, not just this page, same "is this column constant over the
+    # complete set?" rule show_flags/show_alliance already apply per-column.
+    # When it does hold, state it once above the table instead of repeating
+    # it down every row.
+    constant_name = None
+    if log_total:
+        distinct_names = await conn.fetch(
+            "SELECT DISTINCT name FROM galaxy_stat WHERE galaxy_id = $1 LIMIT 2", galaxy_id
+        )
+        if len(distinct_names) == 1:
+            constant_name = distinct_names[0]["name"]
     return templates.TemplateResponse(
         request,
         "galaxy_detail.html",
@@ -1039,6 +1076,7 @@ async def galaxy_detail(
             "user": user,
             "show_flags": show_flags,
             "show_alliance": show_alliance,
+            "constant_name": constant_name,
         },
     )
 

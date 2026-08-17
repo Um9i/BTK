@@ -30,13 +30,15 @@ def sparkline(
         points.append((x, y))
 
     line = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
-    baseline = height - pad
-    area = f"{pad:.1f},{baseline:.1f} {line} {width - pad:.1f},{baseline:.1f}"
     end_x, end_y = points[-1]
 
+    # No fill/area -- at this size a translucent polygon under the line reads as a grey
+    # smear rather than a chart, so the stroke alone is the signal. preserveAspectRatio
+    # is pinned to the left edge (not the "meet" default's centering) so the drawn line
+    # starts flush under its vital's label instead of drifting right when the rendered
+    # box's aspect ratio doesn't match the viewBox's.
     return Markup(
-        f'<svg class="sparkline" viewBox="0 0 {width} {height}" aria-hidden="true">'
-        f'<polygon points="{area}" fill="currentColor" fill-opacity="0.08" stroke="none"></polygon>'
+        f'<svg class="sparkline" viewBox="0 0 {width} {height}" preserveAspectRatio="xMinYMid meet" aria-hidden="true">'
         f'<polyline points="{line}" fill="none" stroke="currentColor" stroke-width="2" '
         f'stroke-linejoin="round" stroke-linecap="round"></polyline>'
         f'<circle cx="{end_x:.1f}" cy="{end_y:.1f}" r="2.5" fill="currentColor"></circle>'

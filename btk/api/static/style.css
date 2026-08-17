@@ -872,22 +872,45 @@ h2 {
 
 .vital .value {
     font-family: var(--font-data);
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-variant-numeric: tabular-nums;
 }
 
-/* The one vital with a trend line -- everything else in the strip stays a
-   plain number, this is the single place the eye should land first. */
+/* Score is what a planet/galaxy/alliance page is actually about -- with every
+   vital set at the same size and weight the row had no entry point for the
+   eye. Giving just this one vital a visibly larger, heavier value makes it
+   the obvious first read, with Rank/Members/Size/etc. reading as supporting
+   detail rather than competing on equal footing. */
+.vital-primary .value {
+    font-size: 1.65rem;
+    font-weight: 600;
+}
+
+/* Every vital reserves the same vertical slot below its value, whether or not
+   it actually has a trend -- alliance vitals like Rank/Members/Points have no
+   chart at all, and even a vital that normally does can render an empty
+   .trend-slot on a fresh round (sparkline() needs 2+ ticks of history). Fixing
+   the height here, not just on the vitals that happen to have content, is what
+   keeps the row looking like a deliberate grid instead of ragged/misaligned. */
+.vital {
+    min-height: 3.6rem;
+}
+
 .vital-trend {
     min-width: 9rem;
+}
+
+.vital-trend .trend-slot {
+    display: block;
+    height: 28px;
+    margin-top: 0.5rem;
 }
 
 .vital-trend .sparkline {
     display: block;
     width: 100%;
     max-width: 10rem;
-    height: 28px;
-    margin-top: 0.5rem;
+    height: 100%;
     color: var(--fg-dim);
 }
 
@@ -1128,6 +1151,20 @@ td.rank-top {
     font-weight: 700;
 }
 
+/* A right-aligned Rank number sitting directly against a left-aligned Coords
+   cell (e.g. /web/needs-intel's "133  2:3:3") reads as one blob when both are
+   the same weight/color in the same monospace font -- dimming the rank (it's
+   secondary here, a worklist sort order, not the page's subject) plus a
+   wider gap than the table's usual column padding gives the eye a real break
+   between the two numbers. */
+td.rank-dim, th.rank-col {
+    color: var(--fg-dim);
+}
+
+th.rank-col, td.rank-col {
+    padding-right: 2.5rem;
+}
+
 .empty {
     color: var(--fg-dim);
     font-style: italic;
@@ -1145,11 +1182,7 @@ td.rank-top {
     vertical-align: bottom;
 }
 
-.truncate-wide {
-    max-width: 14rem;
-}
-
-/* Marks a cell with a real tooltip attached (see macros.alliance_intel) -- a
+/* Marks a cell with a real tooltip attached (see macros.intel_tooltip) -- a
    dotted underline is the standard signal that there's something to hover
    for, so it doesn't just look like plain text that happens to truncate. */
 .has-tooltip {
@@ -1560,6 +1593,24 @@ td.rank-top {
 
 .map-key .slot-empty, .map-key .slot-occupied, .map-key .slot-known, .map-key .slot-mine {
     margin-right: 0.3rem;
+}
+
+/* Each galaxy row is only ever a few hundred px wide (label + one glyph per
+   planet slot), so stacking clusters one under another on a full-width page
+   left two thirds of the page empty and turned the map into a very long
+   scroll. Floating clusters into columns puts them side by side, where
+   they're actually comparable, and keeps the whole map closer to one
+   screen. auto-fill/minmax rather than a fixed column count so it adapts
+   from one column on mobile up to three-plus on a wide desktop. */
+.map-clusters {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    column-gap: 2.5rem;
+    align-items: start;
+}
+
+.map-cluster h2 {
+    margin-top: 0;
 }
 
 .map-grid {

@@ -12,23 +12,23 @@
     <div class="vital vital-trend">
         <div class="label">Size</div>
         <div class="value">{{ latest.size }}{{ macros.delta(latest.size_delta) }}</div>
-        {{ size_trend }}
+        <div class="trend-slot">{{ size_trend }}</div>
     </div>
-    <div class="vital vital-trend">
+    <div class="vital vital-trend vital-primary">
         <div class="label">Score</div>
         <div class="value">{{ "{:,}".format(latest.score) }}{{ macros.delta(latest.score_delta) }}</div>
         {{ macros.avg_rate(avg_score_delta, 10) }}
-        {{ score_trend }}
+        <div class="trend-slot">{{ score_trend }}</div>
     </div>
     <div class="vital vital-trend">
         <div class="label">Value</div>
         <div class="value">{{ "{:,}".format(latest.value) }}{{ macros.delta(latest.value_delta) }}</div>
-        {{ value_trend }}
+        <div class="trend-slot">{{ value_trend }}</div>
     </div>
     <div class="vital vital-trend">
         <div class="label">XP</div>
         <div class="value">{{ "{:,}".format(latest.xp) }}{{ macros.delta(latest.xp_delta) }}</div>
-        {{ xp_trend }}
+        <div class="trend-slot">{{ xp_trend }}</div>
     </div>
 </div>
 {% endif %}
@@ -75,13 +75,16 @@
 
 <h2>Log</h2>
 {% if history %}
+{% if constant_name %}
+<p class="subtitle">Name: {{ constant_name }} (unchanged across this history)</p>
+{% endif %}
 <div class="table-scroll">
 <table>
     <thead>
         <tr>
             <th class="num">Tick</th>
             <th class="num">Rank</th>
-            <th>Name</th>
+            {% if not constant_name %}<th>Name</th>{% endif %}
             <th class="num">Size</th>
             <th class="num">Score</th>
             <th class="num">Value</th>
@@ -93,7 +96,7 @@
         <tr>
             <td class="num">{{ h.tick }}</td>
             <td class="num">{{ h.rank }}{{ macros.rank_change(h.rank_delta) }}</td>
-            <td>{{ h.name }}</td>
+            {% if not constant_name %}<td>{{ h.name }}</td>{% endif %}
             <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
             <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>
             <td class="num">{{ "{:,}".format(h.value) }}{{ macros.delta(h.value_delta) }}</td>

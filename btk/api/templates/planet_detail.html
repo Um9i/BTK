@@ -21,23 +21,23 @@
     <div class="vital vital-trend">
         <div class="label">Size</div>
         <div class="value">{{ latest.size }}{{ macros.delta(latest.size_delta) }}</div>
-        {{ size_trend }}
+        <div class="trend-slot">{{ size_trend }}</div>
     </div>
-    <div class="vital vital-trend">
+    <div class="vital vital-trend vital-primary">
         <div class="label">Score</div>
         <div class="value">{{ "{:,}".format(latest.score) }}{{ macros.delta(latest.score_delta) }}</div>
         {{ macros.avg_rate(avg_score_delta, 10) }}
-        {{ score_trend }}
+        <div class="trend-slot">{{ score_trend }}</div>
     </div>
     <div class="vital vital-trend">
         <div class="label">Value</div>
         <div class="value">{{ "{:,}".format(latest.value) }}{{ macros.delta(latest.value_delta) }}</div>
-        {{ value_trend }}
+        <div class="trend-slot">{{ value_trend }}</div>
     </div>
     <div class="vital vital-trend">
         <div class="label">XP</div>
         <div class="value">{{ "{:,}".format(latest.xp) }}{{ macros.delta(latest.xp_delta) }}</div>
-        {{ xp_trend }}
+        <div class="trend-slot">{{ xp_trend }}</div>
     </div>
 </div>
 {% else %}

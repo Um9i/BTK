@@ -16,7 +16,9 @@
     <span class="map-key"><span class="slot-mine">&#9632;</span> your alliance</span>
     {% endif %}
 </p>
+<div class="map-clusters">
 {% for cluster in clusters %}
+<div class="map-cluster">
 <h2>Cluster {{ cluster.x }}</h2>
 <div class="map-grid">
     {% for g in cluster.galaxies %}
@@ -36,7 +38,9 @@
     </div>
     {% endfor %}
 </div>
+</div>
 {% endfor %}
+</div>
 {% else %}
 <p class="empty">No galaxy data yet.</p>
 {% endif %}

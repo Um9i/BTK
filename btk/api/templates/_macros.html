@@ -68,16 +68,18 @@
 <th class="{{ extra_class }}" aria-sort="{{ aria }}"><a href="{{ sort_url(field) }}">{{ label }}{% if current_sort == field %} {{ '▲' if current_dir == 'asc' else '▼' }}{% endif %}</a></th>
 {%- endmacro %}
 
-{% macro alliance_intel(p, show_nick, show_comment_column) -%}
-    {#- Nick and comment used to be their own columns next to Alliance, but on
-    a roster where most rows carry both, that's 3 extra wide columns just to
-    show scouted-intel metadata that's secondary to the roster itself. Folding
-    them into a tooltip on the alliance name keeps that data one hover away
-    without permanently spending table width on it.
+{% macro intel_tooltip(anchor, p, show_nick, show_comment_column) -%}
+    {#- Nick and comment used to be their own columns, but on a roster where
+    most rows carry both, that's extra wide columns just to show scouted-
+    intel metadata that's secondary to the roster itself. Folding them into
+    a tooltip on some per-row anchor column (Alliance on the planets list,
+    Ruler on an alliance's own roster where Alliance would be redundant)
+    keeps that data one hover away without permanently spending table width
+    on it.
 
     Built as a real (CSS-only) tooltip, not title= -- title is invisible on
     touch and unreachable by keyboard, and this is the primary way scouted
-    intel surfaces on the planets list. tabindex + :focus-within makes it
+    intel surfaces on these tables. tabindex + :focus-within makes it
     keyboard-reachable; role="tooltip" + aria-describedby wires it up for
     screen readers the same way title= would have, minus the touch/keyboard
     gap. See .has-tooltip-wrap in style.css for the hover/focus display. -#}
@@ -87,12 +89,16 @@
     {%- if tip -%}
     {%- set tip_id = "intel-tip-" ~ p.id -%}
     <span class="has-tooltip-wrap">
-        <span class="truncate has-tooltip" tabindex="0" aria-describedby="{{ tip_id }}">{{ p.alliance or "" }}</span>
+        <span class="truncate has-tooltip" tabindex="0" aria-describedby="{{ tip_id }}">{{ anchor }}</span>
         <span class="tooltip-bubble" id="{{ tip_id }}" role="tooltip">{{ tip }}</span>
     </span>
     {%- else -%}
-    <span class="truncate">{{ p.alliance or "" }}</span>
+    <span class="truncate">{{ anchor }}</span>
     {%- endif -%}
+{%- endmacro %}
+
+{% macro alliance_intel(p, show_nick, show_comment_column) -%}
+    {{- intel_tooltip(p.alliance or "", p, show_nick, show_comment_column) -}}
 {%- endmacro %}
 
 {% macro coverage_pct(pct) -%}

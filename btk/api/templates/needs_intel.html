@@ -11,7 +11,7 @@
 <table class="roster">
     <thead>
         <tr>
-            <th class="num">Rank</th>
+            <th class="num rank-col">Rank</th>
             <th>Coords</th>
             <th>Ruler</th>
             <th class="col-secondary">Planet</th>
@@ -23,7 +23,7 @@
     <tbody>
         {% for p in planets %}
         <tr>
-            <td class="num{% if p.rank <= 3 %} rank-top{% endif %}">{{ p.rank }}</td>
+            <td class="num rank-col{% if p.rank <= 3 %} rank-top{% else %} rank-dim{% endif %}">{{ p.rank }}</td>
             <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
             <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
             <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>

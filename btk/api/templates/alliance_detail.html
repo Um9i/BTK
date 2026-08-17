@@ -21,24 +21,24 @@
     <div class="vital vital-trend">
         <div class="label">Size</div>
         <div class="value">{{ latest.size }}{{ macros.delta(latest.size_delta) }}</div>
-        {{ size_trend }}
+        <div class="trend-slot">{{ size_trend }}</div>
     </div>
-    <div class="vital vital-trend">
+    <div class="vital vital-trend vital-primary">
         <div class="label">Score</div>
         <div class="value">{{ "{:,}".format(latest.score) }}{{ macros.delta(latest.score_delta) }}</div>
         {{ macros.avg_rate(avg_score_delta, 10) }}
-        {{ score_trend }}
+        <div class="trend-slot">{{ score_trend }}</div>
     </div>
     <div class="vital"><div class="label">Points</div><div class="value">{{ latest.points }}</div></div>
     <div class="vital vital-trend">
         <div class="label">Total Score</div>
         <div class="value">{{ "{:,}".format(latest.total_score) }}{{ macros.delta(latest.total_score_delta) }}</div>
-        {{ total_score_trend }}
+        <div class="trend-slot">{{ total_score_trend }}</div>
     </div>
     <div class="vital vital-trend">
         <div class="label">Total Value</div>
         <div class="value">{{ "{:,}".format(latest.total_value) }}{{ macros.delta(latest.total_value_delta) }}</div>
-        {{ total_value_trend }}
+        <div class="trend-slot">{{ total_value_trend }}</div>
     </div>
 </div>
 {% endif %}
@@ -71,15 +71,13 @@
             <th class="num">Size</th>
             {% if show_amps %}<th class="num">Amps</th>{% endif %}
             {% if show_dists %}<th class="num">Dists</th>{% endif %}
-            {% if show_nick %}<th>Nick</th>{% endif %}
-            {% if show_comment_column %}<th>Comment</th>{% endif %}
         </tr>
     </thead>
     <tbody>
         {% for p in intel_planets %}
         <tr>
             <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
-            <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
+            <td>{{ macros.intel_tooltip(p.ruler_name, p, show_nick, show_comment_column) }}</td>
             <td><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
             <td>{{ p.race }}</td>
             {% if show_flags %}
@@ -90,8 +88,6 @@
             <td class="num">{{ p.size }}</td>
             {% if show_amps %}<td class="num">{{ "{:,}".format(p.amps) if p.amps is not none else "" }}</td>{% endif %}
             {% if show_dists %}<td class="num">{{ "{:,}".format(p.dists) if p.dists is not none else "" }}</td>{% endif %}
-            {% if show_nick %}<td>{{ p.nick or "" }} {{ macros.nick_provenance(p.comment) }}</td>{% endif %}
-            {% if show_comment_column %}<td><span class="truncate truncate-wide" title="{{ p.comment or '' }}">{{ p.comment or "" }}</span></td>{% endif %}
         </tr>
         {% endfor %}
     </tbody>
@@ -158,13 +154,21 @@
 
 <h2>Log</h2>
 {% if history %}
+{% if constant_rank is not none or constant_members is not none %}
+<p class="subtitle">
+    {% if constant_rank is not none %}Rank: {{ constant_rank }}{% endif %}
+    {% if constant_rank is not none and constant_members is not none %} &middot; {% endif %}
+    {% if constant_members is not none %}Members: {{ constant_members }}{% endif %}
+    (unchanged across this history)
+</p>
+{% endif %}
 <div class="table-scroll">
 <table>
     <thead>
         <tr>
             <th class="num">Tick</th>
-            <th class="num">Rank</th>
-            <th class="num">Members</th>
+            {% if constant_rank is none %}<th class="num">Rank</th>{% endif %}
+            {% if constant_members is none %}<th class="num">Members</th>{% endif %}
             <th class="num">Size</th>
             <th class="num">Score</th>
             <th class="num">Points</th>
@@ -176,8 +180,8 @@
         {% for h in history %}
         <tr>
             <td class="num">{{ h.tick }}</td>
-            <td class="num">{{ h.rank }}{{ macros.rank_change(h.rank_delta) }}</td>
-            <td class="num">{{ h.members }}</td>
+            {% if constant_rank is none %}<td class="num">{{ h.rank }}{{ macros.rank_change(h.rank_delta) }}</td>{% endif %}
+            {% if constant_members is none %}<td class="num">{{ h.members }}</td>{% endif %}
             <td class="num">{{ h.size }}{{ macros.delta(h.size_delta) }}</td>
             <td class="num">{{ "{:,}".format(h.score) }}{{ macros.delta(h.score_delta) }}</td>
             <td class="num">{{ h.points }}</td>

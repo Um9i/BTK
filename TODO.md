@@ -7,12 +7,124 @@ consumer dashboard -- so "slick" here means *precise and fast*, not
 flashy. Nothing here should introduce cards, border-radius, or color
 beyond the existing good/bad semantic pair.
 
-Two halves: the **open backlog** immediately below (prioritized, from the
-2026-08-17 audit), then the **completed log** of everything shipped so far.
+Three parts: the **open visual pass** immediately below, then the
+**completed 2026-08-17 audit**, then the **completed log** of everything
+shipped before that.
 
 ---
 
-# Open backlog — 2026-08-17 audit
+# Open — visual pass (screenshot review, 2026-08-17)
+
+Reviewed full-page screenshots of all eight pages (map, alliance detail,
+galaxy detail, planet detail, needs-intel, alliances, galaxies, planets) at
+round 118 / tick 236, after the structural audit below had shipped. The
+structure is right now; what's left is that a few elements *read* as
+unfinished — a chart that looks like a rendering artifact, a column of
+duplicated text, and a page using a third of its width. Same constraints as
+always: no cards, no radius, no third colour.
+
+Ordered by how much each one hurts on first look.
+
+## P0 — the three that read as broken
+
+- [x] **Fix the vitals sparklines — they read as smudges, not data.** Three
+      fixes, matching the three problems: (1) dropped the filled polygon
+      entirely (`charts.py`'s `sparkline()`) rather than just lowering its
+      opacity — at this size a translucent area under the line was reading as
+      a grey smear, not signal; (2) `preserveAspectRatio="xMinYMid meet"` on
+      the `<svg>` instead of the default `xMidYMid`, which was centering the
+      drawn line and padding it away from the label above whenever the
+      rendered box's aspect ratio didn't match the viewBox's; (3) wrapped
+      every trend in a `<div class="trend-slot">` (`planet_detail.html`,
+      `galaxy_detail.html`, `alliance_detail.html`) with a fixed
+      `height: 28px` in CSS, plus a new `.vital { min-height: 3.6rem }` so
+      *every* vital in the row — including ones with no trend at all, like
+      alliance Rank/Members/Points — reserves identical vertical space. That
+      last part turned out to matter beyond the "4 of 7 have a trend" case
+      the audit called out: `sparkline()` also silently returns empty markup
+      on <2 ticks of history, so without a slot with a floor height, a
+      fresh-round vital would shrink and misalign the row even where a trend
+      normally renders. → `btk/api/charts.py`, `style.css` (`.vital`,
+      `.vital-trend .trend-slot`, `.vital-trend .sparkline`),
+      `planet_detail.html`, `galaxy_detail.html`, `alliance_detail.html`
+- [x] **Collapse the near-duplicate Comment column on the alliance roster.**
+      Went with the tooltip option: generalized `macros.alliance_intel()` into
+      `macros.intel_tooltip(anchor, p, show_nick, show_comment_column)` (an
+      explicit anchor arg instead of always `p.alliance`, since this roster has
+      no Alliance column to hang it off), wired it onto the Ruler cell, and
+      dropped the dedicated Nick and Comment `<th>`/`<td>` pairs outright —
+      matching the pattern the planets list already used for the same data.
+      `_comment_display()`'s uniform-comment subtitle collapse (`web.py:152`)
+      is untouched and still fires when every row shares the exact same note;
+      the tooltip only carries the differing case now. → `_macros.html`
+      (`intel_tooltip`, `alliance_intel`), `alliance_detail.html`, `web.py`
+      (`trailing_cols` no longer counts Nick/Comment as columns), also
+      removed the now-dead `.truncate-wide` CSS rule.
+- [x] **Lay the cluster map out in columns.** Wrapped the `{% for cluster %}`
+      loop in a `.map-clusters` container (`map.html`), each cluster now its
+      own `.map-cluster` block with the `<h2>` inside it, laid out with
+      `display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem,
+      1fr))` — auto-fill/minmax rather than a fixed 2–3 count so it also
+      collapses cleanly to one column on mobile. → `map.html`, `style.css`
+      (`.map-clusters`, `.map-cluster`)
+
+  All three verified in a real browser (Playwright/Chromium, screenshots at
+  desktop/mobile/dark-mode): the map now renders 3 columns at 1400px and 1 at
+  420px; planet/galaxy vitals sparklines are thin flush-left strokes with no
+  fill, uniform baseline across the row, confirmed on both light and dark;
+  the alliance roster's Ruler column shows a dotted-underline tooltip
+  (hover-tested) with the full comment when comments differ across rows, and
+  still collapses to the single uniform-comment subtitle when they're
+  byte-identical — tested both cases against temporary DB rows (removed after
+  screenshotting; this local DB's round 116 dataset had no existing
+  `planet_intel` rows to test against). `ruff check` and the full test suite
+  (50 passed) both clean.
+
+## P1 — density and hierarchy, once P0 lands
+
+- [x] **Give the vitals row a primary metric.** New `.vital-primary` modifier
+      (`style.css`) bumps just the Score value to 1.65rem/weight 600 while the
+      shared `.vital .value` baseline dropped from 1.2rem to 1.05rem, so every
+      other vital — Rank, Members, Size, Points, Total score, Total value —
+      reads as a visible step down. Applied to the Score `<div class="vital
+      vital-trend">` on all three detail pages by adding `vital-primary` to its
+      class list — no markup restructuring needed. →
+      `style.css` (`.vital .value`, `.vital-primary`), `planet_detail.html`,
+      `galaxy_detail.html`, `alliance_detail.html`
+- [x] **Strip columns that never vary from the log tables.** Added a
+      full-history distinct-value check at the route level (`SELECT DISTINCT
+      <col> ... LIMIT 2`, not scoped to the current page — same principle as
+      `_planet_flags`' full-set check) for galaxy Name and alliance
+      Rank/Members. When a column comes back constant across the entire round
+      (not just what's visible on this log page), the column is dropped and
+      the value stated once in a subtitle above the table instead; when it
+      isn't — confirmed against a galaxy that was actually renamed
+      mid-round — the column stays, so this never hides a real change that
+      happens to fall outside the current page. → `web.py` (`galaxy_detail`,
+      `alliance_detail`), `galaxy_detail.html`, `alliance_detail.html`
+- [x] **Separate Rank and Coords on `/web/needs-intel`.** New `.rank-col`
+      (wider `padding-right: 2.5rem` instead of the table's usual 1.25rem) and
+      `.rank-dim` (`color: var(--fg-dim)`, skipped on top-3 rows which already
+      read as heavier via the existing `.rank-top`) — the worklist's sort
+      order now visibly recedes behind the coordinate a scout actually needs,
+      instead of blurring into one digit string. → `style.css` (`.rank-dim`,
+      `.rank-col`), `needs_intel.html`
+
+  All three verified in a real browser (Playwright/Chromium) against the
+  local DB: Score is now the clear visual anchor on all three detail pages;
+  a galaxy that kept one name for its whole history collapsed to a "Name: ..."
+  subtitle with the column gone, while a galaxy that was renamed mid-round
+  (real data: "Cant Be Arsed" → "A Galaxy Far Far Away") correctly kept its
+  Name column; a single-member alliance with constant Rank/Members collapsed
+  both into one subtitle, while a growing 46-member alliance (varying rank,
+  varying members over its full history despite both happening to be flat on
+  the visible page) correctly kept both columns; `/web/needs-intel`'s Rank
+  column now reads as clearly secondary to Coords. `ruff check` and the full
+  test suite (50 passed) both clean.
+
+---
+
+# Completed — 2026-08-17 audit
 
 Audit of `btk/api/templates/`, `btk/api/static/style.css` and
 `btk/api/routers/web.py` at tick 233 / round 118. Ordered by impact, not by
