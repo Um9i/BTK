@@ -64,19 +64,35 @@
    (into "&amp;#9650;") when they come out of a {{ }} expression instead of
    being static template text, unlike rank_change() above which is safe
    because its entities sit directly in literal HTML, not inside {{ }}. -#}
-<th class="{{ extra_class }}"><a href="{{ sort_url(field) }}">{{ label }}{% if current_sort == field %} {{ '▲' if current_dir == 'asc' else '▼' }}{% endif %}</a></th>
+{%- set aria = ('ascending' if current_dir == 'asc' else 'descending') if current_sort == field else 'none' -%}
+<th class="{{ extra_class }}" aria-sort="{{ aria }}"><a href="{{ sort_url(field) }}">{{ label }}{% if current_sort == field %} {{ '▲' if current_dir == 'asc' else '▼' }}{% endif %}</a></th>
 {%- endmacro %}
 
 {% macro alliance_intel(p, show_nick, show_comment_column) -%}
     {#- Nick and comment used to be their own columns next to Alliance, but on
     a roster where most rows carry both, that's 3 extra wide columns just to
     show scouted-intel metadata that's secondary to the roster itself. Folding
-    them into a hover tooltip on the alliance name keeps that data one hover
-    away without permanently spending table width on it. -#}
+    them into a tooltip on the alliance name keeps that data one hover away
+    without permanently spending table width on it.
+
+    Built as a real (CSS-only) tooltip, not title= -- title is invisible on
+    touch and unreachable by keyboard, and this is the primary way scouted
+    intel surfaces on the planets list. tabindex + :focus-within makes it
+    keyboard-reachable; role="tooltip" + aria-describedby wires it up for
+    screen readers the same way title= would have, minus the touch/keyboard
+    gap. See .has-tooltip-wrap in style.css for the hover/focus display. -#}
     {%- set nick_line = (("Nick: " ~ p.nick ~ (" (guessed)" if p.comment and "guess_nicks.py" in p.comment else "")) if show_nick and p.nick else "") -%}
     {%- set comment_line = (p.comment if show_comment_column and p.comment else "") -%}
     {%- set tip = nick_line ~ ("\n" if nick_line and comment_line else "") ~ comment_line -%}
-    <span class="truncate{% if tip %} has-tooltip{% endif %}"{% if tip %} title="{{ tip }}"{% endif %}>{{ p.alliance or "" }}</span>
+    {%- if tip -%}
+    {%- set tip_id = "intel-tip-" ~ p.id -%}
+    <span class="has-tooltip-wrap">
+        <span class="truncate has-tooltip" tabindex="0" aria-describedby="{{ tip_id }}">{{ p.alliance or "" }}</span>
+        <span class="tooltip-bubble" id="{{ tip_id }}" role="tooltip">{{ tip }}</span>
+    </span>
+    {%- else -%}
+    <span class="truncate">{{ p.alliance or "" }}</span>
+    {%- endif -%}
 {%- endmacro %}
 
 {% macro coverage_pct(pct) -%}

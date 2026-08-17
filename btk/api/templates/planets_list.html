@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Planets - BTK{% endblock %}
+{% block description %}{% if round %}Browse and search every planet in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %} — coordinates, ruler, score, and more.{% else %}Browse and search planets tracked by BTK.{% endif %}{% endblock %}
 {% block content %}
 <h1>Planets</h1>
 {% if round %}
@@ -7,55 +8,17 @@
 {% endif %}
 <form class="search-form" method="get" action="/web/planets" id="planets-form">
     <span class="prompt">&gt;</span>
-    <input type="text" name="q" value="{{ q }}" placeholder="x:y:z or x y z for a planet, x:y or x y for a galaxy, or a planet/ruler{% if user %}/nick{% endif %} name" autocomplete="off" id="planets-query">
+    <input type="text" name="q" value="{{ q }}" placeholder="planet, ruler{% if user %}, nick{% endif %}, or coords&hellip;" autocomplete="off" id="planets-query">
     <button type="submit" class="btn">Query</button>
 </form>
-<p class="subtitle">Shortcuts: <code>@name</code> jumps to an alliance, <code>#123</code> jumps to whoever holds rank 123 right now.</p>
+<div class="search-examples">
+    <span class="eyebrow">Try</span>
+    <a class="example-chip" href="/web/planets?q=1%3A2%3A3">1:2:3</a>
+    <a class="example-chip" href="/web/planets?q=5%3A9">5:9</a>
+    <a class="example-chip" href="/web/planets?q=%40Imperium">@Imperium</a>
+    <a class="example-chip" href="/web/planets?q=%231">#1</a>
+</div>
 <div id="planets-results">
 {% include "_planets_results.html" %}
 </div>
-<script>
-    // Live filtering: re-fetch just the results fragment as you type instead
-    // of a full page reload per keystroke -- the plain <form> above still
-    // works untouched (same GET, same URL) if JS is unavailable.
-    //
-    // @name / #123 are exempt: the server resolves those to a redirect (see
-    // planets_list() in web.py), which a live per-keystroke fetch would either
-    // follow silently mid-typing or dump a whole other page's HTML into this
-    // results div. Both are wrong, so those two prefixes always go through a
-    // real navigation instead -- on submit only, never while still typing.
-    (function () {
-        var input = document.getElementById("planets-query");
-        var form = document.getElementById("planets-form");
-        var results = document.getElementById("planets-results");
-        var timer = null;
-
-        function isCommand(q) {
-            return q.charAt(0) === "@" || q.charAt(0) === "#";
-        }
-
-        function load(q) {
-            var url = "/web/planets?q=" + encodeURIComponent(q);
-            fetch(url, {headers: {"X-BTK-Partial": "1"}})
-                .then(function (r) { return r.text(); })
-                .then(function (html) {
-                    results.innerHTML = html;
-                    history.replaceState(null, "", url);
-                });
-        }
-
-        input.addEventListener("input", function () {
-            clearTimeout(timer);
-            if (isCommand(input.value)) return;
-            timer = setTimeout(function () { load(input.value); }, 300);
-        });
-
-        form.addEventListener("submit", function (e) {
-            clearTimeout(timer);
-            if (isCommand(input.value)) return; // let the plain GET navigate for real
-            e.preventDefault();
-            load(input.value);
-        });
-    })();
-</script>
 {% endblock %}

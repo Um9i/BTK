@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}BTK{% endblock %}
+{% block description %}{% if round %}Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}{% if tick %}, tick {{ "%04d"|format(tick.number) }}{% endif %} — {{ counts.planets }} planets, {{ counts.galaxies }} galaxies, {{ counts.alliances }} alliances tracked tick by tick.{% else %}Tick-by-tick tracker for Planetarion round data.{% endif %}{% endblock %}
 {% block content %}
 {% if round %}
 <div class="console">
@@ -10,7 +11,7 @@
             <div class="subtitle">Tick-by-tick tracker</div>
         </div>
         <div class="status-wrap">
-            <span class="status-pill{% if freshness.live %} live{% endif %}" id="status-pill">
+            <span class="status-pill{% if freshness.live %} live{% endif %}" id="status-pill" data-round="{{ round.number if round else '' }}" data-tick="{{ tick.number if tick else '' }}">
                 <span class="dot"></span>{{ freshness.label }}
             </span>
             <a href="/" id="new-tick-hint" class="new-tick-hint" hidden>new tick &mdash; reload</a>
@@ -27,7 +28,30 @@
             <div class="clock-value dim">{% if tick %}{{ "%04d"|format(tick.number) }}{% else %}&mdash;{% endif %}</div>
         </div>
     </div>
+
+    <div class="counts-line">
+        <a href="/web/planets">{{ counts.planets }} planets</a><span class="sep">&middot;</span><a href="/web/galaxies">{{ counts.galaxies }} galaxies</a><span class="sep">&middot;</span><a href="/web/alliances">{{ counts.alliances }} alliances</a>
+    </div>
+
+    <div class="search-wrap">
+        <form class="search-form hero" method="get" action="/web/planets" id="header-search-form">
+            <span class="prompt">&gt;</span>
+            <input id="site-search" type="text" name="q" placeholder="search planets, rulers{% if user %}, nicks{% endif %}, coords&hellip;" autocomplete="off">
+            <span class="tag kbd-hint" aria-hidden="true">/</span>
+        </form>
+        <div class="search-examples">
+            <span class="eyebrow">Try</span>
+            <a class="example-chip" href="/web/planets?q=1%3A2%3A3">1:2:3</a>
+            <a class="example-chip" href="/web/planets?q=5%3A9">5:9</a>
+            <a class="example-chip" href="/web/planets?q=%40Imperium">@Imperium</a>
+            <a class="example-chip" href="/web/planets?q=%231">#1</a>
+        </div>
+        <ul id="recent-searches" class="recent-dropdown" hidden></ul>
+    </div>
 </div>
+
+<div class="dashboard-grid">
+<div class="dashboard-main">
 
 {% if user %}
 <div class="you-box">
@@ -115,21 +139,6 @@
 </div>
 {% endif %}
 
-<div class="stat-grid">
-    <a class="stat-card" href="/web/alliances">
-        <div class="value">{{ counts.alliances }}</div>
-        <div class="label">Alliances</div>
-    </a>
-    <a class="stat-card" href="/web/galaxies">
-        <div class="value">{{ counts.galaxies }}</div>
-        <div class="label">Galaxies</div>
-    </a>
-    <a class="stat-card" href="/web/planets">
-        <div class="value">{{ counts.planets }}</div>
-        <div class="label">Planets</div>
-    </a>
-</div>
-
 {% if alliance_movers or galaxy_movers %}
 <h2>Movers this tick</h2>
 <div class="leader-grid">
@@ -182,6 +191,9 @@
 </div>
 {% endif %}
 
+</div>
+<div class="dashboard-rail">
+
 {% if race_distribution %}
 <h2>Race distribution</h2>
 <div class="race-dist">
@@ -205,61 +217,12 @@
 </div>
 {% endif %}
 
+</div>
+</div>
+
 <p class="links-line"><a href="/status/game">Live game status</a>{% if user %} &middot; <a href="/docs">JSON API docs</a>{% endif %}</p>
-
-<script>
-    // PA ticks hourly, 1 minute past the hour (UTC) -- no server round-trip
-    // needed, the schedule is fixed, so this counts down entirely client-side.
-    (function () {
-        var el = document.getElementById("countdown");
-        function render() {
-            var now = new Date();
-            var next = new Date(Date.UTC(
-                now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
-                now.getUTCHours(), 1, 0
-            ));
-            if (next <= now) {
-                next.setUTCHours(next.getUTCHours() + 1);
-            }
-            var s = Math.max(0, Math.floor((next - now) / 1000));
-            var h = String(Math.floor(s / 3600)).padStart(2, "0");
-            var m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-            var sec = String(s % 60).padStart(2, "0");
-            el.textContent = "T−" + h + ":" + m + ":" + sec;
-        }
-        render();
-        setInterval(render, 1000);
-    })();
-    // The countdown above only ever predicts when a tick *should* land, not
-    // whether it actually has -- ingest can lag or skip (see btk-ingest's
-    // ticking check). Poll the tick number itself and surface it plainly
-    // when it moves, rather than leaving the page quietly stale until a
-    // manual reload.
-    (function () {
-        var initialRound = {{ round.number if round else "null" }};
-        var initialTick = {{ tick.number if tick else "null" }};
-        if (initialTick === null) return;
-        var pill = document.getElementById("status-pill");
-        var hint = document.getElementById("new-tick-hint");
-        var POLL_MS = 20000;
-
-        function poll() {
-            fetch("/web/tick-status")
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.round === initialRound && data.tick !== null && data.tick > initialTick) {
-                        hint.hidden = false;
-                        pill.classList.add("flash");
-                        clearInterval(timer);
-                    }
-                })
-                .catch(function () {}); // a failed poll just tries again next interval
-        }
-        var timer = setInterval(poll, POLL_MS);
-    })();
-</script>
 {% else %}
 <h1>BTK</h1>
-<p class="empty">No round data yet.</p>
+<p class="empty">No round data yet — nothing's been ingested. Check <a href="/status/game">live game status</a> to see whether the round is actually ticking right now.</p>
 {% endif %}
 {% endblock %}

@@ -21,13 +21,13 @@
             {% if paginated %}
             {{ macros.sort_th(sort_url, 'size', 'Size', sort, dir, 'num col-secondary') }}
             {{ macros.sort_th(sort_url, 'score', 'Score', sort, dir, 'num') }}
-            {{ macros.sort_th(sort_url, 'value', 'Value', sort, dir, 'num col-secondary') }}
-            {{ macros.sort_th(sort_url, 'xp', 'XP', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'value', 'Value', sort, dir, 'num col-secondary col-tertiary') }}
+            {{ macros.sort_th(sort_url, 'xp', 'XP', sort, dir, 'num col-secondary col-tertiary') }}
             {% else %}
             <th class="num col-secondary">Size</th>
             <th class="num">Score</th>
-            <th class="num col-secondary">Value</th>
-            <th class="num col-secondary">XP</th>
+            <th class="num col-secondary col-tertiary">Value</th>
+            <th class="num col-secondary col-tertiary">XP</th>
             {% endif %}
             {% if show_amps %}<th class="num col-secondary">Amps</th>{% endif %}
             {% if show_dists %}<th class="num col-secondary">Dists</th>{% endif %}
@@ -45,8 +45,8 @@
             {% if show_alliance %}<td class="col-secondary">{{ macros.alliance_intel(p, show_nick, show_comment_column) }}</td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(p.xp) }}</td>
+            <td class="num col-secondary col-tertiary">{{ "{:,}".format(p.value) }}</td>
+            <td class="num col-secondary col-tertiary">{{ "{:,}".format(p.xp) }}</td>
             {% if show_amps %}<td class="num col-secondary">{{ "{:,}".format(p.amps) if p.amps is not none else "" }}</td>{% endif %}
             {% if show_dists %}<td class="num col-secondary">{{ "{:,}".format(p.dists) if p.dists is not none else "" }}</td>{% endif %}
         </tr>
@@ -56,11 +56,19 @@
 </div>
 {% if paginated %}
 <div class="pagination">
-    {% if page > 1 %}<a href="/web/planets?page={{ page - 1 }}&sort={{ sort }}&dir={{ dir }}">&larr; prev</a>{% endif %}
+    {% if page > 1 %}<a href="/web/planets?page={{ page - 1 }}&sort={{ sort }}&dir={{ dir }}{% if q %}&q={{ q_param }}{% endif %}">&larr; prev</a>{% endif %}
     <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} planets</span>
-    {% if page * page_size < total %}<a href="/web/planets?page={{ page + 1 }}&sort={{ sort }}&dir={{ dir }}">next &rarr;</a>{% endif %}
+    {% if page * page_size < total %}<a href="/web/planets?page={{ page + 1 }}&sort={{ sort }}&dir={{ dir }}{% if q %}&q={{ q_param }}{% endif %}">next &rarr;</a>{% endif %}
 </div>
 {% endif %}
 {% else %}
-<p class="empty">{% if q %}No planets matching '{{ q }}'.{% else %}No planet data yet.{% endif %}</p>
+<p class="empty">
+    {% if q %}
+    No planets matching '{{ q }}'. Try a coord (<code>1:2:3</code>), a galaxy (<code>1:2</code>),
+    or part of a ruler/planet name{% if user %}/nick{% endif %} — or <code>@name</code> for an
+    alliance, <code>#123</code> for a score rank.
+    {% else %}
+    No planet data yet.
+    {% endif %}
+</p>
 {% endif %}

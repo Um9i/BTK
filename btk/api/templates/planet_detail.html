@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}{{ external_id }} - BTK{% endblock %}
+{% block description %}{% if latest %}{{ latest.ruler_name }} of {{ latest.planet_name }} ({{ latest.x }}:{{ latest.y }}:{{ latest.z }}) — rank {{ rank }}, {{ "{:,}".format(latest.score) }} score.{% else %}Planet {{ external_id }} on BTK.{% endif %}{% endblock %}
 {% block content %}
-{% set latest = history[0] if history else None %}
 {% if latest %}
 <div class="page-title-row">
     <h1>{{ latest.x }}:{{ latest.y }}:{{ latest.z }} &mdash; {{ latest.ruler_name }} of {{ latest.planet_name }}</h1>
@@ -66,7 +66,7 @@
 </form>
 {% endif %}
 
-<h2>Log &mdash; most recent 50 ticks</h2>
+<h2>Log</h2>
 {% if history %}
 <div class="table-scroll">
 <table>
@@ -95,6 +95,11 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
+<div class="pagination">
+    {% if log_page > 1 %}<a href="?page={{ log_page - 1 }}">&larr; prev</a>{% endif %}
+    <span>page {{ log_page }} / {{ ((log_total - 1) // log_page_size) + 1 if log_total else 1 }} &mdash; {{ log_total }} ticks</span>
+    {% if log_page * log_page_size < log_total %}<a href="?page={{ log_page + 1 }}">next &rarr;</a>{% endif %}
 </div>
 {% else %}
 <p class="empty">No stats recorded.</p>

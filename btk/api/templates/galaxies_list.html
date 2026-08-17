@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}Galaxies - BTK{% endblock %}
+{% block description %}{% if round %}Every galaxy in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}, ranked by score.{% else %}Galaxy rankings tracked by BTK.{% endif %}{% endblock %}
 {% block content %}
 <h1>Galaxies</h1>
 {% if round %}
@@ -16,8 +17,8 @@
             <th>Name</th>
             {{ macros.sort_th(sort_url, 'size', 'Size', sort, dir, 'num col-secondary') }}
             {{ macros.sort_th(sort_url, 'score', 'Score', sort, dir, 'num') }}
-            {{ macros.sort_th(sort_url, 'value', 'Value', sort, dir, 'num col-secondary') }}
-            {{ macros.sort_th(sort_url, 'xp', 'XP', sort, dir, 'num col-secondary') }}
+            {{ macros.sort_th(sort_url, 'value', 'Value', sort, dir, 'num col-secondary col-tertiary') }}
+            {{ macros.sort_th(sort_url, 'xp', 'XP', sort, dir, 'num col-secondary col-tertiary') }}
         </tr>
     </thead>
     <tbody>
@@ -28,12 +29,17 @@
             <td><span class="truncate" title="{{ g.name }}">{{ g.name }}</span></td>
             <td class="num col-secondary">{{ g.size }}</td>
             <td class="num">{{ "{:,}".format(g.score) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(g.value) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(g.xp) }}</td>
+            <td class="num col-secondary col-tertiary">{{ "{:,}".format(g.value) }}</td>
+            <td class="num col-secondary col-tertiary">{{ "{:,}".format(g.xp) }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
+<div class="pagination">
+    {% if page > 1 %}<a href="?page={{ page - 1 }}&sort={{ sort }}&dir={{ dir }}">&larr; prev</a>{% endif %}
+    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} galaxies</span>
+    {% if page * page_size < total %}<a href="?page={{ page + 1 }}&sort={{ sort }}&dir={{ dir }}">next &rarr;</a>{% endif %}
 </div>
 {% else %}
 <p class="empty">No galaxy data yet.</p>

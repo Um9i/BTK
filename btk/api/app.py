@@ -6,6 +6,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 
 from btk.api.routers import alliances, feed, galaxies, health, planets, rounds, ships, status, web
@@ -36,6 +37,15 @@ def create_app() -> FastAPI:
     app.include_router(feed.router)
     app.include_router(web.router)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+    # base.html's own <link rel="icon"> already points browsers at the real
+    # file -- this only catches the handful of browsers/tools/crawlers that
+    # probe the conventional /favicon.ico path regardless, so that request
+    # 404s instead of resolving cleanly.
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon() -> RedirectResponse:
+        return RedirectResponse("/static/favicon.svg")
+
     return app
 
 

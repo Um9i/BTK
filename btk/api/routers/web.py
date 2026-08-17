@@ -11,6 +11,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from asyncpg import Connection, Record
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -35,7 +36,12 @@ templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "
 # "1:1:1", "1.1.1" and "1 1 1" all resolve the same way.
 PLANET_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)[:.\s]+(\d+)")
 GALAXY_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)")
-PLANET_LIST_PAGE_SIZE = 50
+# Shared page size for the planets/alliances/galaxies/needs-intel listings.
+LIST_PAGE_SIZE = 50
+# Detail pages' tick-history log tables (alliance/galaxy/planet) -- a
+# conceptually separate listing, kept as its own constant even though the
+# value happens to match.
+TICK_LOG_PAGE_SIZE = 50
 
 ALLIANCE_SORT_COLUMNS = {
     "rank": "s.rank",
@@ -46,23 +52,30 @@ ALLIANCE_SORT_COLUMNS = {
     "total_score": "s.total_score",
     "total_value": "s.total_value",
 }
-GALAXY_SORT_COLUMNS = {"rank": "rank", "size": "s.size", "score": "s.score", "value": "s.value", "xp": "s.xp"}
-PLANET_SORT_COLUMNS = {"rank": "rank", "size": "ps.size", "score": "ps.score", "value": "ps.value", "xp": "ps.xp"}
+GALAXY_SORT_COLUMNS = {"rank": "rank", "size": "size", "score": "score", "value": "value", "xp": "xp"}
+# A whitelist, not a column-name mapping -- both planets_list() branches that
+# use this query `ranked` (RANKED_PLANET_STAT_CTE), whose own output columns
+# are already named exactly these, unqualified, so `sort` gets interpolated
+# directly once validated against this set rather than looked up in a dict.
+PLANET_SORT_COLUMNS = {"rank", "size", "score", "value", "xp"}
 
 
-def _sort_url_factory(current_sort: str, current_dir: str):
+def _sort_url_factory(current_sort: str, current_dir: str, q: str = ""):
     """Click-to-sort column headers: clicking the active column flips its direction,
     clicking a different one sorts by it fresh (ascending for "rank" -- 1st, 2nd, 3rd...
     reads naturally in that order; descending for every stat column -- biggest first is
     the interesting direction on a first click). Plain query-string GET links, so this
-    needs no client state and works identically with JS off."""
+    needs no client state and works identically with JS off. `q` (only ever set on
+    /web/planets' search results) is carried through so re-sorting doesn't silently
+    drop the current search."""
+    q_suffix = f"&q={quote(q)}" if q else ""
 
     def sort_url(field: str) -> str:
         if field == current_sort:
             new_dir = "asc" if current_dir == "desc" else "desc"
         else:
             new_dir = "asc" if field == "rank" else "desc"
-        return f"?sort={field}&dir={new_dir}"
+        return f"?sort={field}&dir={new_dir}{q_suffix}"
 
     return sort_url
 
@@ -473,17 +486,23 @@ async def alliances_list(
     request: Request,
     sort: str = "rank",
     dir: str = "asc",
+    page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
     sort = sort if sort in ALLIANCE_SORT_COLUMNS else "rank"
     dir = "desc" if dir == "desc" else "asc"
+    page = max(page, 1)
     round_row = await _current_round(conn)
     rows = []
+    total = 0
     tick_row = None
     if round_row:
         tick_row = await _latest_tick(conn, round_row["id"])
     if tick_row:
+        total = await conn.fetchval(
+            "SELECT count(*) FROM alliance_stat WHERE tick_id = $1", tick_row["id"]
+        )
         rows = await conn.fetch(
             f"""
             SELECT a.id, a.name, s.rank, s.size, s.members, s.score, s.points, s.total_score, s.total_value
@@ -491,8 +510,11 @@ async def alliances_list(
             JOIN alliance a ON a.id = s.alliance_id
             WHERE s.tick_id = $1
             ORDER BY {ALLIANCE_SORT_COLUMNS[sort]} {dir.upper()}
+            LIMIT $2 OFFSET $3
             """,
             tick_row["id"],
+            LIST_PAGE_SIZE,
+            (page - 1) * LIST_PAGE_SIZE,
         )
     return templates.TemplateResponse(
         request,
@@ -504,6 +526,9 @@ async def alliances_list(
             "sort": sort,
             "dir": dir,
             "sort_url": _sort_url_factory(sort, dir),
+            "page": page,
+            "total": total,
+            "page_size": LIST_PAGE_SIZE,
         },
     )
 
@@ -512,6 +537,7 @@ async def alliances_list(
 async def alliance_detail(
     request: Request,
     alliance_id: int,
+    page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
@@ -521,24 +547,54 @@ async def alliance_detail(
     if alliance_row is None:
         raise HTTPException(status_code=404, detail="No such alliance")
     name = alliance_row["name"]
-    history = await conn.fetch(
+    page = max(page, 1)
+    log_total = await conn.fetchval(
+        "SELECT count(*) FROM alliance_stat WHERE alliance_id = $1", alliance_id
+    )
+    log_fields = ["rank", "size", "score", "total_score", "total_value"]
+    # Fetch one extra row past the page so the oldest visible row's delta is
+    # computed against the tick just before the page, not left None just
+    # because the LIMIT/OFFSET window happened to end there (see with_deltas()).
+    page_rows = await conn.fetch(
         """
         SELECT t.number AS tick, s.rank, s.size, s.members, s.score, s.points, s.total_score, s.total_value
         FROM alliance_stat s
         JOIN tick t ON t.id = s.tick_id
         WHERE s.alliance_id = $1
         ORDER BY t.number DESC
-        LIMIT 50
+        LIMIT $2 OFFSET $3
         """,
         alliance_id,
+        TICK_LOG_PAGE_SIZE + 1,
+        (page - 1) * TICK_LOG_PAGE_SIZE,
     )
-    history = with_deltas(history, ["rank", "size", "score", "total_score", "total_value"])
-    avg_score_delta = _avg_delta(history, "score")
-    chronological = list(reversed(history))
+    history = with_deltas(page_rows, log_fields)[:TICK_LOG_PAGE_SIZE]
+    # Vitals/sparklines always reflect the true latest tick, independent of
+    # which log page is being browsed -- page 1's own fetch already covers
+    # that window, so only pages 2+ need a second, small unpaginated query.
+    if page == 1:
+        trend = history
+    else:
+        trend_rows = await conn.fetch(
+            """
+            SELECT t.number AS tick, s.rank, s.size, s.members, s.score, s.points, s.total_score, s.total_value
+            FROM alliance_stat s
+            JOIN tick t ON t.id = s.tick_id
+            WHERE s.alliance_id = $1
+            ORDER BY t.number DESC
+            LIMIT $2
+            """,
+            alliance_id,
+            TICK_LOG_PAGE_SIZE,
+        )
+        trend = with_deltas(trend_rows, log_fields)
+    avg_score_delta = _avg_delta(trend, "score")
+    chronological = list(reversed(trend))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
     total_score_trend = sparkline([h["total_score"] for h in chronological])
     total_value_trend = sparkline([h["total_value"] for h in chronological])
+    latest = trend[0] if trend else None
     # alliance_listing.txt has no per-planet membership (see db/schema.sql's
     # note on planet_intel), so the only "roster" for an alliance is
     # whatever's been manually tagged via !intel alliance=<name> -- shown
@@ -570,7 +626,6 @@ async def alliance_detail(
             # is the only honest cross-check available: if the roster is
             # complete and each planet's stats are current, the sums should
             # land at ~100%.
-            latest = history[0] if history else None
             if latest is not None:
                 roster_score = sum(p["score"] for p in intel_planets)
                 roster_value = sum(p["value"] for p in intel_planets)
@@ -680,6 +735,10 @@ async def alliance_detail(
             "alliance_id": alliance_id,
             "name": name,
             "history": history,
+            "latest": latest,
+            "log_page": page,
+            "log_total": log_total,
+            "log_page_size": TICK_LOG_PAGE_SIZE,
             "size_trend": size_trend,
             "score_trend": score_trend,
             "total_score_trend": total_score_trend,
@@ -707,27 +766,47 @@ async def galaxies_list(
     request: Request,
     sort: str = "rank",
     dir: str = "asc",
+    page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
     sort = sort if sort in GALAXY_SORT_COLUMNS else "rank"
     dir = "desc" if dir == "desc" else "asc"
+    page = max(page, 1)
     round_row = await _current_round(conn)
     rows = []
+    total = 0
     tick_row = None
     if round_row:
         tick_row = await _latest_tick(conn, round_row["id"])
     if tick_row:
-        rows = await conn.fetch(
-            f"""
-            SELECT g.id, g.x, g.y, s.name, s.size, s.score, s.value, s.xp,
-                   RANK() OVER (ORDER BY s.score DESC) AS rank
-            FROM galaxy_stat s
+        total = await conn.fetchval(
+            """
+            SELECT count(*) FROM galaxy_stat s
             JOIN galaxy g ON g.id = s.galaxy_id
             WHERE s.tick_id = $1
-            ORDER BY {GALAXY_SORT_COLUMNS[sort]} {dir.upper()}
             """,
             tick_row["id"],
+        )
+        # The RANK() window has to run unfiltered/unlimited (it needs every
+        # galaxy at this tick to rank correctly) -- wrapped in a CTE so the
+        # outer SELECT can sort by the computed rank and page the result.
+        rows = await conn.fetch(
+            f"""
+            WITH ranked AS (
+                SELECT g.id, g.x, g.y, s.name, s.size, s.score, s.value, s.xp,
+                       RANK() OVER (ORDER BY s.score DESC) AS rank
+                FROM galaxy_stat s
+                JOIN galaxy g ON g.id = s.galaxy_id
+                WHERE s.tick_id = $1
+            )
+            SELECT * FROM ranked
+            ORDER BY {GALAXY_SORT_COLUMNS[sort]} {dir.upper()}
+            LIMIT $2 OFFSET $3
+            """,
+            tick_row["id"],
+            LIST_PAGE_SIZE,
+            (page - 1) * LIST_PAGE_SIZE,
         )
     return templates.TemplateResponse(
         request,
@@ -739,6 +818,9 @@ async def galaxies_list(
             "sort": sort,
             "dir": dir,
             "sort_url": _sort_url_factory(sort, dir),
+            "page": page,
+            "total": total,
+            "page_size": LIST_PAGE_SIZE,
         },
     )
 
@@ -827,16 +909,22 @@ async def cluster_map(
 async def galaxy_detail(
     request: Request,
     galaxy_id: int,
+    page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
     galaxy = await conn.fetchrow("SELECT id, x, y FROM galaxy WHERE id = $1", galaxy_id)
     if galaxy is None:
         raise HTTPException(status_code=404, detail="No such galaxy")
+    page = max(page, 1)
+    log_total = await conn.fetchval("SELECT count(*) FROM galaxy_stat WHERE galaxy_id = $1", galaxy_id)
+    log_fields = ["rank", "size", "score", "value", "xp"]
     # galaxy_stat has no stored rank column (unlike alliance_stat) -- computed here
     # per tick via a window function scoped to this galaxy's round, so both the
-    # current rank and with_deltas' rank-over-time come from one query.
-    history = await conn.fetch(
+    # current rank and with_deltas' rank-over-time come from one query. Fetches
+    # one extra row past the page so the oldest visible row's delta is computed
+    # against the tick just before the page (see with_deltas()).
+    page_rows = await conn.fetch(
         """
         WITH ranked AS (
             SELECT gs.galaxy_id, gs.tick_id,
@@ -851,20 +939,48 @@ async def galaxy_detail(
         JOIN ranked r ON r.galaxy_id = s.galaxy_id AND r.tick_id = s.tick_id
         WHERE s.galaxy_id = $1
         ORDER BY t.number DESC
-        LIMIT 50
+        LIMIT $2 OFFSET $3
         """,
         galaxy_id,
+        TICK_LOG_PAGE_SIZE + 1,
+        (page - 1) * TICK_LOG_PAGE_SIZE,
     )
-    history = with_deltas(history, ["rank", "size", "score", "value", "xp"])
-    avg_score_delta = _avg_delta(history, "score")
-    chronological = list(reversed(history))
+    history = with_deltas(page_rows, log_fields)[:TICK_LOG_PAGE_SIZE]
+    # Vitals/sparklines always reflect the true latest tick, independent of
+    # which log page is being browsed -- see the alliance_detail comment above.
+    if page == 1:
+        trend = history
+    else:
+        trend_rows = await conn.fetch(
+            """
+            WITH ranked AS (
+                SELECT gs.galaxy_id, gs.tick_id,
+                       RANK() OVER (PARTITION BY gs.tick_id ORDER BY gs.score DESC) AS rank
+                FROM galaxy_stat gs
+                JOIN tick t ON t.id = gs.tick_id
+                WHERE t.round_id = (SELECT round_id FROM galaxy WHERE id = $1)
+            )
+            SELECT t.number AS tick, s.name, s.size, s.score, s.value, s.xp, r.rank
+            FROM galaxy_stat s
+            JOIN tick t ON t.id = s.tick_id
+            JOIN ranked r ON r.galaxy_id = s.galaxy_id AND r.tick_id = s.tick_id
+            WHERE s.galaxy_id = $1
+            ORDER BY t.number DESC
+            LIMIT $2
+            """,
+            galaxy_id,
+            TICK_LOG_PAGE_SIZE,
+        )
+        trend = with_deltas(trend_rows, log_fields)
+    avg_score_delta = _avg_delta(trend, "score")
+    chronological = list(reversed(trend))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
     value_trend = sparkline([h["value"] for h in chronological])
     xp_trend = sparkline([h["xp"] for h in chronological])
-    rank = history[0]["rank"] if history else None
+    rank = trend[0]["rank"] if trend else None
     planets = []
-    if history:
+    if trend:
         latest_tick_id = await conn.fetchval(
             "SELECT id FROM tick WHERE round_id = (SELECT round_id FROM galaxy WHERE id = $1) ORDER BY number DESC LIMIT 1",
             galaxy_id,
@@ -894,9 +1010,13 @@ async def galaxy_detail(
         {
             "galaxy": galaxy,
             "history": history,
+            "latest": trend[0] if trend else None,
+            "log_page": page,
+            "log_total": log_total,
+            "log_page_size": TICK_LOG_PAGE_SIZE,
             "planets": planets,
             "rank": rank,
-            "rank_change": history[0]["rank_delta"] if history else None,
+            "rank_change": trend[0]["rank_delta"] if trend else None,
             "avg_score_delta": avg_score_delta,
             "size_trend": size_trend,
             "score_trend": score_trend,
@@ -929,6 +1049,29 @@ async def _find_alliance_by_name(conn: Connection, tick_id: int, name: str) -> R
         if row is not None:
             return row
     return None
+
+
+async def _planet_flags(conn: Connection, tick_id: int, where_sql: str, *params) -> dict:
+    """Whether any planet in the FULL matching set (not just whatever page happens to be
+    on screen) has something in each optional column. Needed for the paginated planets_list
+    branches -- computing this from just the current page's rows means a column can appear
+    on page 1 and vanish on page 2 of the exact same query, reflowing the table under the
+    user (a real bug caught in the 2026-08-17 audit, not hypothetical)."""
+    row = await conn.fetchrow(
+        RANKED_PLANET_STAT_CTE
+        + f"""
+        SELECT bool_or(special IS NOT NULL AND special <> '') AS show_flags,
+               bool_or(alliance IS NOT NULL AND alliance <> '') AS show_alliance,
+               bool_or(nick IS NOT NULL AND nick <> '') AS show_nick,
+               bool_or(amps IS NOT NULL) AS show_amps,
+               bool_or(dists IS NOT NULL) AS show_dists
+        FROM ranked
+        WHERE {where_sql}
+        """,
+        tick_id,
+        *params,
+    )
+    return dict(row)
 
 
 async def _planet_id_at_rank(conn: Connection, tick_id: int, rank: int) -> int | None:
@@ -964,6 +1107,16 @@ async def planets_list(
     tick_row = None
     total = 0
     page = max(page, 1)
+    # Only the two paginated branches below (free-text search, default browse)
+    # set this True -- the coord/galaxy exact-match branches return a single
+    # planet or a single galaxy's worth (bounded naturally, never worth
+    # paging), and the command-redirect/no-match branch never reaches here.
+    paginated = False
+    # Set by the two paginated branches via _planet_flags() (computed over the
+    # FULL matching set, not just the page); left None for the coord/galaxy
+    # branches, which fall back to the any()-over-rows check below since their
+    # `rows` already IS the full set.
+    flags = None
     if round_row:
         tick_row = await _latest_tick(conn, round_row["id"])
     if tick_row:
@@ -991,9 +1144,10 @@ async def planets_list(
                     "round": round_row,
                     "planets": [],
                     "q": q,
+                    "q_param": quote(q),
                     "page": page,
                     "total": 0,
-                    "page_size": PLANET_LIST_PAGE_SIZE,
+                    "page_size": LIST_PAGE_SIZE,
                     "paginated": False,
                     "user": user,
                     "show_flags": False,
@@ -1035,57 +1189,76 @@ async def planets_list(
             # only logged-in users get to search by it, same gate as showing
             # it at all (see show_nick below).
             nick_clause = "OR nick ILIKE $2" if user is not None else ""
+            match_clause = f"planet_name ILIKE $2 OR ruler_name ILIKE $2 {nick_clause}"
+            total = await conn.fetchval(
+                RANKED_PLANET_STAT_CTE + f"SELECT count(*) FROM ranked WHERE {match_clause}",
+                tick_row["id"],
+                pattern,
+            )
             rows = await conn.fetch(
                 RANKED_PLANET_STAT_CTE
                 + f"""
                 SELECT * FROM ranked
-                WHERE planet_name ILIKE $2 OR ruler_name ILIKE $2 {nick_clause}
-                ORDER BY score DESC
-                LIMIT 100
+                WHERE {match_clause}
+                ORDER BY {sort} {dir.upper()}
+                LIMIT $3 OFFSET $4
                 """,
                 tick_row["id"],
                 pattern,
+                LIST_PAGE_SIZE,
+                (page - 1) * LIST_PAGE_SIZE,
             )
-            total = len(rows)
+            paginated = True
+            flags = await _planet_flags(conn, tick_row["id"], match_clause, pattern)
         else:
             total = await conn.fetchval(
                 "SELECT count(*) FROM planet_stat WHERE tick_id = $1", tick_row["id"]
             )
+            # Reuses RANKED_PLANET_STAT_CTE (same columns/join the other branches
+            # already query through) rather than repeating the join by hand --
+            # also what makes sharing _planet_flags() below straightforward.
             rows = await conn.fetch(
-                f"""
-                SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race,
-                       ps.size, ps.score, ps.value, ps.xp, ps.special, pi.alliance,
-                       pi.nick, pi.comment, pi.amps, pi.dists, pi.defwhore,
-                       RANK() OVER (ORDER BY ps.score DESC) AS rank
-                FROM planet_stat ps
-                JOIN planet p ON p.id = ps.planet_id
-                LEFT JOIN planet_intel pi ON pi.planet_id = p.id
-                WHERE ps.tick_id = $1
-                ORDER BY {PLANET_SORT_COLUMNS[sort]} {dir.upper()}
+                RANKED_PLANET_STAT_CTE
+                + f"""
+                SELECT * FROM ranked
+                ORDER BY {sort} {dir.upper()}
                 LIMIT $2 OFFSET $3
                 """,
                 tick_row["id"],
-                PLANET_LIST_PAGE_SIZE,
-                (page - 1) * PLANET_LIST_PAGE_SIZE,
+                LIST_PAGE_SIZE,
+                (page - 1) * LIST_PAGE_SIZE,
             )
-    show_flags = any(p["special"] for p in rows)
-    # Intel fields are scouted data (see planet_intel), same visibility rule
-    # as the alliance-page roster -- logged-out visitors don't see them, and
-    # an empty column is noise, so each only shows up if some row actually
-    # has something in it.
-    show_alliance = user is not None and any(p["alliance"] for p in rows)
-    show_nick = user is not None and any(p["nick"] for p in rows)
-    show_amps = user is not None and any(p["amps"] is not None for p in rows)
-    show_dists = user is not None and any(p["dists"] is not None for p in rows)
+            paginated = True
+            flags = await _planet_flags(conn, tick_row["id"], "TRUE")
+    if flags is not None:
+        show_flags = flags["show_flags"] or False
+        show_alliance = user is not None and (flags["show_alliance"] or False)
+        show_nick = user is not None and (flags["show_nick"] or False)
+        show_amps = user is not None and (flags["show_amps"] or False)
+        show_dists = user is not None and (flags["show_dists"] or False)
+    else:
+        # coord/galaxy exact-match branches (or no tick data at all) -- `rows`
+        # already IS the full matching set here, so checking it directly is
+        # correct, not just a fallback for a missing query.
+        show_flags = any(p["special"] for p in rows)
+        # Intel fields are scouted data (see planet_intel), same visibility rule
+        # as the alliance-page roster -- logged-out visitors don't see them, and
+        # an empty column is noise, so each only shows up if some row actually
+        # has something in it.
+        show_alliance = user is not None and any(p["alliance"] for p in rows)
+        show_nick = user is not None and any(p["nick"] for p in rows)
+        show_amps = user is not None and any(p["amps"] is not None for p in rows)
+        show_dists = user is not None and any(p["dists"] is not None for p in rows)
     uniform_comment, show_comment_column = _comment_display(rows) if user is not None else (None, False)
     context = {
         "round": round_row,
         "planets": rows,
         "q": q,
+        "q_param": quote(q),
         "page": page,
         "total": total,
-        "page_size": PLANET_LIST_PAGE_SIZE,
-        "paginated": not q,
+        "page_size": LIST_PAGE_SIZE,
+        "paginated": paginated,
         "user": user,
         "show_flags": show_flags,
         "show_alliance": show_alliance,
@@ -1096,7 +1269,7 @@ async def planets_list(
         "uniform_comment": uniform_comment,
         "sort": sort,
         "dir": dir,
-        "sort_url": _sort_url_factory(sort, dir),
+        "sort_url": _sort_url_factory(sort, dir, q),
     }
     # The page's own live-filter JS re-fetches just the results fragment on
     # every keystroke instead of a full page reload -- this header (set only
@@ -1149,8 +1322,8 @@ async def needs_intel(
             LIMIT $2 OFFSET $3
             """,
             tick_row["id"],
-            PLANET_LIST_PAGE_SIZE,
-            (page - 1) * PLANET_LIST_PAGE_SIZE,
+            LIST_PAGE_SIZE,
+            (page - 1) * LIST_PAGE_SIZE,
         )
     return templates.TemplateResponse(
         request,
@@ -1160,7 +1333,7 @@ async def needs_intel(
             "planets": rows,
             "page": page,
             "total": total,
-            "page_size": PLANET_LIST_PAGE_SIZE,
+            "page_size": LIST_PAGE_SIZE,
             "user": user,
         },
     )
@@ -1170,16 +1343,22 @@ async def needs_intel(
 async def planet_detail(
     request: Request,
     planet_id: int,
+    page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
     external_id = await conn.fetchval("SELECT external_id FROM planet WHERE id = $1", planet_id)
     if external_id is None:
         raise HTTPException(status_code=404, detail="No such planet")
+    page = max(page, 1)
+    log_total = await conn.fetchval("SELECT count(*) FROM planet_stat WHERE planet_id = $1", planet_id)
+    log_fields = ["rank", "size", "score", "value", "xp"]
     # planet_stat has no stored rank column -- computed here per tick via a window
     # function scoped to this planet's round, so both the current rank and
-    # with_deltas' rank-over-time come from one query.
-    history = await conn.fetch(
+    # with_deltas' rank-over-time come from one query. Fetches one extra row past
+    # the page so the oldest visible row's delta is computed against the tick
+    # just before the page (see with_deltas()).
+    page_rows = await conn.fetch(
         """
         WITH ranked AS (
             SELECT ps.planet_id, ps.tick_id,
@@ -1195,18 +1374,47 @@ async def planet_detail(
         JOIN ranked r ON r.planet_id = s.planet_id AND r.tick_id = s.tick_id
         WHERE s.planet_id = $1
         ORDER BY t.number DESC
-        LIMIT 50
+        LIMIT $2 OFFSET $3
         """,
         planet_id,
+        TICK_LOG_PAGE_SIZE + 1,
+        (page - 1) * TICK_LOG_PAGE_SIZE,
     )
-    history = with_deltas(history, ["rank", "size", "score", "value", "xp"])
-    avg_score_delta = _avg_delta(history, "score")
-    chronological = list(reversed(history))
+    history = with_deltas(page_rows, log_fields)[:TICK_LOG_PAGE_SIZE]
+    # Vitals/sparklines always reflect the true latest tick, independent of
+    # which log page is being browsed -- see the alliance_detail comment above.
+    if page == 1:
+        trend = history
+    else:
+        trend_rows = await conn.fetch(
+            """
+            WITH ranked AS (
+                SELECT ps.planet_id, ps.tick_id,
+                       RANK() OVER (PARTITION BY ps.tick_id ORDER BY ps.score DESC) AS rank
+                FROM planet_stat ps
+                JOIN tick t ON t.id = ps.tick_id
+                WHERE t.round_id = (SELECT round_id FROM planet WHERE id = $1)
+            )
+            SELECT t.number AS tick, s.x, s.y, s.z, s.planet_name, s.ruler_name,
+                   s.race, s.size, s.score, s.value, s.xp, s.special, r.rank
+            FROM planet_stat s
+            JOIN tick t ON t.id = s.tick_id
+            JOIN ranked r ON r.planet_id = s.planet_id AND r.tick_id = s.tick_id
+            WHERE s.planet_id = $1
+            ORDER BY t.number DESC
+            LIMIT $2
+            """,
+            planet_id,
+            TICK_LOG_PAGE_SIZE,
+        )
+        trend = with_deltas(trend_rows, log_fields)
+    avg_score_delta = _avg_delta(trend, "score")
+    chronological = list(reversed(trend))
     size_trend = sparkline([h["size"] for h in chronological])
     score_trend = sparkline([h["score"] for h in chronological])
     value_trend = sparkline([h["value"] for h in chronological])
     xp_trend = sparkline([h["xp"] for h in chronological])
-    rank = history[0]["rank"] if history else None
+    rank = trend[0]["rank"] if trend else None
     # Scouting notes are player-submitted intel on other alliances, not
     # public data -- only shown to logged-in (Discord-verified) members.
     intel = None
@@ -1228,8 +1436,12 @@ async def planet_detail(
             "planet_id": planet_id,
             "external_id": external_id,
             "history": history,
+            "latest": trend[0] if trend else None,
+            "log_page": page,
+            "log_total": log_total,
+            "log_page_size": TICK_LOG_PAGE_SIZE,
             "rank": rank,
-            "rank_change": history[0]["rank_delta"] if history else None,
+            "rank_change": trend[0]["rank_delta"] if trend else None,
             "avg_score_delta": avg_score_delta,
             "size_trend": size_trend,
             "score_trend": score_trend,

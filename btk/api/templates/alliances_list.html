@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}Alliances - BTK{% endblock %}
+{% block description %}{% if round %}Every alliance in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}, ranked by score.{% else %}Alliance rankings tracked by BTK.{% endif %}{% endblock %}
 {% block content %}
 <h1>Alliances</h1>
 {% if round %}
@@ -34,6 +35,11 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
+<div class="pagination">
+    {% if page > 1 %}<a href="?page={{ page - 1 }}&sort={{ sort }}&dir={{ dir }}">&larr; prev</a>{% endif %}
+    <span>page {{ page }} / {{ ((total - 1) // page_size) + 1 if total else 1 }} &mdash; {{ total }} alliances</span>
+    {% if page * page_size < total %}<a href="?page={{ page + 1 }}&sort={{ sort }}&dir={{ dir }}">next &rarr;</a>{% endif %}
 </div>
 {% else %}
 <p class="empty">No alliance data yet.</p>

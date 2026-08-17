@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Log in - BTK{% endblock %}
 {% block content %}
-<h1>Log in</h1>
-<p class="subtitle">Get a password with <code>!pref &lt;password&gt;</code> in Discord, then sign in here with your Discord username.</p>
+<div class="auth-console">
+    <div class="eyebrow">Authenticate</div>
+    <h1>Log in</h1>
+    <p class="subtitle">Get a password with <code>!pref &lt;password&gt;</code> in Discord, then sign in here with your Discord username.</p>
 
-{% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+    {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
 
-<form class="stack-form" method="post" action="/login">
-    <input type="hidden" name="next" value="{{ next }}">
-    <label for="username">Username</label>
-    <input type="text" id="username" name="username" autocomplete="username" autofocus required>
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" autocomplete="current-password" required>
-    <button type="submit">Log in</button>
-</form>
+    <form class="stack-form" method="post" action="/login">
+        <input type="hidden" name="next" value="{{ next }}">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" autofocus required>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <button type="submit">Log in</button>
+    </form>
+</div>
 {% endblock %}

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}{{ galaxy.x }}:{{ galaxy.y }} - BTK{% endblock %}
+{% block description %}{% if latest %}Galaxy {{ galaxy.x }}:{{ galaxy.y }} — {{ latest.name }}, rank {{ rank }}, {{ "{:,}".format(latest.score) }} score.{% else %}Galaxy {{ galaxy.x }}:{{ galaxy.y }} on BTK.{% endif %}{% endblock %}
 {% block content %}
 <h1>Galaxy {{ galaxy.x }}:{{ galaxy.y }}</h1>
 
-{% if history %}
-{% set latest = history[0] %}
+{% if latest %}
 <div class="vitals">
     <div class="vital"><div class="label">Rank</div><div class="value">{{ rank }}{{ macros.rank_change(rank_change) }}</div></div>
     <div class="vital"><div class="label">Name</div><div class="value">{{ latest.name }}</div></div>
@@ -47,8 +47,8 @@
             {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
             <th class="num col-secondary">Size</th>
             <th class="num">Score</th>
-            <th class="num col-secondary">Value</th>
-            <th class="num col-secondary">XP</th>
+            <th class="num col-secondary col-tertiary">Value</th>
+            <th class="num col-secondary col-tertiary">XP</th>
         </tr>
     </thead>
     <tbody>
@@ -62,8 +62,8 @@
             {% if show_alliance %}<td class="col-secondary"><span class="truncate" title="{{ p.alliance or '' }}">{{ p.alliance or "" }}</span></td>{% endif %}
             <td class="num col-secondary">{{ p.size }}</td>
             <td class="num">{{ "{:,}".format(p.score) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(p.value) }}</td>
-            <td class="num col-secondary">{{ "{:,}".format(p.xp) }}</td>
+            <td class="num col-secondary col-tertiary">{{ "{:,}".format(p.value) }}</td>
+            <td class="num col-secondary col-tertiary">{{ "{:,}".format(p.xp) }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -73,7 +73,7 @@
 <p class="empty">No planets recorded.</p>
 {% endif %}
 
-<h2>Log &mdash; most recent 50 ticks</h2>
+<h2>Log</h2>
 {% if history %}
 <div class="table-scroll">
 <table>
@@ -102,6 +102,11 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
+<div class="pagination">
+    {% if log_page > 1 %}<a href="?page={{ log_page - 1 }}">&larr; prev</a>{% endif %}
+    <span>page {{ log_page }} / {{ ((log_total - 1) // log_page_size) + 1 if log_total else 1 }} &mdash; {{ log_total }} ticks</span>
+    {% if log_page * log_page_size < log_total %}<a href="?page={{ log_page + 1 }}">next &rarr;</a>{% endif %}
 </div>
 {% else %}
 <p class="empty">No stats recorded.</p>
