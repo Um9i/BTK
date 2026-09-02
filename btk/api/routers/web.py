@@ -59,6 +59,13 @@ GALAXY_SORT_COLUMNS = {"rank": "rank", "size": "size", "score": "score", "value"
 # directly once validated against this set rather than looked up in a dict.
 PLANET_SORT_COLUMNS = {"rank", "size", "score", "value", "xp"}
 
+MOVERS_MODES = {"gainers", "crashers", "ratio"}
+MOVERS_METRIC_COLUMNS = {"score": "score", "value": "value", "size": "size", "xp": "xp"}
+RATIO_METRIC_COLUMNS = {"score": "score", "value": "value"}
+MOVERS_DEFAULT_TICKS = 24
+MOVERS_TICK_PRESETS = (1, 6, 24, 72, 168)
+MOVERS_LIMIT = 50
+
 
 def _sort_url_factory(current_sort: str, current_dir: str, q: str = ""):
     """Click-to-sort column headers: clicking the active column flips its direction,
@@ -857,6 +864,90 @@ async def galaxies_list(
             "page": page,
             "total": total,
             "page_size": LIST_PAGE_SIZE,
+        },
+    )
+
+
+@router.get("/web/movers")
+async def movers(
+    request: Request,
+    mode: str = "gainers",
+    metric: str = "score",
+    ticks: int = MOVERS_DEFAULT_TICKS,
+    conn: Connection = Depends(db_conn),
+    user: Record | None = Depends(current_user),
+):
+    """Whole-universe "who's growing/shrinking fastest" and "who's most efficient
+    right now" leaderboards -- the aggregate counterparts to a single planet's own
+    !xp/!value growth history (btk/bot/cogs/stats.py). Gainers/crashers are the same
+    planet compared to itself `ticks` ago; ratio has no time dimension, just this
+    tick's metric-per-size across every planet."""
+    mode = mode if mode in MOVERS_MODES else "gainers"
+    metric_columns = RATIO_METRIC_COLUMNS if mode == "ratio" else MOVERS_METRIC_COLUMNS
+    metric = metric if metric in metric_columns else "score"
+    ticks = ticks if 1 <= ticks <= 1000 else MOVERS_DEFAULT_TICKS
+    column = metric_columns[metric]
+
+    round_row = await _current_round(conn)
+    tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
+    rows = []
+    insufficient_history = False
+    if tick_row and mode == "ratio":
+        rows = await conn.fetch(
+            f"""
+            SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race, ps.size,
+                   ps.{column} AS metric_value, pi.alliance,
+                   (ps.{column}::float / ps.size) AS ratio
+            FROM planet_stat ps
+            JOIN planet p ON p.id = ps.planet_id
+            LEFT JOIN planet_intel pi ON pi.planet_id = ps.planet_id
+            WHERE ps.tick_id = $1 AND ps.size > 0
+            ORDER BY ratio DESC
+            LIMIT {MOVERS_LIMIT}
+            """,
+            tick_row["id"],
+        )
+    elif tick_row:
+        old_tick_id = await conn.fetchval(
+            "SELECT id FROM tick WHERE round_id = $1 ORDER BY number DESC OFFSET $2 LIMIT 1",
+            round_row["id"],
+            ticks,
+        )
+        if old_tick_id is None:
+            insufficient_history = True
+        else:
+            direction = "DESC" if mode == "gainers" else "ASC"
+            rows = await conn.fetch(
+                f"""
+                SELECT p.id, cur.x, cur.y, cur.z, cur.planet_name, cur.ruler_name, cur.race, pi.alliance,
+                       cur.{column} AS cur_value,
+                       (cur.{column} - old.{column}) AS delta
+                FROM planet_stat cur
+                JOIN planet_stat old ON old.planet_id = cur.planet_id AND old.tick_id = $2
+                JOIN planet p ON p.id = cur.planet_id
+                LEFT JOIN planet_intel pi ON pi.planet_id = cur.planet_id
+                WHERE cur.tick_id = $1
+                ORDER BY delta {direction}
+                LIMIT {MOVERS_LIMIT}
+                """,
+                tick_row["id"],
+                old_tick_id,
+            )
+    show_alliance = user is not None and any(r["alliance"] for r in rows)
+    return templates.TemplateResponse(
+        request,
+        "movers.html",
+        {
+            "round": round_row,
+            "tick": tick_row,
+            "mode": mode,
+            "metric": metric,
+            "ticks": ticks,
+            "tick_presets": MOVERS_TICK_PRESETS,
+            "rows": rows,
+            "insufficient_history": insufficient_history,
+            "show_alliance": show_alliance,
+            "user": user,
         },
     )
 

@@ -629,6 +629,14 @@ h2 {
     border-color: var(--fg-dim);
 }
 
+/* The movers page reuses these chips as a metric/window picker, where one
+   option is always the current selection -- needs a persistent "this one's
+   active" state, unlike the search page's chips, which are just suggestions. */
+.example-chip.active {
+    color: var(--fg);
+    border-color: var(--fg);
+}
+
 /* ---------- dashboard grid (homepage, below the hero) ---------- */
 
 /* Single column by default -- .dashboard-main and .dashboard-rail are

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}Movers - BTK{% endblock %}
+{% block description %}{% if round %}Fastest-growing and fastest-shrinking planets in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}, plus a per-size efficiency ranking.{% else %}Planet growth and efficiency rankings tracked by BTK.{% endif %}{% endblock %}
+{% block content %}
+{% set METRIC_LABELS = {"score": "Score", "value": "Value", "size": "Size", "xp": "XP"} %}
+<h1>Movers</h1>
+
+<div class="tabs" role="tablist">
+    <a class="tab" role="tab" aria-selected="{{ 'true' if mode == 'gainers' else 'false' }}" href="?mode=gainers">Gainers</a>
+    <a class="tab" role="tab" aria-selected="{{ 'true' if mode == 'crashers' else 'false' }}" href="?mode=crashers">Crashers</a>
+    <a class="tab" role="tab" aria-selected="{{ 'true' if mode == 'ratio' else 'false' }}" href="?mode=ratio">Ratio</a>
+</div>
+
+{% if mode == 'ratio' %}
+<div class="search-examples">
+    <span class="eyebrow">Per size:</span>
+    {% for m in ['score', 'value'] %}
+    <a class="example-chip{% if metric == m %} active{% endif %}" href="?mode=ratio&metric={{ m }}">{{ METRIC_LABELS[m] }}</a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="search-examples">
+    <span class="eyebrow">Metric:</span>
+    {% for m in ['score', 'value', 'size', 'xp'] %}
+    <a class="example-chip{% if metric == m %} active{% endif %}" href="?mode={{ mode }}&metric={{ m }}&ticks={{ ticks }}">{{ METRIC_LABELS[m] }}</a>
+    {% endfor %}
+</div>
+<div class="search-examples">
+    <span class="eyebrow">Over:</span>
+    {% for t in tick_presets %}
+    <a class="example-chip{% if ticks == t %} active{% endif %}" href="?mode={{ mode }}&metric={{ metric }}&ticks={{ t }}">{{ t }} ticks</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if insufficient_history %}
+<p class="empty">Not enough tick history for a {{ ticks }}-tick window yet.</p>
+{% elif rows %}
+<div class="table-scroll">
+<table>
+    <thead>
+        <tr>
+            <th class="num">Rank</th>
+            <th>Coords</th>
+            <th>Ruler</th>
+            <th class="col-secondary">Planet</th>
+            <th class="col-secondary">Race</th>
+            {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
+            {% if mode == 'ratio' %}
+            <th class="num">Ratio</th>
+            <th class="num col-secondary">Size</th>
+            <th class="num col-secondary">{{ METRIC_LABELS[metric] }}</th>
+            {% else %}
+            <th class="num">{{ METRIC_LABELS[metric] }} change</th>
+            <th class="num col-secondary">Now</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in rows %}
+        <tr>
+            <td class="num{% if loop.index <= 3 %} rank-top{% endif %}">{{ loop.index }}</td>
+            <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
+            <td><span class="truncate" title="{{ p.ruler_name }}">{{ p.ruler_name }}</span></td>
+            <td class="col-secondary"><a class="truncate" href="/web/planets/{{ p.id }}" title="{{ p.planet_name }}">{{ p.planet_name }}</a></td>
+            <td class="col-secondary">{{ p.race }}</td>
+            {% if show_alliance %}<td class="col-secondary"><span class="truncate" title="{{ p.alliance or '' }}">{{ p.alliance or "" }}</span></td>{% endif %}
+            {% if mode == 'ratio' %}
+            <td class="num">{{ "%.2f"|format(p.ratio) }}</td>
+            <td class="num col-secondary">{{ p.size }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(p.metric_value) }}</td>
+            {% else %}
+            <td class="num">{{ macros.delta(p.delta) }}</td>
+            <td class="num col-secondary">{{ "{:,}".format(p.cur_value) }}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">No planet data yet.</p>
+{% endif %}
+{% endblock %}

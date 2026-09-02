@@ -15,9 +15,11 @@ from btk.db import acquire
 # Column names are interpolated directly into SQL (order-by target can't be
 # parametrized), so only ever allow one of these known-safe literals in.
 METRIC_COLUMNS = {"score": "score", "value": "value", "size": "size", "xp": "xp"}
+RATIO_COLUMNS = {"score": "score", "value": "value"}
 HISTORY_TICKS = 15
 LEADERBOARD_LIMIT = 10
 SEARCH_LIMIT = 25
+MOVERS_DEFAULT_TICKS = 24
 
 
 def _parse_leaderboard_args(rest: str) -> tuple[str, str | None, str | None]:
@@ -34,6 +36,60 @@ def _parse_leaderboard_args(rest: str) -> tuple[str, str | None, str | None]:
         elif token.lower() in METRIC_COLUMNS:
             metric = token.lower()
     return metric, alliance, race
+
+
+def _parse_movers_args(rest: str) -> tuple[str, int, str | None, str | None]:
+    """Tokens in any order: score|value|size|xp (default score), ticks=<n> (default
+    MOVERS_DEFAULT_TICKS), alliance=<name>, race=<name>."""
+    metric = "score"
+    ticks = MOVERS_DEFAULT_TICKS
+    alliance = None
+    race = None
+    for token in rest.split():
+        key, sep, val = token.partition("=")
+        if sep and key.lower() == "alliance":
+            alliance = val
+        elif sep and key.lower() == "race":
+            race = val
+        elif sep and key.lower() == "ticks" and val.isdigit():
+            ticks = int(val)
+        elif token.lower() in METRIC_COLUMNS:
+            metric = token.lower()
+    return metric, ticks, alliance, race
+
+
+def _parse_ratio_args(rest: str) -> tuple[str, str | None, str | None]:
+    """Tokens in any order: score|value (default score, ratio is always vs. size),
+    alliance=<name>, race=<name>."""
+    metric = "score"
+    alliance = None
+    race = None
+    for token in rest.split():
+        key, sep, val = token.partition("=")
+        if sep and key.lower() == "alliance":
+            alliance = val
+        elif sep and key.lower() == "race":
+            race = val
+        elif token.lower() in RATIO_COLUMNS:
+            metric = token.lower()
+    return metric, alliance, race
+
+
+def _format_mover_row(rank: int, row) -> str:
+    sign = "+" if row["delta"] >= 0 else ""
+    line = f"{rank:>2}. {row['x']}:{row['y']}:{row['z']} '{row['ruler_name']}' of '{row['planet_name']}'"
+    if row["alliance"]:
+        line += f" [{row['alliance']}]"
+    line += f" -- {sign}{num2short(row['delta'])} (now {num2short(row['cur_value'])})"
+    return line
+
+
+def _format_ratio_row(rank: int, row) -> str:
+    line = f"{rank:>2}. {row['x']}:{row['y']}:{row['z']} '{row['ruler_name']}' of '{row['planet_name']}'"
+    if row["alliance"]:
+        line += f" [{row['alliance']}]"
+    line += f" -- Ratio: {row['ratio']:.2f} (Size: {row['size']})"
+    return line
 
 
 def _format_leaderboard_row(rank: int, row) -> str:
@@ -167,6 +223,112 @@ class Stats(commands.Cog):
             f"(total {'+' if total_gain >= 0 else ''}{num2short(total_gain)}):\n```\n"
             + "\n".join(lines)
             + "\n```"
+        )
+
+    async def _movers(self, ctx: commands.Context, arg: str, ascending: bool) -> None:
+        metric, ticks, alliance, race = _parse_movers_args(arg or "")
+        column = METRIC_COLUMNS[metric]
+        direction = "ASC" if ascending else "DESC"
+
+        async with acquire() as conn:
+            round_id = await self._current_round_id(conn)
+            if round_id is None:
+                await ctx.send("No round data yet.")
+                return
+            tick = await self._latest_tick(conn, round_id)
+            if tick is None:
+                await ctx.send("No ticks ingested yet.")
+                return
+            old_tick_id = await conn.fetchval(
+                """
+                SELECT id FROM tick WHERE round_id = $1
+                ORDER BY number DESC OFFSET $2 LIMIT 1
+                """,
+                round_id,
+                ticks,
+            )
+            if old_tick_id is None:
+                await ctx.send(f"Not enough tick history for a {ticks}-tick window yet.")
+                return
+
+            rows = await conn.fetch(
+                f"""
+                SELECT cur.x, cur.y, cur.z, cur.planet_name, cur.ruler_name, pi.alliance,
+                       cur.{column} AS cur_value,
+                       (cur.{column} - old.{column}) AS delta
+                FROM planet_stat cur
+                JOIN planet_stat old ON old.planet_id = cur.planet_id AND old.tick_id = $2
+                LEFT JOIN planet_intel pi ON pi.planet_id = cur.planet_id
+                WHERE cur.tick_id = $1
+                  AND ($3::text IS NULL OR pi.alliance ILIKE $3)
+                  AND ($4::text IS NULL OR cur.race ILIKE $4)
+                ORDER BY delta {direction}
+                LIMIT {LEADERBOARD_LIMIT}
+                """,
+                tick["id"],
+                old_tick_id,
+                alliance,
+                race,
+            )
+        if not rows:
+            await ctx.send("No planets matched.")
+            return
+        lines = [_format_mover_row(i, row) for i, row in enumerate(rows, start=1)]
+        await ctx.send(
+            f"Tick {tick['number']} -- {metric} change over last {ticks} ticks:\n```\n"
+            + "\n".join(lines)
+            + "\n```"
+        )
+
+    @commands.command(name="gainers")
+    async def gainers(self, ctx: commands.Context, *, arg: str = "") -> None:
+        """Top 10 planets by score/value/size/xp gained over N ticks. Usage: !gainers [ticks=24] [alliance=<name>] [race=<name>] [score|value|size|xp]"""
+        await self._movers(ctx, arg, ascending=False)
+
+    @commands.command(name="crashers")
+    async def crashers(self, ctx: commands.Context, *, arg: str = "") -> None:
+        """Top 10 planets by score/value/size/xp lost over N ticks. Usage: !crashers [ticks=24] [alliance=<name>] [race=<name>] [score|value|size|xp]"""
+        await self._movers(ctx, arg, ascending=True)
+
+    @commands.command(name="ratio")
+    async def ratio(self, ctx: commands.Context, *, arg: str = "") -> None:
+        """Top 10 planets by score/size or value/size ratio. Usage: !ratio [alliance=<name>] [race=<name>] [score|value]"""
+        metric, alliance, race = _parse_ratio_args(arg or "")
+        column = RATIO_COLUMNS[metric]
+
+        async with acquire() as conn:
+            round_id = await self._current_round_id(conn)
+            if round_id is None:
+                await ctx.send("No round data yet.")
+                return
+            tick = await self._latest_tick(conn, round_id)
+            if tick is None:
+                await ctx.send("No ticks ingested yet.")
+                return
+
+            rows = await conn.fetch(
+                f"""
+                SELECT ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.size, pi.alliance,
+                       (ps.{column}::float / ps.size) AS ratio
+                FROM planet_stat ps
+                LEFT JOIN planet_intel pi ON pi.planet_id = ps.planet_id
+                WHERE ps.tick_id = $1
+                  AND ps.size > 0
+                  AND ($2::text IS NULL OR pi.alliance ILIKE $2)
+                  AND ($3::text IS NULL OR ps.race ILIKE $3)
+                ORDER BY ratio DESC
+                LIMIT {LEADERBOARD_LIMIT}
+                """,
+                tick["id"],
+                alliance,
+                race,
+            )
+        if not rows:
+            await ctx.send("No planets matched.")
+            return
+        lines = [_format_ratio_row(i, row) for i, row in enumerate(rows, start=1)]
+        await ctx.send(
+            f"Tick {tick['number']} by {metric}/size ratio:\n```\n" + "\n".join(lines) + "\n```"
         )
 
     @commands.command(name="xp")
