@@ -2058,7 +2058,7 @@ deliberately-left-unresolved idle-tie slots (PATSA's 4th, BBQQ's 32nd):
 |---|---|---|---|---|
 | 10 single-member alliances + `myownally` (11 total, see list above) | 1 each | 1 each | full available range | direct lookup (`btk-verify-rosters`) |
 | Terra | 2 | 2 | 1-619 (split at the tick-261 join) | pair search (`btk-verify-rosters`) |
-| PATSA | 4 | 3 | 1-619 | CP-SAT + `--force-out` idle pool; 4th slot unresolved |
+| PATSA | 4 | 4 | 1-619 | CP-SAT + `--force-out`, then the zero-fund invariant (see below) |
 | TiT | 13 | 13 | 491-619 | CP-SAT, unique |
 | PussycatZ | 20 | 20 | 96-619 | CP-SAT, unique |
 | Chocolate Starfish | 21 | 21 | 559-619 | CP-SAT, unique |
@@ -2074,10 +2074,51 @@ Every one of the six 40-member alliances that took an entire dedicated
 pass each in production (Fourth through Eleventh passes above) solved in
 well under a minute this time -- the fund-aware CP-SAT model plus
 `--extend` is now routine, not research, for this shape of problem.
-**The two `--force-out`-based idle-tie partial solves (PATSA, BBQQ) are
-the only alliances in this pass that didn't reach full N-of-N confirmation
--- both for the same well-documented reason (a size=0/xp=0 slot with many
-indistinguishable candidates), not a new failure mode.**
+**The two `--force-out`-based idle-tie partial solves (PATSA, BBQQ) initially
+didn't reach full N-of-N confirmation** -- both for the same well-documented
+reason (a size=0/xp=0 slot with many indistinguishable candidates), not a
+new failure mode. PATSA's was broken afterward; see next.
+
+### Breaking an idle-tie without search: the zero-fund invariant
+
+Before reaching for the GPU search (the doc's established tool for a
+*genuinely* hard-to-distinguish tie), it's worth checking whether the tie
+is a true mathematical symmetry first -- if it is, no search method can add
+information CP-SAT doesn't already have (every candidate contributes
+exactly `(0, 0)` to the size/xp equations, and `value` is absorbed by a
+free fund-slack variable, so nothing in the model favors one candidate over
+another). Confirmed this for both PATSA's and BBQQ's remaining ties by
+checking, for every one of the 20 round-wide `(size=0, xp=0)` candidates,
+whether substituting it into the confirmed roster keeps every tick's fund
+inside `[0, 500000]` -- most fail this (their value is too far off to fit
+the slack), narrowing 20 candidates down to **6 for PATSA**
+(`24frm186, aojoz7k0, bj4pxzj0, dauri6kw, ky7zf5fx, rf6kw8zr`) and
+**5 for BBQQ** (the same list minus `ky7zf5fx`) -- real information, cheap
+to get, but still leaves a symmetric tie among the survivors.
+
+The correction at the very top of this doc already documents a fact that
+turns out to break PATSA's tie for free: **"every zero-fund alliance is a
+1-member one or PATSA"** -- i.e. PATSA is *specifically* known (from round
+117 ground truth) to run with zero banked fund, unlike every other
+alliance in this doc. That's an extra, alliance-specific equation the
+generic model doesn't encode: not just "fund `<= 500000`" but "fund `== 0`"
+for this one alliance. Checking each of the 6 tied candidates' implied
+fund (`total_value - sum(confirmed values) - candidate's own value`) at
+every tick in the window found exactly one that satisfies this: **`ky7zf5fx`
+makes PATSA's fund exactly 0 at all 618 ticks**; the other 5 leave a
+nonzero fund of 32k-35k throughout. Inserted as PATSA's confirmed 4th
+member on that basis.
+
+The same check against BBQQ's 5 remaining candidates found **no zero-fund
+match** (29,542-43,605 depending on choice, never 0) -- consistent with
+BBQQ not being a documented zero-fund alliance, so its tie is a genuine,
+unbroken symmetry and stays unresolved. **Lesson: before running a GPU
+search on a tied idle slot, check (a) whether the tie is provably total
+symmetry across the whole window (if so, no search will break it) and (b)
+whether the target alliance has any known alliance-specific invariant
+(like PATSA's zero-fund history) that adds a real equation the generic
+model doesn't have. Only reach for the GPU search once both of those are
+checked and still leave a genuine tie.**
 
 ## Practical recipe
 
