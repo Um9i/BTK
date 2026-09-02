@@ -176,7 +176,7 @@ def _comment_display(rows: list, comment_key: str = "comment") -> tuple[str | No
 
 
 async def _current_round(conn: Connection):
-    return await conn.fetchrow("SELECT id, number, name FROM round ORDER BY id DESC LIMIT 1")
+    return await conn.fetchrow("SELECT id, number, name FROM round ORDER BY number DESC LIMIT 1")
 
 
 async def _latest_tick(conn: Connection, round_id: int):
