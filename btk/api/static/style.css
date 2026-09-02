@@ -609,6 +609,15 @@ h2 {
     align-items: center;
     gap: 0.6rem;
     margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Movers stacks two of these chip rows (Metric:, Over:) directly above its
+   table -- the last one needs extra clearance since a table's own header
+   row sits flush against whatever precedes it (see "tables" below), unlike
+   these chips which only ever carried a gap on their top edge before. */
+.search-examples:last-of-type {
+    margin-bottom: 1.5rem;
 }
 
 .search-examples .eyebrow {

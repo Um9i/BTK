@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}Movers - BTK{% endblock %}
-{% block description %}{% if round %}Fastest-growing and fastest-shrinking planets in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}, plus a per-size efficiency ranking.{% else %}Planet growth and efficiency rankings tracked by BTK.{% endif %}{% endblock %}
+{% block description %}{% if round %}Fastest-growing and fastest-shrinking planets in Round {{ round.number }}{% if round.name %} — {{ round.name }}{% endif %}, plus a size-for-score/value target-picking ranking.{% else %}Planet growth and target-picking rankings tracked by BTK.{% endif %}{% endblock %}
 {% block content %}
 {% set METRIC_LABELS = {"score": "Score", "value": "Value", "size": "Size", "xp": "XP"} %}
 <h1>Movers</h1>
@@ -14,7 +14,7 @@
 
 {% if mode == 'ratio' %}
 <div class="search-examples">
-    <span class="eyebrow">Per size:</span>
+    <span class="eyebrow">Size per 1M:</span>
     {% for m in ['score', 'value'] %}
     <a class="example-chip{% if metric == m %} active{% endif %}" href="?mode=ratio&metric={{ m }}">{{ METRIC_LABELS[m] }}</a>
     {% endfor %}
@@ -22,7 +22,7 @@
 {% else %}
 <div class="search-examples">
     <span class="eyebrow">Metric:</span>
-    {% for m in ['score', 'value', 'size', 'xp'] %}
+    {% for m in (['score', 'value', 'size'] if mode == 'crashers' else ['score', 'value', 'size', 'xp']) %}
     <a class="example-chip{% if metric == m %} active{% endif %}" href="?mode={{ mode }}&metric={{ m }}&ticks={{ ticks }}">{{ METRIC_LABELS[m] }}</a>
     {% endfor %}
 </div>
@@ -48,7 +48,7 @@
             <th class="col-secondary">Race</th>
             {% if show_alliance %}<th class="col-secondary">Alliance</th>{% endif %}
             {% if mode == 'ratio' %}
-            <th class="num">Ratio</th>
+            <th class="num">Size / 1M {{ METRIC_LABELS[metric] }}</th>
             <th class="num col-secondary">Size</th>
             <th class="num col-secondary">{{ METRIC_LABELS[metric] }}</th>
             {% else %}

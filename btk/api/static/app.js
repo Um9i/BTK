@@ -200,6 +200,13 @@
         var panels = tabs.map(function (tab) {
             return document.getElementById(tab.getAttribute("aria-controls"));
         });
+        // Some tablists (e.g. Movers' Gainers/Crashers/Ratio) are plain
+        // navigation links with no in-page panel to swap -- each tab is a
+        // full page load to a different query string. Only progressively
+        // enhance into a real single-page tablist (preventDefault + panel
+        // swap) when every tab actually has a panel to show/hide; otherwise
+        // leave the links alone so clicking them navigates normally.
+        if (panels.some(function (p) { return !p; })) return;
         function activate(tab, focus) {
             tabs.forEach(function (t, i) {
                 var selected = t === tab;

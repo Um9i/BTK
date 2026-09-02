@@ -61,6 +61,10 @@ PLANET_SORT_COLUMNS = {"rank", "size", "score", "value", "xp"}
 
 MOVERS_MODES = {"gainers", "crashers", "ratio"}
 MOVERS_METRIC_COLUMNS = {"score": "score", "value": "value", "size": "size", "xp": "xp"}
+# xp only ever goes up, so every planet's "xp change" over any window is
+# always exactly 0 under crashers' ascending sort -- there's no such thing as
+# a crasher by xp, so it's excluded here rather than in gainers'.
+CRASHER_METRIC_COLUMNS = {"score": "score", "value": "value", "size": "size"}
 RATIO_METRIC_COLUMNS = {"score": "score", "value": "value"}
 MOVERS_DEFAULT_TICKS = 24
 MOVERS_TICK_PRESETS = (1, 6, 24, 72, 168)
@@ -877,13 +881,21 @@ async def movers(
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
-    """Whole-universe "who's growing/shrinking fastest" and "who's most efficient
-    right now" leaderboards -- the aggregate counterparts to a single planet's own
+    """Whole-universe "who's growing/shrinking fastest" and "who's biggest for their
+    score/value" leaderboards -- the aggregate counterparts to a single planet's own
     !xp/!value growth history (btk/bot/cogs/stats.py). Gainers/crashers are the same
     planet compared to itself `ticks` ago; ratio has no time dimension, just this
-    tick's metric-per-size across every planet."""
+    tick's size-per-metric across every planet -- highest first means "most size for
+    the least score/value", i.e. the juiciest/weakest-for-its-size targets. This is
+    deliberately the inverse of the bot's own !ratio command (metric-per-size), which
+    answers a different question (score efficiency, not target-picking)."""
     mode = mode if mode in MOVERS_MODES else "gainers"
-    metric_columns = RATIO_METRIC_COLUMNS if mode == "ratio" else MOVERS_METRIC_COLUMNS
+    if mode == "ratio":
+        metric_columns = RATIO_METRIC_COLUMNS
+    elif mode == "crashers":
+        metric_columns = CRASHER_METRIC_COLUMNS
+    else:
+        metric_columns = MOVERS_METRIC_COLUMNS
     metric = metric if metric in metric_columns else "score"
     ticks = ticks if 1 <= ticks <= 1000 else MOVERS_DEFAULT_TICKS
     column = metric_columns[metric]
@@ -897,11 +909,11 @@ async def movers(
             f"""
             SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race, ps.size,
                    ps.{column} AS metric_value, pi.alliance,
-                   (ps.{column}::float / ps.size) AS ratio
+                   (ps.size::float / ps.{column} * 1000000) AS ratio
             FROM planet_stat ps
             JOIN planet p ON p.id = ps.planet_id
             LEFT JOIN planet_intel pi ON pi.planet_id = ps.planet_id
-            WHERE ps.tick_id = $1 AND ps.size > 0
+            WHERE ps.tick_id = $1 AND ps.size > 0 AND ps.{column} > 0
             ORDER BY ratio DESC
             LIMIT {MOVERS_LIMIT}
             """,
