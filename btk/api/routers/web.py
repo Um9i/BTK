@@ -36,12 +36,14 @@ templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "
 # "1:1:1", "1.1.1" and "1 1 1" all resolve the same way.
 PLANET_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)[:.\s]+(\d+)")
 GALAXY_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)")
-# Shared page size for the planets/alliances/galaxies listings.
-LIST_PAGE_SIZE = 50
+# Shared page size for every paginated table on the site (planets/alliances/
+# galaxies listings, tick-history logs, movers, alliance rosters) -- one
+# number so "paginate everything at N rows" means changing it in one place.
+LIST_PAGE_SIZE = 20
 # Detail pages' tick-history log tables (alliance/galaxy/planet) -- a
 # conceptually separate listing, kept as its own constant even though the
 # value happens to match.
-TICK_LOG_PAGE_SIZE = 50
+TICK_LOG_PAGE_SIZE = 20
 
 ALLIANCE_SORT_COLUMNS = {
     "rank": "s.rank",
@@ -68,7 +70,6 @@ CRASHER_METRIC_COLUMNS = {"score": "score", "value": "value", "size": "size"}
 RATIO_METRIC_COLUMNS = {"score": "score", "value": "value"}
 MOVERS_DEFAULT_TICKS = 24
 MOVERS_TICK_PRESETS = (1, 6, 24, 72, 168)
-MOVERS_LIMIT = 50
 
 
 def _sort_url_factory(current_sort: str, current_dir: str, q: str = ""):
@@ -561,6 +562,7 @@ async def alliance_detail(
     request: Request,
     alliance_id: int,
     page: int = 1,
+    roster_page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
@@ -748,6 +750,15 @@ async def alliance_detail(
     uniform_comment, show_comment_column = _comment_display(intel_planets)
     leading_cols = 4 + (1 if show_flags else 0)  # Coords, Planet, Ruler, Race[, Flags]
     trailing_cols = sum([show_amps, show_dists])
+    # Coverage/flag/comment detection above all need the FULL roster, not just
+    # one page of it -- paginating is purely a display slice of the already-
+    # fetched list, not a second query, since a roster tops out in the low
+    # hundreds at most (nowhere near worth a LIMIT/OFFSET round-trip).
+    roster_page = max(roster_page, 1)
+    roster_total = len(intel_planets)
+    roster_planets = intel_planets[
+        (roster_page - 1) * LIST_PAGE_SIZE : roster_page * LIST_PAGE_SIZE
+    ]
     watching = False
     if user is not None:
         watching = await conn.fetchval(
@@ -794,6 +805,10 @@ async def alliance_detail(
             "watching": bool(watching),
             "user": user,
             "intel_planets": intel_planets,
+            "roster_planets": roster_planets,
+            "roster_page": roster_page,
+            "roster_total": roster_total,
+            "roster_page_size": LIST_PAGE_SIZE,
             "intel_coverage": intel_coverage,
             "suggested_planets": suggested_planets,
             "show_flags": show_flags,
@@ -878,6 +893,7 @@ async def movers(
     mode: str = "gainers",
     metric: str = "score",
     ticks: int = MOVERS_DEFAULT_TICKS,
+    page: int = 1,
     conn: Connection = Depends(db_conn),
     user: Record | None = Depends(current_user),
 ):
@@ -898,13 +914,22 @@ async def movers(
         metric_columns = MOVERS_METRIC_COLUMNS
     metric = metric if metric in metric_columns else "score"
     ticks = ticks if 1 <= ticks <= 1000 else MOVERS_DEFAULT_TICKS
+    page = max(page, 1)
     column = metric_columns[metric]
 
     round_row = await _current_round(conn)
     tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
     rows = []
+    total = 0
     insufficient_history = False
     if tick_row and mode == "ratio":
+        total = await conn.fetchval(
+            f"""
+            SELECT count(*) FROM planet_stat ps
+            WHERE ps.tick_id = $1 AND ps.size > 0 AND ps.{column} > 0
+            """,
+            tick_row["id"],
+        )
         rows = await conn.fetch(
             f"""
             SELECT p.id, ps.x, ps.y, ps.z, ps.planet_name, ps.ruler_name, ps.race, ps.size,
@@ -915,9 +940,11 @@ async def movers(
             LEFT JOIN planet_intel pi ON pi.planet_id = ps.planet_id
             WHERE ps.tick_id = $1 AND ps.size > 0 AND ps.{column} > 0
             ORDER BY ratio DESC
-            LIMIT {MOVERS_LIMIT}
+            LIMIT $2 OFFSET $3
             """,
             tick_row["id"],
+            LIST_PAGE_SIZE,
+            (page - 1) * LIST_PAGE_SIZE,
         )
     elif tick_row:
         old_tick_id = await conn.fetchval(
@@ -929,6 +956,15 @@ async def movers(
             insufficient_history = True
         else:
             direction = "DESC" if mode == "gainers" else "ASC"
+            total = await conn.fetchval(
+                """
+                SELECT count(*) FROM planet_stat cur
+                JOIN planet_stat old ON old.planet_id = cur.planet_id AND old.tick_id = $2
+                WHERE cur.tick_id = $1
+                """,
+                tick_row["id"],
+                old_tick_id,
+            )
             rows = await conn.fetch(
                 f"""
                 SELECT p.id, cur.x, cur.y, cur.z, cur.planet_name, cur.ruler_name, cur.race, pi.alliance,
@@ -940,10 +976,12 @@ async def movers(
                 LEFT JOIN planet_intel pi ON pi.planet_id = cur.planet_id
                 WHERE cur.tick_id = $1
                 ORDER BY delta {direction}
-                LIMIT {MOVERS_LIMIT}
+                LIMIT $3 OFFSET $4
                 """,
                 tick_row["id"],
                 old_tick_id,
+                LIST_PAGE_SIZE,
+                (page - 1) * LIST_PAGE_SIZE,
             )
     show_alliance = user is not None and any(r["alliance"] for r in rows)
     return templates.TemplateResponse(
@@ -957,6 +995,9 @@ async def movers(
             "ticks": ticks,
             "tick_presets": MOVERS_TICK_PRESETS,
             "rows": rows,
+            "page": page,
+            "total": total,
+            "page_size": LIST_PAGE_SIZE,
             "insufficient_history": insufficient_history,
             "show_alliance": show_alliance,
             "user": user,

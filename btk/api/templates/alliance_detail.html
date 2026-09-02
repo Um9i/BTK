@@ -83,7 +83,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for p in intel_planets %}
+        {% for p in roster_planets %}
         <tr>
             <td><a href="/web/planets/{{ p.id }}">{{ p.x }}:{{ p.y }}:{{ p.z }}</a></td>
             <td>{{ macros.intel_tooltip(p.ruler_name, p, show_nick, show_comment_column) }}</td>
@@ -112,6 +112,11 @@
     </tfoot>
     {% endif %}
 </table>
+</div>
+<div class="pagination">
+    {% if roster_page > 1 %}<a href="?roster_page={{ roster_page - 1 }}#tab-roster">&larr; prev</a>{% endif %}
+    <span>page {{ roster_page }} / {{ ((roster_total - 1) // roster_page_size) + 1 if roster_total else 1 }} &middot; {{ roster_total }} planets</span>
+    {% if roster_page * roster_page_size < roster_total %}<a href="?roster_page={{ roster_page + 1 }}#tab-roster">next &rarr;</a>{% endif %}
 </div>
 {% else %}
 <p class="empty">No planets tagged <code>alliance={{ name }}</code> yet. Set one with <code>!intel &lt;x:y:z&gt; alliance={{ name }}</code> in Discord.</p>
