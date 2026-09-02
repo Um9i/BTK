@@ -1224,20 +1224,6 @@ td.rank-top {
     font-weight: 700;
 }
 
-/* A right-aligned Rank number sitting directly against a left-aligned Coords
-   cell (e.g. /web/needs-intel's "133  2:3:3") reads as one blob when both are
-   the same weight/color in the same monospace font -- dimming the rank (it's
-   secondary here, a worklist sort order, not the page's subject) plus a
-   wider gap than the table's usual column padding gives the eye a real break
-   between the two numbers. */
-td.rank-dim, th.rank-col {
-    color: var(--fg-dim);
-}
-
-th.rank-col, td.rank-col {
-    padding-right: 2.5rem;
-}
-
 .empty {
     color: var(--fg-dim);
     font-style: italic;

@@ -36,7 +36,7 @@ templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "
 # "1:1:1", "1.1.1" and "1 1 1" all resolve the same way.
 PLANET_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)[:.\s]+(\d+)")
 GALAXY_COORD_RE = re.compile(r"(\d+)[:.\s]+(\d+)")
-# Shared page size for the planets/alliances/galaxies/needs-intel listings.
+# Shared page size for the planets/alliances/galaxies listings.
 LIST_PAGE_SIZE = 50
 # Detail pages' tick-history log tables (alliance/galaxy/planet) -- a
 # conceptually separate listing, kept as its own constant even though the
@@ -1429,66 +1429,6 @@ async def planets_list(
         "sort_url": _sort_url_factory(sort, dir, q),
     }
     return templates.TemplateResponse(request, "planets_list.html", context)
-
-
-@router.get("/web/needs-intel")
-async def needs_intel(
-    request: Request,
-    page: int = 1,
-    conn: Connection = Depends(db_conn),
-    user: Record | None = Depends(current_user),
-):
-    """A ready-made scouting worklist: every planet with nothing at all tagged in
-    planet_intel, biggest (most worth knowing about) first. Same visibility rule as
-    every other intel surface -- logged-out visitors get sent to log in rather than
-    an empty/gated page, since the entire point of this page is intel."""
-    if user is None:
-        return RedirectResponse(f"/login?next={request.url.path}", status_code=303)
-    round_row = await _current_round(conn)
-    rows = []
-    total = 0
-    page = max(page, 1)
-    tick_row = await _latest_tick(conn, round_row["id"]) if round_row else None
-    if tick_row:
-        # Rank is computed against the FULL tick (RANKED_PLANET_STAT_CTE), same as
-        # every other rank on the site -- filtering to the no-intel subset happens
-        # after, so a planet's rank here means the same thing it does everywhere
-        # else, not just "rank among the unscouted." A blank-but-present
-        # planet_intel row (e.g. the web form saved with every field empty) counts
-        # as "no intel" just as much as no row at all -- same completeness check
-        # planet_detail.html uses to decide whether to show its own intel box.
-        no_intel_clause = """
-            nick IS NULL AND alliance IS NULL AND comment IS NULL
-            AND amps IS NULL AND dists IS NULL AND defwhore IS NULL
-        """
-        total = await conn.fetchval(
-            RANKED_PLANET_STAT_CTE + f"SELECT count(*) FROM ranked WHERE {no_intel_clause}",
-            tick_row["id"],
-        )
-        rows = await conn.fetch(
-            RANKED_PLANET_STAT_CTE
-            + f"""
-            SELECT * FROM ranked
-            WHERE {no_intel_clause}
-            ORDER BY score DESC
-            LIMIT $2 OFFSET $3
-            """,
-            tick_row["id"],
-            LIST_PAGE_SIZE,
-            (page - 1) * LIST_PAGE_SIZE,
-        )
-    return templates.TemplateResponse(
-        request,
-        "needs_intel.html",
-        {
-            "round": round_row,
-            "planets": rows,
-            "page": page,
-            "total": total,
-            "page_size": LIST_PAGE_SIZE,
-            "user": user,
-        },
-    )
 
 
 @router.get("/web/planets/{planet_id}")

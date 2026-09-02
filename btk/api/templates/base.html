@@ -34,9 +34,6 @@
                 <a class="nav-link{% if request.url.path == '/web/alliances' %} active{% endif %}" href="/web/alliances">Alliances</a>
                 <a class="nav-link{% if request.url.path == '/web/movers' %} active{% endif %}" href="/web/movers">Movers</a>
                 <a class="nav-link{% if request.url.path == '/web/map' %} active{% endif %}" href="/web/map">Map</a>
-                {% if user %}
-                <a class="nav-link{% if request.url.path == '/web/needs-intel' %} active{% endif %}" href="/web/needs-intel">Needs intel</a>
-                {% endif %}
             </nav>
             <div class="nav-controls">
                 {% if user %}
