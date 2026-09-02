@@ -2,6 +2,25 @@
 {% set SPECIAL_DANGER = ["D", "E"] %}
 {% set SPECIAL_QUIET = ["P"] %}
 
+{% macro trend_chart(chart_metrics, chart_data) %}
+{#- The big interactive chart in every detail page's Trends tab -- app.js
+   builds it with Chart.js (vendored at /static/vendor/chart.umd.min.js,
+   loaded by each template's own extra_scripts block) once it finds both the
+   canvas and this JSON payload; with JS off, chart_data still sits in the
+   page as an inert <script> tag and only the chip row is visibly missing
+   anything to do. #}
+<h2>Trends</h2>
+<div class="chart-toolbar">
+    {% for key, label in chart_metrics %}
+    <button type="button" class="example-chip chart-metric-chip{% if loop.first %} active{% endif %}" data-metric="{{ key }}">{{ label }}</button>
+    {% endfor %}
+</div>
+<div class="chart-panel">
+    <canvas id="trend-chart" role="img" aria-label="{{ chart_metrics[0][1] }} over time"></canvas>
+</div>
+<script type="application/json" id="trend-chart-data">{{ chart_data | safe }}</script>
+{% endmacro %}
+
 {% macro special_tags(special) %}
     {% if special %}
         {% for code in special.split(",") %}

@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from btk.api.charts import sparkline, with_deltas
+from btk.api.charts import sparkline, trend_series_json, with_deltas
 from btk.api.deps import current_user, db_conn
 from btk.auth import (
     SESSION_COOKIE_NAME,
@@ -60,6 +60,18 @@ GALAXY_SORT_COLUMNS = {"rank": "rank", "size": "size", "score": "score", "value"
 # are already named exactly these, unqualified, so `sort` gets interpolated
 # directly once validated against this set rather than looked up in a dict.
 PLANET_SORT_COLUMNS = {"rank", "size", "score", "value", "xp"}
+
+# Metric picker for each detail page's Trends tab (see app.js's chart code) --
+# (field, label) in display order, first one is the tab's default metric.
+# Values must match a column trend_series_json() is given for that route.
+PLANET_CHART_METRICS = [("score", "Score"), ("value", "Value"), ("size", "Size"), ("xp", "XP")]
+GALAXY_CHART_METRICS = PLANET_CHART_METRICS
+ALLIANCE_CHART_METRICS = [
+    ("score", "Score"),
+    ("total_score", "Total Score"),
+    ("total_value", "Total Value"),
+    ("size", "Size"),
+]
 
 MOVERS_MODES = {"gainers", "crashers", "ratio"}
 MOVERS_METRIC_COLUMNS = {"score": "score", "value": "value", "size": "size", "xp": "xp"}
@@ -784,6 +796,20 @@ async def alliance_detail(
         )
         if len(distinct_members) == 1:
             constant_members = distinct_members[0]["members"]
+    # Trends tab plots the WHOLE round's history, not just this log page --
+    # a proper chart is the point of that tab, so it gets its own unpaginated
+    # query rather than reusing the paginated `history` above.
+    chart_rows = await conn.fetch(
+        """
+        SELECT t.number AS tick, s.size, s.score, s.total_score, s.total_value
+        FROM alliance_stat s
+        JOIN tick t ON t.id = s.tick_id
+        WHERE s.alliance_id = $1
+        ORDER BY t.number ASC
+        """,
+        alliance_id,
+    )
+    chart_data = trend_series_json(chart_rows, ["size", "score", "total_score", "total_value"])
     return templates.TemplateResponse(
         request,
         "alliance_detail.html",
@@ -792,6 +818,8 @@ async def alliance_detail(
             "name": name,
             "history": history,
             "latest": latest,
+            "chart_data": chart_data,
+            "chart_metrics": ALLIANCE_CHART_METRICS,
             "log_page": page,
             "log_total": log_total,
             "log_page_size": TICK_LOG_PAGE_SIZE,
@@ -1199,11 +1227,27 @@ async def galaxy_detail(
         )
         if len(distinct_names) == 1:
             constant_name = distinct_names[0]["name"]
+    # Trends tab plots the WHOLE round's history, not just this log page --
+    # a proper chart is the point of that tab, so it gets its own unpaginated
+    # query rather than reusing the paginated `history` above.
+    chart_rows = await conn.fetch(
+        """
+        SELECT t.number AS tick, s.size, s.score, s.value, s.xp
+        FROM galaxy_stat s
+        JOIN tick t ON t.id = s.tick_id
+        WHERE s.galaxy_id = $1
+        ORDER BY t.number ASC
+        """,
+        galaxy_id,
+    )
+    chart_data = trend_series_json(chart_rows, ["size", "score", "value", "xp"])
     return templates.TemplateResponse(
         request,
         "galaxy_detail.html",
         {
             "galaxy": galaxy,
+            "chart_data": chart_data,
+            "chart_metrics": GALAXY_CHART_METRICS,
             "history": history,
             "latest": trend[0] if trend else None,
             "log_page": page,
@@ -1564,6 +1608,20 @@ async def planet_detail(
             user["discord_user_id"],
             planet_id,
         )
+    # Trends tab plots the WHOLE round's history, not just this log page --
+    # a proper chart is the point of that tab, so it gets its own unpaginated
+    # query rather than reusing the paginated `history` above.
+    chart_rows = await conn.fetch(
+        """
+        SELECT t.number AS tick, s.size, s.score, s.value, s.xp
+        FROM planet_stat s
+        JOIN tick t ON t.id = s.tick_id
+        WHERE s.planet_id = $1
+        ORDER BY t.number ASC
+        """,
+        planet_id,
+    )
+    chart_data = trend_series_json(chart_rows, ["size", "score", "value", "xp"])
     return templates.TemplateResponse(
         request,
         "planet_detail.html",
@@ -1572,6 +1630,8 @@ async def planet_detail(
             "external_id": external_id,
             "history": history,
             "latest": trend[0] if trend else None,
+            "chart_data": chart_data,
+            "chart_metrics": PLANET_CHART_METRICS,
             "log_page": page,
             "log_total": log_total,
             "log_page_size": TICK_LOG_PAGE_SIZE,

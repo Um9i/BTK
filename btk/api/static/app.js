@@ -212,7 +212,14 @@
                 var selected = t === tab;
                 t.setAttribute("aria-selected", selected ? "true" : "false");
                 t.tabIndex = selected ? 0 : -1;
-                if (panels[i]) panels[i].hidden = !selected;
+                if (panels[i]) {
+                    panels[i].hidden = !selected;
+                    // A panel that's `hidden` measures 0x0 -- anything inside
+                    // it that sizes itself off its container at build time
+                    // (the Trends chart below) needs telling once it's
+                    // actually visible and has real dimensions to read.
+                    if (selected) panels[i].dispatchEvent(new CustomEvent("btk:panelshown"));
+                }
             });
             if (focus) tab.focus();
         }
@@ -249,6 +256,11 @@
         var dark = root.classList.toggle("dark");
         localStorage.setItem("theme", dark ? "dark" : "light");
         sync();
+        // The Trends chart (below) draws its line/grid/axis colors onto a
+        // <canvas> from the CSS tokens at build time -- unlike everything
+        // else on the page, those pixels don't repaint themselves just
+        // because --fg/--line changed, so it needs telling explicitly.
+        window.dispatchEvent(new Event("btk:themechange"));
     });
     sync();
 })();
@@ -323,4 +335,166 @@
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) poll();
     });
+})();
+
+(function () {
+    // Detail pages' Trends tab -- a full-size Chart.js line chart standing in
+    // for the tiny vitals sparklines (those stay as-is; this is a separate,
+    // much bigger chart for actually reading tick-by-tick history). Guards on
+    // Chart existing since the library is only loaded on the three detail
+    // page templates that have this tab, via their own extra_scripts block.
+    var canvas = document.getElementById("trend-chart");
+    var dataEl = document.getElementById("trend-chart-data");
+    if (!canvas || !dataEl || typeof Chart === "undefined") return;
+
+    var series = JSON.parse(dataEl.textContent);
+    var chips = Array.prototype.slice.call(document.querySelectorAll(".chart-metric-chip"));
+    var root = document.documentElement;
+    var chart = null;
+
+    function themeColor(name) {
+        return getComputedStyle(root).getPropertyValue(name).trim();
+    }
+
+    // Compact axis labels ("2.9M") -- the tooltip below gives the exact
+    // figure on hover, so the axis only needs to be scannable at a glance.
+    function abbreviate(n) {
+        var sign = n < 0 ? "-" : "";
+        var abs = Math.abs(n);
+        if (abs >= 1e9) return sign + trimZero((abs / 1e9).toFixed(2)) + "B";
+        if (abs >= 1e6) return sign + trimZero((abs / 1e6).toFixed(2)) + "M";
+        if (abs >= 1e3) return sign + trimZero((abs / 1e3).toFixed(1)) + "K";
+        return sign + abs;
+    }
+    function trimZero(s) {
+        return s.replace(/\.0+$/, "");
+    }
+
+    // A plain positioned element instead of Chart.js's canvas-drawn tooltip --
+    // this one is styled entirely from style.css (site tokens, theme-aware
+    // for free), where the line/grid/axis below has to be recolored by hand
+    // on every theme change since canvas pixels don't pick up CSS variables.
+    var tooltipEl = document.createElement("div");
+    tooltipEl.className = "chart-tooltip";
+    canvas.parentNode.appendChild(tooltipEl);
+
+    function externalTooltip(context) {
+        var tt = context.tooltip;
+        if (tt.opacity === 0) {
+            tooltipEl.classList.remove("visible");
+            return;
+        }
+        var point = tt.dataPoints && tt.dataPoints[0];
+        if (point) {
+            tooltipEl.innerHTML =
+                '<div class="chart-tooltip-tick">Tick ' + point.label + "</div>" +
+                '<div class="chart-tooltip-value">' + point.parsed.y.toLocaleString() + "</div>";
+        }
+        var box = canvas.parentNode.getBoundingClientRect();
+        var canvasBox = canvas.getBoundingClientRect();
+        var x = canvasBox.left - box.left + tt.caretX;
+        var y = canvasBox.top - box.top + tt.caretY;
+        // Flip to the left of the cursor once there's no room on the right,
+        // rather than letting the tooltip run off the edge of the chart.
+        var flip = x + 140 > box.width;
+        tooltipEl.classList.toggle("flip", flip);
+        tooltipEl.style.left = x + "px";
+        tooltipEl.style.top = y + "px";
+        tooltipEl.classList.add("visible");
+    }
+
+    function buildConfig(metric) {
+        var points = series[metric] || [];
+        var fg = themeColor("--fg");
+        var line = themeColor("--line");
+        var fgFaint = themeColor("--fg-faint");
+        var fontFamily = themeColor("--font-data") || "monospace";
+        return {
+            type: "line",
+            data: {
+                labels: points.map(function (p) { return p.t; }),
+                datasets: [{
+                    data: points.map(function (p) { return p.v; }),
+                    borderColor: fg,
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    pointHitRadius: 8,
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: fg,
+                    pointHoverBorderWidth: 0,
+                    tension: 0.15,
+                    fill: true,
+                    // fg is always a plain #rrggbb site token -- appending a
+                    // hex alpha is simplest, rather than reparsing it into rgba().
+                    backgroundColor: fg + "12",
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 200 },
+                interaction: { mode: "index", intersect: false },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        border: { color: line },
+                        ticks: { color: fgFaint, font: { family: fontFamily, size: 10 }, maxRotation: 0, maxTicksLimit: 8 },
+                    },
+                    y: {
+                        grid: { color: line },
+                        border: { display: false },
+                        ticks: { color: fgFaint, font: { family: fontFamily, size: 10 }, maxTicksLimit: 5, callback: abbreviate },
+                    },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false, external: externalTooltip },
+                },
+            },
+        };
+    }
+
+    function render(metric) {
+        var config = buildConfig(metric);
+        if (chart) {
+            chart.destroy();
+        }
+        chart = new Chart(canvas, config);
+    }
+
+    var current = (chips[0] && chips[0].dataset.metric) || Object.keys(series)[0];
+
+    // Trends starts out as a `hidden` tab panel (Roster/Intel/Planets is the
+    // default tab on every page that has this chart), and a hidden element
+    // measures 0x0 -- building the chart before its panel is ever shown
+    // would permanently lock it to Chart.js's fallback canvas size. Wait for
+    // the tabs code above to actually reveal it; build on the first reveal,
+    // just resize on any later one (switching tabs away and back).
+    var panel = canvas.closest('[role="tabpanel"]');
+    if (!panel || !panel.hidden) {
+        render(current);
+    } else {
+        panel.addEventListener("btk:panelshown", function () {
+            if (chart) {
+                chart.resize();
+            } else {
+                render(current);
+            }
+        });
+    }
+
+    chips.forEach(function (chip) {
+        chip.addEventListener("click", function () {
+            if (chip.classList.contains("active")) return;
+            chips.forEach(function (c) { c.classList.remove("active"); });
+            chip.classList.add("active");
+            current = chip.dataset.metric;
+            render(current);
+        });
+    });
+
+    // Re-theming destroys and rebuilds with fresh colors read from the CSS
+    // tokens above -- simpler and cheap enough (one chart, a few hundred
+    // points) next to hand-patching every color option Chart.js exposes.
+    window.addEventListener("btk:themechange", function () { render(current); });
 })();

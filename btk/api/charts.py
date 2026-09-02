@@ -1,12 +1,18 @@
-"""Tiny server-rendered SVG trend helpers for the detail pages.
+"""Tiny server-rendered SVG trend helpers for the detail pages, plus the JSON
+feed for the bigger Chart.js panel in the new Trends tab (see app.js).
 
-No chart library and no client JS -- these build plain <svg> markup from
-already-fetched tick-history rows, in keeping with btk/api/routers/web.py's
-plain-server-rendered-HTML approach. Line color is deliberately left as
-`currentColor` so it inherits whatever text color the surrounding CSS sets,
-rather than the module needing to know the site's light/dark tokens.
+The inline sparkline stays a plain <svg> -- it's a glance-level accent inside
+a vitals tile, not something worth a JS library for. The Trends tab is the
+opposite job (read exact tick-by-tick values), which a hand-rolled SVG can't
+give you (no hover, fixed resolution) -- that one goes to the client as raw
+{tick, value} pairs and Chart.js renders it. Line color for the sparkline is
+deliberately left as `currentColor` so it inherits whatever text color the
+surrounding CSS sets, rather than the module needing to know the site's
+light/dark tokens; the JSON feed carries no color at all, since app.js reads
+the same CSS tokens itself at draw time.
 """
 
+import json
 from collections.abc import Sequence
 
 from markupsafe import Markup
@@ -44,6 +50,21 @@ def sparkline(
         f'<circle cx="{end_x:.1f}" cy="{end_y:.1f}" r="2.5" fill="currentColor"></circle>'
         f"</svg>"
     )
+
+
+def trend_series_json(rows: Sequence, fields: Sequence[str]) -> str:
+    """{field: [{"t": tick, "v": value}, ...]} for every field, oldest tick first,
+    serialized once server-side so the template just drops it into a <script
+    type="application/json"> tag. Numeric only (tick numbers/stat values) --
+    never carries a free-text field, so no HTML-escaping concerns embedding it
+    directly in the page."""
+    series: dict[str, list[dict[str, float | int]]] = {f: [] for f in fields}
+    for row in rows:
+        for f in fields:
+            v = row[f]
+            if v is not None:
+                series[f].append({"t": row["tick"], "v": v})
+    return json.dumps(series)
 
 
 def with_deltas(rows: Sequence, fields: Sequence[str]) -> list[dict]:

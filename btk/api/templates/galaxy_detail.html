@@ -36,6 +36,7 @@
 
 <div class="tabs" role="tablist">
     <a href="#tab-planets" id="tabbtn-planets" class="tab" role="tab" aria-selected="true" aria-controls="tab-planets">Planets{% if planets %} ({{ planets|length }}){% endif %}</a>
+    <a href="#tab-trends" id="tabbtn-trends" class="tab" role="tab" aria-selected="false" aria-controls="tab-trends">Trends</a>
     <a href="#tab-log" id="tabbtn-log" class="tab" role="tab" aria-selected="false" aria-controls="tab-log">Log{% if log_total %} ({{ log_total }}){% endif %}</a>
 </div>
 
@@ -78,6 +79,15 @@
 </div>
 {% else %}
 <p class="empty">No planets recorded.</p>
+{% endif %}
+</section>
+
+<section id="tab-trends" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-trends" hidden>
+{% if latest %}
+{{ macros.trend_chart(chart_metrics, chart_data) }}
+{% else %}
+<h2>Trends</h2>
+<p class="empty">No stats recorded.</p>
 {% endif %}
 </section>
 
@@ -124,4 +134,7 @@
 <p class="empty">No stats recorded.</p>
 {% endif %}
 </section>
+{% endblock %}
+{% block extra_scripts %}
+<script src="/static/vendor/chart.umd.min.js" defer></script>
 {% endblock %}

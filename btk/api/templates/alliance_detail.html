@@ -49,6 +49,7 @@
 {% if user %}
 <div class="tabs" role="tablist">
     <a href="#tab-roster" id="tabbtn-roster" class="tab" role="tab" aria-selected="true" aria-controls="tab-roster">Roster{% if intel_planets %} ({{ intel_planets|length }}){% endif %}</a>
+    <a href="#tab-trends" id="tabbtn-trends" class="tab" role="tab" aria-selected="false" aria-controls="tab-trends">Trends</a>
     <a href="#tab-log" id="tabbtn-log" class="tab" role="tab" aria-selected="false" aria-controls="tab-log">Log{% if log_total %} ({{ log_total }}){% endif %}</a>
 </div>
 
@@ -166,10 +167,22 @@
 {% endif %}
 </section>
 
+<section id="tab-trends" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-trends" hidden>
+{% if latest %}
+{{ macros.trend_chart(chart_metrics, chart_data) }}
+{% else %}
+<h2>Trends</h2>
+<p class="empty">No stats recorded.</p>
+{% endif %}
+</section>
+
 <section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
 {{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
 </section>
 {% else %}
 {{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
 {% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script src="/static/vendor/chart.umd.min.js" defer></script>
 {% endblock %}

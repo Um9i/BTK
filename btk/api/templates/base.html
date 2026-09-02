@@ -56,6 +56,14 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+    {# Per-page scripts (currently just the Trends tab's vendored Chart.js on
+       detail pages) -- kept out of every other page's request waterfall,
+       unlike app.js below which is small and genuinely shared. Placed
+       *before* app.js: deferred scripts always execute in document order
+       regardless of load timing, and app.js's Trends chart code needs
+       `window.Chart` to already exist when it runs its own top-level
+       `typeof Chart` guard -- app.js after this block, not before it. #}
+    {% block extra_scripts %}{% endblock %}
     {# Cacheable across navigations instead of re-parsed on every page load --
        see app.js's own header comment for why the pre-paint theme-init
        snippet above is the one script that stays inline. `defer` runs it
