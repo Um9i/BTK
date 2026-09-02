@@ -93,3 +93,15 @@ the pipeline above, using cross-round history from
 - **`uv run btk-initdb`** (`init_db.py`) — applies `db/schema.sql`. Part of
   normal local setup, not the inference pipeline; see the repo root
   `CLAUDE.md`.
+- **`uv run btk-backfill-current`** (`backfill_current.py`) — catches up
+  missing ticks of the *current* live round from dumps.dfwtk.com's
+  recent-ticks mirror (`https://dumps.dfwtk.com/<tick>/<file>.txt`), e.g.
+  after the hourly `btk-ingest live` timer wasn't running for a stretch.
+  Different from `btk-ingest archive`, which backfills a *past*, finished
+  round from a separate archive host laid out by round. Already-ingested
+  ticks are skipped, so it's safe to re-run.
+  ```
+  uv run btk-backfill-current                 # every missing tick, 1..current_tick
+  uv run btk-backfill-current --from 1 --to 600
+  uv run btk-backfill-current --keep-going     # don't stop on one tick's fetch error
+  ```
