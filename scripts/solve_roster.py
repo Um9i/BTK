@@ -353,10 +353,13 @@ async def run(args: argparse.Namespace) -> None:
             f"ticks {args.lo}-{args.hi}, {len(data['history'])} ticks with data"
         )
         force_in = set(args.force_in or ())
-        model, x, history, cands = build_model(data, force_in, not args.no_exclude_claimed)
+        force_out = set(args.force_out or ())
+        model, x, history, cands = build_model(
+            data, force_in, not args.no_exclude_claimed, extra_exclude=force_out
+        )
         n = history[0]["members"]
         excluded = len(data["claimed_elsewhere"]) if not args.no_exclude_claimed else 0
-        print(f"N={n}, pool={len(cands)} (excluded {excluded} claimed elsewhere)")
+        print(f"N={n}, pool={len(cands)} (excluded {excluded} claimed elsewhere, {len(force_out)} --force-out)")
 
         solver, status = solve(model, args.time)
         print(f"status: {solver.StatusName(status)} ({solver.WallTime():.1f}s)")
@@ -396,7 +399,7 @@ async def run(args: argparse.Namespace) -> None:
                     "re-solving with all of them excluded to check the rest is still forced..."
                 )
                 model3, _x3, _, _cands3 = build_model(
-                    data, force_in, not args.no_exclude_claimed, extra_exclude=idle_pool
+                    data, force_in, not args.no_exclude_claimed, extra_exclude=idle_pool | force_out
                 )
                 solver3, status3 = solve(model3, args.time)
                 print(f"status: {solver3.StatusName(status3)} ({solver3.WallTime():.1f}s)")
@@ -485,6 +488,12 @@ def main() -> None:
     ap.add_argument("--time", type=float, default=180.0, help="solver time limit per solve, sec")
     ap.add_argument(
         "--force-in", action="append", metavar="EXTERNAL_ID", help="planet(s) to require in-set"
+    )
+    ap.add_argument(
+        "--force-out",
+        action="append",
+        metavar="EXTERNAL_ID",
+        help="planet(s) to exclude from the candidate pool (e.g. a known idle-tie candidate)",
     )
     ap.add_argument(
         "--no-exclude-claimed",

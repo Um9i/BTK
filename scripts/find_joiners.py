@@ -172,11 +172,34 @@ def analyse(data: dict[str, Any], only: str | None) -> list[dict[str, Any]]:
                 ext = cands[0]
                 d = data["detail"][(ext, ev["prev_tick"])]
                 coords = f"{d['x']}:{d['y']}:{d['z']}"
-                print(
-                    f"   tick {ev['tick']:>4}  join carrying {ev['delta']:,} -> "
-                    f"{ext}  {coords}  {d['ruler_name']} / {d['planet_name']}"
+                # A later unambiguous "leave" event whose magnitude exactly matches this
+                # joiner's own carried-in delta is very likely the same planet leaving
+                # again -- don't insert it as a current member if so (see the Fourteenth
+                # pass's hief0xd7/z3gu9okd staleness bug, both caught by this exact match).
+                matching_leave = next(
+                    (
+                        e
+                        for e in events
+                        if e["tick"] > ev["tick"]
+                        and classify(e) == "leave"
+                        and -e["delta"] == ev["delta"]
+                    ),
+                    None,
                 )
-                found.append({"alliance": name, "ext": ext, **ev})
+                if matching_leave:
+                    print(
+                        f"   tick {ev['tick']:>4}  join carrying {ev['delta']:,} -> "
+                        f"{ext}  {coords}  {d['ruler_name']} / {d['planet_name']}  "
+                        f"STALE RISK: {name} has a later leave at tick {matching_leave['tick']} "
+                        f"of the exact same magnitude -- likely this same planet leaving again; "
+                        f"not inserting"
+                    )
+                else:
+                    print(
+                        f"   tick {ev['tick']:>4}  join carrying {ev['delta']:,} -> "
+                        f"{ext}  {coords}  {d['ruler_name']} / {d['planet_name']}"
+                    )
+                    found.append({"alliance": name, "ext": ext, **ev})
             elif cands:
                 print(
                     f"   tick {ev['tick']:>4}  join carrying {ev['delta']:,} -> "

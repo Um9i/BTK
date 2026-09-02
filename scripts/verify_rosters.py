@@ -240,7 +240,15 @@ async def insert(
     for r in confirmed:
         for ext in r["members_ext"]:
             claims.setdefault(ext, []).append(f"{r['alliance']} ({r['span'][0]}-{r['span'][1]})")
-    contested = {ext: who for ext, who in claims.items() if len(who) > 1}
+    # Two windows can both legitimately confirm the same planet for the same
+    # alliance (e.g. a 1-member and a later 2-member window either side of a
+    # join) -- only a planet claimed by *different* alliance names is a real
+    # conflict.
+    contested = {
+        ext: who
+        for ext, who in claims.items()
+        if len({w.split(" (")[0] for w in who}) > 1
+    }
     if contested:
         for ext, who in sorted(contested.items()):
             print(f"  CONFLICT {ext} claimed by: {', '.join(who)}")

@@ -1444,10 +1444,23 @@ were.
   failing tick, rather than requiring the manual per-alliance script this
   pass used. It's a full scan rather than a true bisection, but at ~200
   ticks per round that distinction doesn't matter in practice.
-- Investigate whether tick 59's off-by-3 xp anomaly recurs elsewhere in
+- ~~Investigate whether tick 59's off-by-3 xp anomaly recurs elsewhere in
   the round (a single bad ingest, or something structural about that
   tick's dump) — it was not chased further since it didn't block the
-  proof. Still open.
+  proof.~~ **Resolved (2026-09-02), after backfilling round 118's full
+  619 ticks:** the per-planet identity `score - value == 60 * xp` (the
+  same one the alliance-level equation is built from) was checked against
+  every one of round 118's 247,764 `planet_stat` rows. There is exactly
+  **one** violation in the entire round: external id `64312344` (ruler
+  Razor, planet Occam), tick 59, `xp = 488` where `(score - value) / 60`
+  implies `485` — the same +3 that produced VGN's alliance-level
+  mismatch, and the *only* source of it (that one planet accounts for the
+  entire gap). Re-fetching tick 59's `planet_listing.txt` from the
+  archive mirror shows `488` verbatim on that planet's line, so this is
+  baked into the game's own dump, not a BTK parsing/ingest bug. It is a
+  single bad data point on one planet at one tick, not anything
+  structural about tick 59 as a whole — no other planet or tick in the
+  round shows the identity break.
 
 **Running total on the live round-118 database after this pass:** 109
 planets across 19 alliances (adding VGN's 40 to the Fourth pass's 69).
@@ -1917,6 +1930,154 @@ results did.
 in composition from the Twelfth pass (still 336 planets/23 alliances, plus
 TiT's expected 337th), all independently reconfirmed live rather than
 re-derived from a prior pass's numbers.
+
+## Fourteenth pass (2026-09-02): rebuilding a second (local dev) database from scratch, and a new find-joiners staleness bug
+
+This pass ran the whole pipeline from an empty `planet_intel` (2 leftover
+test rows) against a *local* Postgres, not the production one used by every
+prior pass -- same round 118 data (still live, now at tick 619, ~386 ticks
+past the Thirteenth pass's tick 233), just a different database instance.
+Order followed the recipe exactly: `btk-verify-rosters --insert` (17 rows,
+16 alliances), then `btk-find-joiners --insert` (22 rows), then
+`btk-solve-roster` per alliance, largest churn-free window first.
+
+### `btk-verify-rosters`'s own conflict guard had a false-positive bug
+
+Before any real solving, `--insert` refused with `CONFLICT whwong4p claimed
+by: Terra (124-260), Terra (261-619)`. This was not a real conflict --
+Terra grew from 1 member to 2 at tick 261, and `whwong4p` is a member in
+*both* windows (the same alliance, before and after the join), which the
+render step correctly reports as two separate confirmed entries. The
+conflict check (`scripts/verify_rosters.py`) compared claim *counts* per
+planet, not claim *identities*, so any planet spanning a genuine
+size-change boundary within one alliance tripped the same guard meant to
+catch a planet claimed by two *different* alliances. Fixed to compare the
+alliance name (the part before ` (`) rather than the raw claim strings --
+see the `contested` dict comprehension in `insert()`. Worth knowing if this
+guard fires again: check whether all the claimants share one alliance name
+before assuming it's a real rename/collision.
+
+### `btk-solve-roster --force-out`: a missing CLI knob for the idle-tie case
+
+`PATSA` (4 members) and `BBQQ` (32 members) both hit the classic idle-slot
+tie from the very first session (`dauri6kw` vs `rf6kw8zr`, described above
+under "the generic idle planet ambiguity") -- except this time the
+uniqueness probe caught it immediately (`NOT UNIQUE`) rather than the
+script's own `--no-check-idle` auto-detection getting a chance to run
+(that logic only fires *after* a `UNIQUE` result). `build_model` already
+supported an `extra_exclude` set internally (used by the auto idle-check),
+but nothing on the CLI let you pass one manually. Added `--force-out
+EXTERNAL_ID` (mirroring `--force-in`) so this case can be handled by hand:
+query for every candidate that's `(size=0, xp=0)` for the whole window,
+pass them all as `--force-out`, and if the re-solve comes back `INFEASIBLE`
+that proves the remaining N-1 members and confirms the last slot really is
+an unresolvable tie among that idle set. Both PATSA (3 of 4) and BBQQ (31
+of 32) were inserted this way, with a comment stating the unresolved slot
+explicitly rather than guessing a name for it.
+
+### The real find: `btk-find-joiners --insert` can tag a planet that has since left
+
+The costliest bug this pass, caught by the user eyeballing the result
+rather than by any of the script's own checks: `btk-find-joiners` names a
+joiner by the counted-score gap and inserts it as a member of the alliance
+it joined -- but it never checks whether that same alliance later *lost* a
+member (a `leave` or `roster change` event further down its own output) in
+a way that could be this same planet. Two of the 22 joiners inserted in
+this pass turned out to be stale:
+
+- **Chocolate Starfish's `hief0xd7`**, tagged as a joiner at tick 436
+  (carried-in score exactly matched a unique planet). The alliance's own
+  `find-joiners` output for the same alliance shows `tick 559  leave: gap
+  -214,193 (members 22 -> 21)` -- the *exact* magnitude of the tick-436
+  join, reversed. This planet joined and later left, and the later
+  `btk-solve-roster` confirm on the post-559 window (correctly) produced a
+  21-member roster that did not include it -- but the original
+  `find-joiners` row was never touched by that later insert (which only
+  writes rows for planets *in* the newly confirmed set) and sat there
+  claiming Chocolate Starfish membership that no longer existed.
+- **TiT's `z3gu9okd`**, tagged as a joiner at tick 223, absent from the
+  `btk-solve-roster`-confirmed 491-619 roster. TiT's own `find-joiners`
+  output shows an unattributed `tick 387  leave: gap -113,352 (members 13
+  -> 12)` -- z3gu9okd is the unnamed planet that left there.
+
+Both were caught only by summing each alliance's currently-tagged
+`planet_intel` members' `size` against the alliance's live `alliance_stat`
+total at the latest tick and finding it **101%** of target (22,528 vs
+22,204 for Chocolate Starfish) -- the exact "cheap cross-check" this doc
+has recommended since the Second pass, just applied to a single alliance
+on demand instead of the whole round. Both rows were deleted outright
+(not reassigned) since neither planet's *current* alliance, if any, is
+known.
+
+**Lesson: a `find-joiners` insert is only as fresh as the tick it was run
+at.** If that alliance's own output shows *any* later `leave` or `roster
+change` event, re-check every earlier-tagged joiner from that same run
+against the eventual `btk-solve-roster` confirmed roster (or, if the
+alliance is never going to get a full solve, against a fresh reconciliation
+sum) before trusting it as current. This is a sharper version of the
+existing "`planet_intel`'s current state is not self-auditing" lesson from
+the Second pass -- it applies *within* a single insert pass, not just to
+old data found lying around. Practically: run the size-sum reconciliation
+check (see above) against every alliance touched by `--insert`, immediately
+after each script's insert step, not just once at the end.
+
+### A second variant of the same bug: the alliance itself can disappear, not just lose a member
+
+Running the whole-round reconciliation check (sum tagged `size` per
+alliance vs. that alliance's own `alliance_stat.size` at the latest tick,
+for *every* alliance currently in `planet_intel`, not just one at a time)
+surfaced one more case the same class of bug: `qq`'s tick-22 joiner
+(`6q6oe9s8`) was tagged from `btk-find-joiners`, but `qq` itself has no
+`alliance_stat` rows at all past tick 83 -- the alliance disappeared
+(disbanded, renamed, or merged) rather than losing one identifiable
+member. Nothing in the "matching leave" detector added above catches
+this, because there's no later `leave` event to compare against; the
+alliance's own history just stops. Deleted the same way (no current
+alliance is known for that planet). This is a live example of the doc's
+own "**Alliance renames and merges**" section above -- worth checking a
+one-tick alliance existence lookup (`select 1 from alliance_stat s join
+alliance a ... where a.name = X and t.number = <latest>`) for every
+`find-joiners`-tagged alliance too, not just leave-magnitude matching.
+
+**The general form of this whole pass's lesson**: any `planet_intel` write
+that isn't independently re-verified against the *current* (latest-tick)
+alliance roster is only a claim about the tick it was made at, and decays
+silently. The reconciliation query above (per-alliance tagged-size-sum vs.
+`alliance_stat.size` at the latest tick, run for every alliance at once) is
+cheap enough to run after *every* insert step, not just when something
+looks suspicious.
+
+### Final tally for this pass
+
+Starting from 2 leftover rows (one pointing at a nonexistent test planet,
+deleted above), this pass brought round 118's local-dev `planet_intel` to
+**344 rows**, covering every currently-affiliated planet except two
+deliberately-left-unresolved idle-tie slots (PATSA's 4th, BBQQ's 32nd):
+
+| Alliance | Members | Confirmed | Window | Method |
+|---|---|---|---|---|
+| 10 single-member alliances + `myownally` (11 total, see list above) | 1 each | 1 each | full available range | direct lookup (`btk-verify-rosters`) |
+| Terra | 2 | 2 | 1-619 (split at the tick-261 join) | pair search (`btk-verify-rosters`) |
+| PATSA | 4 | 3 | 1-619 | CP-SAT + `--force-out` idle pool; 4th slot unresolved |
+| TiT | 13 | 13 | 491-619 | CP-SAT, unique |
+| PussycatZ | 20 | 20 | 96-619 | CP-SAT, unique |
+| Chocolate Starfish | 21 | 21 | 559-619 | CP-SAT, unique |
+| BBQQ | 32 | 31 | 552-619 | CP-SAT + `--force-out` idle pool; 32nd slot unresolved |
+| VGN | 40 | 40 | 100-619 | CP-SAT, unique (full 1-619 window `INFEASIBLE`) |
+| Imperium | 40 | 40 | 496-619 | CP-SAT, unique |
+| KittenZ | 40 | 40 | 1-619 (full round) | CP-SAT, unique |
+| Newdawn ft HR | 40 | 40 | 25-619 | CP-SAT, unique |
+| Pink Fluffy Unicorns | 40 | 40 | 300-619 | CP-SAT, unique (early ticks 1-10 don't reconcile, unrelated pre-window churn) |
+| Tal Shiar | 40 | 40 | 475-619 | CP-SAT, unique |
+
+Every one of the six 40-member alliances that took an entire dedicated
+pass each in production (Fourth through Eleventh passes above) solved in
+well under a minute this time -- the fund-aware CP-SAT model plus
+`--extend` is now routine, not research, for this shape of problem.
+**The two `--force-out`-based idle-tie partial solves (PATSA, BBQQ) are
+the only alliances in this pass that didn't reach full N-of-N confirmation
+-- both for the same well-documented reason (a size=0/xp=0 slot with many
+indistinguishable candidates), not a new failure mode.**
 
 ## Practical recipe
 
