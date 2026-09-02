@@ -47,7 +47,6 @@
 <h1>Planet {{ external_id }}</h1>
 {% endif %}
 
-{% if user %}
 <div class="tabs" role="tablist">
     <a href="#tab-intel" id="tabbtn-intel" class="tab" role="tab" aria-selected="true" aria-controls="tab-intel">Intel</a>
     <a href="#tab-trends" id="tabbtn-trends" class="tab" role="tab" aria-selected="false" aria-controls="tab-trends">Trends</a>
@@ -56,6 +55,9 @@
 
 <section id="tab-intel" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-intel">
 <h2>Intel</h2>
+{% if not user %}
+<p class="empty">Scouted intel is member-only -- <a href="/login?next={{ request.url.path }}">log in</a> to view or edit it.</p>
+{% else %}
 <p class="subtitle">Scouted, not guessed -- same <code>planet_intel</code> table as <code>!intel</code> in Discord, either works.</p>
 <form class="intel-form" method="post" action="/web/planets/{{ planet_id }}/intel">
     <div class="intel-form-grid">
@@ -74,6 +76,7 @@
     <label class="intel-comment-label">Comment<textarea name="comment" rows="2">{{ intel.comment or '' if intel else '' }}</textarea></label>
     <button type="submit" class="btn">Save intel</button>
 </form>
+{% endif %}
 </section>
 
 <section id="tab-trends" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-trends" hidden>
@@ -88,9 +91,6 @@
 <section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
 {{ macros.planet_log(history, log_page, log_total, log_page_size) }}
 </section>
-{% else %}
-{{ macros.planet_log(history, log_page, log_total, log_page_size) }}
-{% endif %}
 {% endblock %}
 {% block extra_scripts %}
 <script src="/static/vendor/chart.umd.min.js" defer></script>

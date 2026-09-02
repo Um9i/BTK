@@ -46,7 +46,6 @@
 </div>
 {% endif %}
 
-{% if user %}
 <div class="tabs" role="tablist">
     <a href="#tab-roster" id="tabbtn-roster" class="tab" role="tab" aria-selected="true" aria-controls="tab-roster">Roster{% if intel_planets %} ({{ intel_planets|length }}){% endif %}</a>
     <a href="#tab-trends" id="tabbtn-trends" class="tab" role="tab" aria-selected="false" aria-controls="tab-trends">Trends</a>
@@ -55,7 +54,9 @@
 
 <section id="tab-roster" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-roster">
 <h2>Intel roster</h2>
-{% if intel_planets %}
+{% if not user %}
+<p class="empty">Scouted intel is member-only -- <a href="/login?next={{ request.url.path }}">log in</a> to view the roster.</p>
+{% elif intel_planets %}
 <p class="subtitle">Planets tagged <code>alliance={{ name }}</code> via <code>!intel</code> -- there's no membership list in the game data itself, only what's been scouted.</p>
 {% if intel_coverage %}
 <p class="subtitle">
@@ -179,9 +180,6 @@
 <section id="tab-log" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
 {{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
 </section>
-{% else %}
-{{ macros.alliance_log(history, log_page, log_total, log_page_size, constant_rank, constant_members) }}
-{% endif %}
 {% endblock %}
 {% block extra_scripts %}
 <script src="/static/vendor/chart.umd.min.js" defer></script>
