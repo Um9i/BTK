@@ -7,7 +7,7 @@
 <p class="subtitle">
     One row per galaxy, one glyph per planet slot.
     <span class="map-key"><span class="slot-empty">&middot;</span> empty</span>
-    <span class="map-key"><span class="slot-occupied">&#9632;</span> occupied</span>
+    <span class="map-key"><span class="slot-occupied">&#9633;</span> occupied</span>
     {% if user %}
     <span class="map-key"><span class="slot-known">&#9632;</span> alliance known</span>
     <span class="map-key"><span class="slot-mine">&#9632;</span> your alliance</span>
@@ -26,7 +26,7 @@
                 {% if cell.planet %}
                 <a class="map-cell {% if cell.mine %}slot-mine{% elif cell.planet.alliance %}slot-known{% else %}slot-occupied{% endif %}"
                    href="/web/planets/{{ cell.planet.id }}"
-                   title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &middot; {{ cell.planet.ruler_name }} of {{ cell.planet.planet_name }}{% if cell.planet.alliance %} ({{ cell.planet.alliance }}){% endif %}">&#9632;</a>
+                   title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &middot; {{ cell.planet.ruler_name }} of {{ cell.planet.planet_name }}{% if cell.planet.alliance %} ({{ cell.planet.alliance }}){% endif %}">{% if cell.planet.alliance %}&#9632;{% else %}&#9633;{% endif %}</a>
                 {% else %}
                 <span class="map-cell slot-empty" title="{{ g.x }}:{{ g.y }}:{{ cell.z }} &middot; unclaimed">&middot;</span>
                 {% endif %}
