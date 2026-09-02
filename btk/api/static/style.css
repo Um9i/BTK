@@ -1042,23 +1042,6 @@ h2 {
 .table-scroll {
     position: relative;
     overflow-x: auto;
-    /* Bounded height + overflow-y:auto, not the page-level scroll this
-       looks like it should just need -- verified in a real browser that a
-       plain "position:sticky; top:0" on thead th does NOT stick against
-       the page here. overflow-x:auto alone makes the UA promote
-       overflow-y to a scroll container too (CSS Overflow spec's "the
-       other axis becomes auto" rule; even overflow-y:clip still measured
-       as capturing it in testing), and once THIS box is that container,
-       sticky descendants stick to ITS edge, not the viewport's -- and
-       since it was unbounded, its edge scrolled away with everything
-       else, so nothing ever visibly stuck. Bounding the height makes that
-       container real: sticky now sticks to the top of this scrolling
-       pane, which is exactly the "column labels survive a scroll"
-       behavior this file's own thead th sticky rule is trying to give.
-       No cap on very short tables -- max-height only bites once content
-       actually exceeds it. */
-    max-height: 75vh;
-    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     /* Firefox: a thin, theme-matched scrollbar instead of the chunky OS
        default, so once someone does find it, it reads as a deliberate
@@ -1069,11 +1052,9 @@ h2 {
 
 /* Chrome/Safari equivalent of scrollbar-width/scrollbar-color above --
    without this the trailing-edge hint below is the only cue at all, since
-   WebKit's default overlay scrollbar stays invisible until hovered. Both
-   axes now, since the box scrolls vertically too (see max-height above). */
+   WebKit's default overlay scrollbar stays invisible until hovered. */
 .table-scroll::-webkit-scrollbar {
     height: 8px;
-    width: 8px;
 }
 
 .table-scroll::-webkit-scrollbar-track {
@@ -1116,12 +1097,7 @@ h2 {
    tables on a normal desktop width never overflow horizontally at all, so
    permanently reserving this line above literally every table on every page
    spent real vertical space for a hint the large majority of tables never
-   show. That trade only made sense back when .table-scroll had no bounded
-   height of its own and a reflow here could shift a whole page's worth of
-   content; now that it's a fixed-height scrolling pane (see .table-scroll's
-   max-height), a table gaining this line only shifts its own few rows, not
-   the page -- worth transitioning smoothly (below) rather than worth
-   reserving forever. */
+   show. */
 .table-scroll-hint {
     height: 0;
     margin-bottom: 0;
@@ -1148,14 +1124,7 @@ table {
     font-size: 0.9rem;
 }
 
-/* Sticky so a long table (the tick logs run to 50 rows) keeps its column
-   labels on screen past the first scroll -- background+z-index needed
-   since sticky alone leaves body rows visible scrolling up through it. */
 thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--bg);
     text-align: left;
     padding: 0 1.25rem 0.6rem 0;
     color: var(--fg-dim);
