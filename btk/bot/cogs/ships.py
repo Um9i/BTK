@@ -79,7 +79,7 @@ class Ships(commands.Cog):
         self.bot = bot
 
     async def _current_round_id(self, conn) -> int | None:
-        return await conn.fetchval("SELECT id FROM round ORDER BY id DESC LIMIT 1")
+        return await conn.fetchval("SELECT id FROM round ORDER BY number DESC LIMIT 1")
 
     async def _find_ship(self, conn, round_id: int, name: str) -> dict | None:
         # Cascading match like Merlin's Ship.load(): exact, then prefix, then substring.

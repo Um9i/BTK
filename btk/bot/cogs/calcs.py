@@ -22,8 +22,8 @@ class Calcs(commands.Cog):
         return await conn.fetchval(
             """
             SELECT t.number FROM tick t
-            JOIN round r ON r.id = t.round_id
-            ORDER BY t.id DESC LIMIT 1
+            WHERE t.round_id = (SELECT id FROM round ORDER BY number DESC LIMIT 1)
+            ORDER BY t.number DESC LIMIT 1
             """
         )
 

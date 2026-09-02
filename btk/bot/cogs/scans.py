@@ -38,11 +38,11 @@ class Scans(commands.Cog):
         self.bot = bot
 
     async def _current_round_and_tick(self, conn) -> tuple[int | None, int]:
-        round_id = await conn.fetchval("SELECT id FROM round ORDER BY id DESC LIMIT 1")
+        round_id = await conn.fetchval("SELECT id FROM round ORDER BY number DESC LIMIT 1")
         if round_id is None:
             return None, 0
         tick_number = await conn.fetchval(
-            "SELECT number FROM tick WHERE round_id = $1 ORDER BY id DESC LIMIT 1", round_id
+            "SELECT number FROM tick WHERE round_id = $1 ORDER BY number DESC LIMIT 1", round_id
         )
         return round_id, tick_number or 0
 

@@ -95,7 +95,7 @@ class Preferences(commands.Cog):
         x, y, z = (int(v) for v in match.groups())
 
         async with acquire() as conn:
-            round_id = await conn.fetchval("SELECT id FROM round ORDER BY id DESC LIMIT 1")
+            round_id = await conn.fetchval("SELECT id FROM round ORDER BY number DESC LIMIT 1")
             if round_id is None:
                 await ctx.send("No round data yet.")
                 return

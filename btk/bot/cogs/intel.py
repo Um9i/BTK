@@ -121,7 +121,7 @@ class Intel(commands.Cog):
         self.bot = bot
 
     async def _current_round_id(self, conn) -> int | None:
-        return await conn.fetchval("SELECT id FROM round ORDER BY id DESC LIMIT 1")
+        return await conn.fetchval("SELECT id FROM round ORDER BY number DESC LIMIT 1")
 
     async def _latest_tick_id(self, conn, round_id: int) -> int | None:
         return await conn.fetchval(

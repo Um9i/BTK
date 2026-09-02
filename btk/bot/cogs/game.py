@@ -30,7 +30,8 @@ class Game(commands.Cog):
                        t.number AS tick_number, t.inserted_at
                 FROM tick t
                 JOIN round r ON r.id = t.round_id
-                ORDER BY t.id DESC
+                WHERE r.id = (SELECT id FROM round ORDER BY number DESC LIMIT 1)
+                ORDER BY t.number DESC
                 LIMIT 1
                 """
             )
